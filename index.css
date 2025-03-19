@@ -1,0 +1,109 @@
+/* From Uiverse.io by gharsh11032000 */ 
+*{
+    font-family: "ellograph-cf", monospace;
+font-weight: 700;
+font-style: normal;
+}
+.button {
+    cursor: pointer;
+    position: relative;
+    padding: 10px 24px;
+    font-size: 18px;
+    color: rgb(193, 163, 98);
+    border: 2px solid rgb(193, 163, 98);
+    border-radius: 34px;
+    background-color: transparent;
+    font-weight: 600;
+    transition: all 1.8s cubic-bezier(0.23, 1, 0.320, 1);
+    overflow: hidden;
+    
+  }
+  
+  .button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 100%;
+    height: 50px;
+    border-radius: inherit;
+    scale: 0;
+    z-index: -1;
+    background-color: rgb(193, 163, 98);
+    transition: all 1.8s cubic-bezier(0.23, 1, 0.320, 1);
+  }
+  
+  .button:hover::before {
+    scale: 3;
+  }
+  
+  .button:hover {
+    color: #212121;
+    scale: 1.1;
+    box-shadow: 0 0px 20px rgba(193, 163, 98,0.4);
+  }
+  
+  .button:active {
+    scale: 1.2;
+  }
+button{
+    gap: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px;
+
+}
+#buttony{
+    background-color: white;
+    color: rgb(0, 0, 0);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: 0.5s;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
+    height: auto;
+    width: auto;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+/* Reset stylů pro celé tělo stránky */
+body, html {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f5f5f5; /* Světle šedé pozadí */
+    
+}
+
+/* Hlavní kontejner tlačítek */
+#buttony {
+    background-color: white;
+    color: rgb(0, 0, 0);
+    border: none;
+    padding: 20px;
+    border-radius: 10px;
+    font-size: 20px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+/* Kontejner pro tlačítka */
+.test {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+  body{
+    background-image: url(https://images.steamusercontent.com/ugc/2511403979991276039/3D9479832D8C88C0A22DFE78DC131DA03EB2CFDB/?imw=5000&imh=5000&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false);
+  }
+  
