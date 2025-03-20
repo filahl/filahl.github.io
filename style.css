@@ -1,8 +1,9 @@
 /* From Uiverse.io by gharsh11032000 */ 
 *{
-    font-family: "ellograph-cf", monospace !important;
-font-weight: 700;
-font-style: normal;
+    font-family: "Lexend", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
 }
 .button {
     cursor: pointer;
