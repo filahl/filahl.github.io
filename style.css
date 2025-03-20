@@ -1,6 +1,6 @@
 /* From Uiverse.io by gharsh11032000 */ 
 *{
-    font-family: "ellograph-cf", monospace;
+    font-family: "ellograph-cf", monospace !important;
 font-weight: 700;
 font-style: normal;
 }
