@@ -10,8 +10,8 @@
     position: relative;
     padding: 10px 24px;
     font-size: 18px;
-    color: rgb(193, 163, 98);
-    border: 2px solid rgb(193, 163, 98);
+    color: #447f92;
+    border: 2px solid #447f92;
     border-radius: 34px;
     background-color: transparent;
     font-weight: 600;
@@ -30,7 +30,7 @@
     border-radius: inherit;
     scale: 0;
     z-index: -1;
-    background-color: rgb(193, 163, 98);
+    background-color:#447f92;
     transition: all 1.8s cubic-bezier(0.23, 1, 0.320, 1);
   }
   
@@ -39,7 +39,7 @@
   }
   
   .button:hover {
-    color: #212121;
+    color: #ffffff;
     scale: 1.1;
     box-shadow: 0 0px 20px rgba(193, 163, 98,0.4);
   }
@@ -56,7 +56,7 @@ button{
 
 }
 #buttony{
-    background-color: white;
+    background-color: #E1E1E1;
     color: rgb(0, 0, 0);
     border: none;
     padding: 10px 20px;
@@ -79,13 +79,13 @@ body, html {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #f5f5f5; /* Světle šedé pozadí */
+     /* Světle šedé pozadí */
     
 }
 
 /* Hlavní kontejner tlačítek */
 #buttony {
-    background-color: white;
+    
     color: rgb(0, 0, 0);
     border: none;
     padding: 20px;
@@ -105,6 +105,8 @@ body, html {
 }
 
   body{
-    background-image: url(https://images.steamusercontent.com/ugc/2511403979991276039/3D9479832D8C88C0A22DFE78DC131DA03EB2CFDB/?imw=5000&imh=5000&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false);
+    background-image: url(https://media.discordapp.net/attachments/1292755456057413688/1354047432240926740/background.png?ex=67e3de70&is=67e28cf0&hm=c5ff8552ad7402a9f6ff3d287174809011664ac7db309f0fd0b303f24e965927&=&format=webp&quality=lossless&width=1376&height=826);
+    background-repeat: no-repeat;
+    background-size: cover;
   }
   
