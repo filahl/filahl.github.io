@@ -175,7 +175,7 @@ input[type="email"],
     font-weight: bold;
 }
 
-/* Responsivita pro menší obrazovky */
+
 @media (max-width: 900px) {
     .produkty-obrazky {
         flex-direction: column;
