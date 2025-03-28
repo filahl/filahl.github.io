@@ -105,7 +105,7 @@ body, html {
 }
 
   body{
-    background-image: url(https://media.discordapp.net/attachments/1292755456057413688/1354047432240926740/background.png?ex=67e3de70&is=67e28cf0&hm=c5ff8552ad7402a9f6ff3d287174809011664ac7db309f0fd0b303f24e965927&=&format=webp&quality=lossless&width=1376&height=826);
+    background-image: url("background.png");
     background-repeat: no-repeat;
     background-size: cover;
   }
