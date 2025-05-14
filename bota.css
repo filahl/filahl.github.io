@@ -139,12 +139,15 @@ color: #9496AD;
     margin: 0 0 20px 0;
     padding: 0;
     list-style: none;
+    transition: all .3s ease-in-out;
+    list-style: none;
 }
 .velikosti li {
     padding: 8px 8px;
-    
+    border: 1px solid transparent;
     border-radius: 50%;
     cursor: pointer;
+    transition: all .3s ease-in-out;
 }
 
 /*.velikosti li:hover {
@@ -152,10 +155,12 @@ color: #9496AD;
     border: 1px solid #f15f42;
     color: white;
 }*/
-.velikosti .vybrana {
+.velikosti .vybrana:hover {
+    
     border: 1px solid #f15f42;
     font-weight: 500;
     color: #f15f42;
+    transition: all .3s ease-in-out;
 }
 
 
@@ -170,6 +175,20 @@ color: #9496AD;
     background-color: #f15f42;
     color: white;
     border-radius: 6px;
+    transition: all .3s ease-in-out;
     box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    
+}
+.tlacitko:hover{
+    background-color: white;
+    color: #f15f42;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+    transition: all .3s ease-in-out;
+}
+.tlacitko:active{
+    background-color:  #50cc49;
+    color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    transition: all .3s ease-in-out;
     
 }
