@@ -1,0 +1,392 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(to right, #141e30, #243b55);
+  color: #FFFBDE;
+  line-height: 1.6;
+}
+
+/* Navigace */
+.nav {
+  background: #174039 ;
+  
+  padding: 1rem 2rem;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.nav-list {
+  list-style: none;
+  display: flex;
+  justify-content: flex-end;
+  gap: 2rem;
+}
+
+.nav-list a {
+  text-decoration: none;
+  color: #CBE3De;
+  font-size: 1.2rem;  
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+
+.nav-list a:hover {
+  color: #ffea48;
+}
+
+/* Welcome sekce */
+.welcome-section {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background: linear-gradient(to bottom right, #04342C, #203a43, #04342C);
+}
+
+.welcome-section h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.welcome-section p {
+  font-size: 1.5rem;
+  font-style: italic;
+  color: #ffea48;
+}
+
+/* Projects sekce */
+.projects-section {
+  padding: 4rem 2rem;
+  background-color: #174039;
+  text-align: center;
+  
+}
+
+.projects-section-header {
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+  color: #ffea48;
+}
+
+.projects-grid {
+  
+  
+  gap: 2rem;
+  flex-direction: row;
+  display: flex;
+  justify-content: center;
+ 
+  margin: 0 auto;
+  max-width: 1200px;
+
+}
+
+.project-tile {
+  background: #04342C;
+  border-radius: 10px;
+  overflow: hidden;
+  text-decoration: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.project-tile:hover {
+  transform: scale(1.03);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+}
+
+.project-image {
+  width: 100%;
+  display: block;
+}
+
+.project-title {
+  padding: 1rem;
+  font-size: 1.1rem;
+  color: #FFFBDE;
+}
+
+.project-title .code {
+  color: #ffea48;
+  font-weight: bold;
+}
+
+/* Button */
+.btn-show-all {
+  display: inline-block;
+  margin-top: 3rem;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  background: #CBE3De;
+  color: #000;
+  border-radius: 30px;
+  text-decoration: none;
+  transition: background 0.3s ease;
+}
+
+.btn-show-all:hover {
+  background: #ffea48;
+  color: #000;
+}
+
+/* Contact sekce */
+.contact-section {
+  padding: 4rem 2rem;
+  background-color: #04342C;
+  text-align: center;
+}
+
+.contact-section-header h2 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.contact-section-header p {
+  font-style: italic;
+  margin-bottom: 2rem;
+  color: #FFFBDE;
+}
+
+.contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.contact-details {
+  color: #000;
+  background-color: #CBE3De;
+  padding: 1rem 1.5rem;
+  border-radius: 30px;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.contact-details:hover {
+  background-color: #ffea48;
+  color: #000;
+  transform: scale(1.05);
+}
+
+/* Footer */
+footer {
+  padding: 2rem;
+  text-align: center;
+  background-color: #174039;
+  font-size: 0.9rem;
+}
+
+footer a {
+  color: #ffea48;
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+
+/* Fancy heading */
+
+.fancy-heading {
+  font-size: 2.5rem;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  color: #ffea48;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 2px solid #ffea48;
+  margin: 0 auto;
+
+  width: 0;
+  animation: 
+    typing 3s steps(15, end) 0s forwards,       /* napsání */
+    waitPause 5s steps(1) 3s forwards,           /* pauza */
+    erase 3s steps(15, end) 8s forwards,         /* mazání */
+    typing 3s steps(15, end) 11s forwards,     /* napsání */
+    blinkCursor 0.75s step-end infinite
+    ;         /* blikající kurzor chatgpt*/
+}
+
+@keyframes typing {
+  from { width: 0; }
+  to { width: 15ch; }
+}
+
+@keyframes waitPause {
+  from { width: 15ch; }
+  to { width: 15ch; }
+}
+
+@keyframes erase {
+  from { width: 15ch; }
+  to { width: 0; }
+}
+
+@keyframes blinkCursor {
+  50% { border-color: transparent; }
+}
+
+
+
+
+
+
+
+
+
+/* Fancy podheading */
+
+.fancy-podheading {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  background: linear-gradient(90deg, #ffea48, #ffea48, #ffea48);
+  background-size: 300%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent; 
+  animation: shine 5s linear infinite, glow-yellow 1.5s ease-in-out infinite alternate;
+  text-shadow: 0 0 5px rgba(7, 252, 88, 0.3);
+}
+
+@keyframes shine {
+  0% { background-position: 0%; }
+  100% { background-position: 300%; }
+}
+
+@keyframes glow-yellow {
+  0% {
+    text-shadow: 0 0 5px #ffea48, 0 0 10px #ffea48, 0 0 15px #ffea48;
+  }
+  100% {
+    text-shadow: 0 0 10px #ffea48, 0 0 20px #ffea48, 0 0 30px #ffea48;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Media Queries */
+
+/* tablett*/
+@media screen and (max-width: 768px) {
+  .nav {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  h1.fancy-heading {
+    font-size: 2rem;
+    text-align: center;
+  }
+
+  p.fancy-podheading {
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .projects-grid {
+    display: flex; 
+    flex-direction: column;
+    gap: 2rem;
+    justify-content: center;
+    margin: 0 auto;
+    max-width: 1200px;
+  }
+}
+
+
+
+/* MOBIl */
+
+@media screen and (max-width: 480px) {
+  .nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    
+  }
+
+  .nav-list a {
+    font-size: 1rem;
+  }
+
+  .welcome-section h1 {
+    font-size: 2rem;
+    text-align: center;
+  }
+
+  .welcome-section p {
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  .projects-section-header {
+    font-size: 2rem;
+    text-align: center;
+  }
+
+  h1.fancy-heading {
+    font-size: 1.5rem;
+    text-align: center;
+    display: block;
+  }
+  p.fancy-podheading {
+    font-size: .8rem;
+    text-align: center;
+    white-space: normal;
+    padding-left: 30%;
+    padding-right: 30%;  
+  }
+  h2.nakytext{
+    font-size: 1.9rem;
+    text-align: center;
+    
+  }
+}
+.avatar{
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  margin-bottom: 2.5rem;
+  transition: ease 0.3s;
+}
+.avatar:hover{
+  transform: scale(1.1);
+  transition: transform 0.3s ease;
+}
