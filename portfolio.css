@@ -86,7 +86,7 @@ body {
 
 .projects-grid {
   
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  
   gap: 2rem;
   flex-direction: row;
   display: flex;
@@ -222,7 +222,7 @@ footer a:hover {
     erase 3s steps(15, end) 8s forwards,         /* mazání */
     typing 3s steps(15, end) 11s forwards,     /* napsání */
     blinkCursor 0.75s step-end infinite
-    ;         /* blikající kurzor */
+    ;         /* blikající kurzor chatgpt*/
 }
 
 @keyframes typing {
@@ -263,7 +263,7 @@ footer a:hover {
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  -webkit-text-fill-color: transparent; /* ← DŮLEŽITÉ */
+  -webkit-text-fill-color: transparent; 
   animation: shine 5s linear infinite, glow-yellow 1.5s ease-in-out infinite alternate;
   text-shadow: 0 0 5px rgba(7, 252, 88, 0.3);
 }
@@ -298,6 +298,8 @@ footer a:hover {
 
 
 /* Media Queries */
+
+/* tablett*/
 @media screen and (max-width: 768px) {
   .nav {
     display: flex;
@@ -315,7 +317,7 @@ footer a:hover {
   }
 
   .projects-grid {
-    display: flex; /* Změna z grid na flex */
+    display: flex; 
     flex-direction: column;
     gap: 2rem;
     justify-content: center;
@@ -324,9 +326,10 @@ footer a:hover {
   }
 }
 
-/* ------------------------- */
-/* MOBIL: max-width: 480px  */
-/* ------------------------- */
+
+
+/* MOBIl */
+
 @media screen and (max-width: 480px) {
   .nav-list {
     display: flex;
