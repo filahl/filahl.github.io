@@ -376,3 +376,14 @@ footer a:hover {
     
   }
 }
+.avatar{
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  margin-bottom: 2.5rem;
+  transition: ease 0.3s;
+}
+.avatar:hover{
+  transform: scale(1.1);
+  transition: transform 0.3s ease;
+}
