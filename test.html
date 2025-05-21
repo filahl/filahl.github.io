@@ -2,36 +2,99 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Simple Test Page</title>
+    <title>Fancy Rouleta</title>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:700,400&display=swap" rel="stylesheet">
     <style>
         body {
-            background: #f0f4f8;
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            color: #333;
+            background: linear-gradient(135deg, #ff9800 0%, #000 100%);
+            font-family: 'Montserrat', Arial, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            color: #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .container {
-            background: #fff;
-            padding: 24px 32px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            max-width: 400px;
-            margin: auto;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px 48px;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            max-width: 420px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
         }
+  
         h1 {
-            color: #0078d7;
-            margin-bottom: 16px;
+            color: #ff9800;
+            margin-bottom: 18px;
+            font-size: 2.1em;
+            font-weight: 700;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 12px #ff99008c;
         }
         p {
-            font-size: 1.1em;
+            font-size: 1.18em;
+            margin-bottom: 28px;
+            position: relative;
+            z-index: 1;
+            color: #ff9800;
+        }
+        .roulette-btn {
+            display: inline-block;
+            padding: 14px 38px;
+            background-color:#ff9800;
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.2em;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            
+            transition: transform 0.15s, box-shadow 0.15s, background 0.3s;
+            position: relative;
+            transition: ease-in-out 0.3s;
+            z-index: 1;
+        }
+        .roulette-btn:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 32px #ff9900a4;
+            transition: ease 0.3s;
+            background-color:#ff9800;
+        }
+        .glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 320px;
+            height: 320px;
+            background: radial-gradient(circle, #ff9800a4 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            pointer-events: none;
         }
     </style>
+    <script>
+
+function rouletteRedirect() {
+    if (Math.random() < 0.9) {
+        window.open("https://www.google.com", "_blank");
+    } else {
+        window.open("https://www.cornhub.website", "_blank");
+    }
+}
+</script>
 </head>
 <body>
+    <div class="glow"></div>
     <div class="container">
-        <h1>Test Page</h1>
-        <p>This is a simple test page with CSS styling.</p>
+        <h1>🎰 Webová Ruleta 🎰</h1>
+        <p>Zmáčkni tlačítko a nech osud rozhodnout, kam tě pošle!</p>
+        <button class="roulette-btn" onclick="rouletteRedirect()" target="_blank">Roztočit ruletu</button>
     </div>
 </body>
 </html>
