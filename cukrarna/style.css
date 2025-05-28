@@ -31,14 +31,14 @@ html { box-sizing: border-box; }
 
 body {
 	margin: 0;
-	font-family: 'Lora', serif;
+	font-family: 'Dosis', serif;
 	font-size: 18px;
 	line-height: 1.5;
 	color: #242424;
 }
 
 h1, h2, h3, h4, h5, h6 {
-	font-family: 'Playfair Display', serif;
+	font-family: 'Dosis', serif;
 	line-height: 1.25;
 	color: #3e606b;
 }
