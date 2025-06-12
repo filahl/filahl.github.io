@@ -6,59 +6,129 @@
   <title>Error 404</title>
   <style>
     body {
-  margin: 0;
-  padding: 0;
-  background: #000 url('https://media1.tenor.com/m/hzKJ5w4qA-AAAAAC/yellow-emoji-no-no-emotiguy.gif') no-repeat center center fixed;
-  background-size: 100% 100%;
-  color: #ffffff;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  text-align: center;
-}
- .container {
+      margin: 0;
+      padding: 0;
+      background: #000 url('https://media1.tenor.com/m/hzKJ5w4qA-AAAAAC/yellow-emoji-no-no-emotiguy.gif') no-repeat center center fixed;
+      background-size: cover;
+      color: #ffffff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      text-align: center;
+      overflow:hidden;
+    }
+    
+    .container {
       background-color: rgba(18, 18, 18, 0.8);
       padding: 40px;
       border-radius: 10px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      max-width: 90%;
+      margin: 20px;
     }
 
     h1 {
       font-size: 6rem;
       margin: 0;
+      text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
     }
 
     p {
       font-size: 1.5rem;
       color: #bbbbbb;
+      margin: 20px 0;
     }
 
     a {
+      display: inline-block;
       margin-top: 20px;
       color: #e0363a;
       text-decoration: none;
       font-size: 1rem;
       border: 1px solid #e0363a;
-      padding: 10px 20px;
+      padding: 12px 24px;
       border-radius: 5px;
-      transition: background 0.3s, color 0.3s;
+      transition: all 0.3s ease;
+      font-weight: bold;
     }
 
     a:hover {
       background-color: #e0363a;
       color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(224, 54, 58, 0.3);
+    }
+
+    /* Media queries pro mobilní zařízení */
+    @media (max-width: 768px) {
+      .container {
+        padding: 30px;
+      }
       
+      h1 {
+        font-size: 4rem;
+      }
+      
+      p {
+        font-size: 1.2rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 20px;
+      }
+      
+      h1 {
+        font-size: 3rem;
+      }
+      
+      p {
+        font-size: 1rem;
+      }
+      
+      a {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-  <h1>404</h1>
-  <p>Stránka nenalezena :(</p>
-  <a href="/">Zpět na hlavní stránku</a>
+    <h1>404</h1>
+    <p>Stránka nenalezena :(</p>
+    <a href="/">Zpět na hlavní stránku</a>
   </div>
+
+  <!-- Audio prvek pro ICQ zvuk -->
+  <audio id="icqSound" autoplay loop>
+    <source src="https://www.myinstants.com/media/sounds/icq-uh-oh.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    // Funkce pro přehrání zvuku po interakci uživatele
+    function enableAudio() {
+      const audio = document.getElementById('icqSound');
+      audio.volume = 0.3; // Nastavení nižší hlasitosti
+      audio.play().catch(e => console.log('Autoplay prevented, waiting for interaction'));
+    }
+    
+    // Pokus o přehrání při načtení
+    document.addEventListener('DOMContentLoaded', enableAudio);
+    
+    // Přehrát při jakékoli interakci uživatele
+    document.addEventListener('click', function() {
+      enableAudio();
+    });
+    
+    // Přehrát při dotyku (pro mobily)
+    document.addEventListener('touchstart', function() {
+      enableAudio();
+    }, { once: true });
+  </script>
 </body>
 </html>
