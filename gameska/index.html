@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pixel Blast — Win95 Edition</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <div class="desktop">
+    <div class="win95">
+      <div class="titlebar">
+        <div class="left"><div class="icon-square"></div> Pixel Blast</div>
+        <div class="right">
+          <div class="square-btn" title="Minimize"></div>
+          <div class="square-btn" title="Maximize"></div>
+          <div class="square-btn" title="Close"></div>
+        </div>
+      </div>
+
+      <div class="window-body">
+        <div class="menu-row">
+          <button id="openSettings" class="btn">Nastavení</button>
+          <div class="status">Skóre: <span id="score">0</span></div>
+          <div class="status">Nej: <span id="best">0</span></div>
+        </div>
+
+        <div class="board-wrap">
+          <canvas id="gameCanvas" width="360" height="520" tabindex="0" aria-label="Hrací plocha"></canvas>
+        </div>
+
+        <div class="slots-row">
+          <div class="slot" id="slot0"><canvas id="slotcv0"></canvas><div class="slot-label">Slot 1</div></div>
+          <div class="slot" id="slot1"><canvas id="slotcv1"></canvas><div class="slot-label">Slot 2</div></div>
+          <div class="slot" id="slot2"><canvas id="slotcv2"></canvas><div class="slot-label">Slot 3</div></div>
+        </div>
+
+        <div class="footer-row">
+          <div class="small">Ovládání: drag&drop, šipky, Space (drop), P (pauza), R (restart)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings window -->
+  <div id="settings-window" class="win95 settings hidden" aria-hidden="true">
+    <div class="titlebar">
+      <div class="left">Nastavení</div>
+      <div class="right"><div class="square-btn" onclick="closeSettings()"></div></div>
+    </div>
+    <div class="window-body">
+      <label>Velikost pixelu: <input id="pixelSizeInput" type="number" min="2" max="24" step="1"></label><br><br>
+      <label>Gravitace: <input id="gravityInput" type="number" min="0.02" max="2" step="0.02"></label><br><br>
+      <label>Počáteční barvy: </label><br>
+      <label><input type="checkbox" id="colorRed" checked> Červená</label>
+      <label><input type="checkbox" id="colorBlue" checked> Modrá</label>
+      <label><input type="checkbox" id="colorGreen" checked> Zelená</label><br><br>
+      <button id="saveSettingsBtn" class="btn">Uložit</button>
+    </div>
+  </div>
+
+<script src="settings.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
