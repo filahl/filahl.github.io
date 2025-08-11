@@ -2,8 +2,8 @@
    Simple settings panel. Exposes `settings` object and fires `settingsChanged`.
 */
 const settings = {
-  pixelSize: 6,
-  gravity: 0.12,
+  pixelSize: 32,
+  gravity: 0.001,
   initialColors: { red:true, blue:true, green:true }
 };
 
