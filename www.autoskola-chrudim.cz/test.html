@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Online přihláška | Autoškola Chrudim Blažek</title>
+  
+  <meta name="description" content="Nezávazná online přihláška do autoškoly. Vyberte si kurz a začněte jezdit.">
+  
+  <link rel="icon" href="favicon.ico">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/modern.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    /* Styling formulářových polí podle vašeho modern.css */
+    .form-control, select.form-control {
+        border-radius: 12px; /* radius-sm */
+        border: 1px solid #e5e7eb;
+        
+        /* ZMĚNA: Větší padding a zrušení fixní výšky, aby to ladilo s tlačítkem */
+        padding: 16px; 
+        height: auto !important;
+        min-height: 56px; /* Zhruba odpovídá výšce tlačítka */
+        
+        background: #f9fafb;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+    
+    /* Oprava pro select na některých prohlížečích, aby text nebyl moc vysoko */
+    select.form-control {
+        padding-top: 14px;
+        padding-bottom: 14px;
+        line-height: 1.5;
+    }
+    
+    .form-control:focus {
+        background: #ffffff;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); /* primary barva s průhledností */
+    }
+
+    /* Styling tlačítka Odeslat */
+    .btn-odeslat {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border: none;
+        padding: 16px 32px; /* Padding 16px na výšku */
+        font-weight: 700;
+        border-radius: 99px; /* kulaté jako menu */
+        width: 100%;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-soft);
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.1rem;
+        min-height: 56px; /* Pro jistotu stejná minimální výška */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-odeslat:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-hover);
+    }
+    
+    /* ... zbytek stylů (form-title, label) zůstává stejný ... */
+    .form-title {
+        font-family: 'Poppins', sans-serif;
+        color: var(--text-main);
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .form-group label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+    }
+    
+
+    
+  </style>
+</head>
+
+<body>
+
+<div class="obal">
+
+  <header class="horni">
+    <img class="logo" src="obr/autoskola.svg" alt="Autoškola Blažek" onerror="this.style.display='none'">
+  </header>
+
+  <nav class="menu">
+    <a href="index.html" class="odkaz"><p>Úvod</p></a>
+    <a href="kurzy.html" class="odkaz"><p>Kurzy a ceník</p></a>
+    <a href="prihlaska.html" class="odkaz active"><p>Přihláška</p></a> <a href="kontakty.html" class="odkaz"><p>Kontakt</p></a>
+    <a href="fotogalerie.html" class="odkaz"><p>Fotogalerie</p></a>
+  </nav>
+
+  <main class="vpravo" style="justify-content: center;"> 
+    
+    <section class="text" style="max-width: 800px; width: 100%;">
+      
+      <h2 class="form-title">Nezávazná online přihláška <i class="fa-solid fa-pen-nib" style="color: var(--primary);"></i></h2>
+      <p style="text-align: center; margin-bottom: 30px; color: #6b7280;">Vyplňte prosím údaje níže. Po odeslání vás budeme kontaktovat pro dokončení registrace.</p>
+
+      <form action="https://formsubmit.co/vladimir@autoskola-blazek.cz" method="POST">
+        
+        <input type="hidden" name="_subject" value="Nová přihláška z webu!">
+        <input type="hidden" name="_captcha" value="false">
+        <input type="hidden" name="_next" value="https://www.autoskola-chrudim.cz/dekujeme.html">
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label for="jmeno">Jméno a příjmení *</label>
+                <input type="text" name="jmeno" class="form-control" id="jmeno" placeholder="Jan Novák" required>
+            </div>
+            <div class="col-md-6 form-group">
+                <label for="narozeni">Datum narození *</label>
+                <input type="date" name="datum_narozeni" class="form-control" id="narozeni" required>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 form-group">
+                <label for="telefon">Telefonní číslo *</label>
+                <input type="tel" name="telefon" class="form-control" id="telefon" placeholder="+420 777 123 456" required>
+            </div>
+            <div class="col-md-6 form-group">
+                <label for="email">E-mailová adresa *</label>
+                <input type="email" name="email" class="form-control" id="email" placeholder="jan@seznam.cz" required>
+            </div>
+        </div>
+
+        <div class="divider"></div> <div class="form-group">
+            <label for="kurz">O jaký kurz máte zájem? *</label>
+            <select name="vybrany_kurz" class="form-control" id="kurz" required>
+                <option value="" selected disabled>-- Vyberte ze seznamu --</option>
+                <option value="Skupina B (Osobní auto)">Skupina B (Osobní auto)</option>
+                <option value="Skupina B Automat">Skupina B (Automat)</option>
+                <option value="Skupina AM (od 15 let)">Skupina AM (od 15 let)</option>
+                <option value="Skupina A1 (od 16 let)">Skupina A1 (od 16 let)</option>
+                <option value="Skupina A2 (od 18 let)">Skupina A2 (od 18 let)</option>
+                <option value="Skupina A (Neomezená)">Skupina A (Neomezená)</option>
+                <option value="Skupina T (Traktor)">Skupina T (Traktor)</option>
+                <option value="Kondiční jízdy">Kondiční jízdy</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="zprava">Poznámka / Dotaz</label>
+            <textarea name="zprava" class="form-control" id="zprava" rows="4" placeholder="Např. Můžu začít až od příštího měsíce..."></textarea>
+        </div>
+
+        <div class="form-group form-check" style="margin: 20px 0;">
+            <input type="checkbox" class="form-check-input" id="gdpr" required>
+            <label class="form-check-label small" for="gdpr" style="color: #6b7280;">
+                Souhlasím se zpracováním osobních údajů za účelem zpětného kontaktování autoškolou.
+            </label>
+        </div>
+
+        <button type="submit" class="btn-odeslat">
+            Odeslat přihlášku <i class="fa-solid fa-paper-plane" style="margin-left: 8px;"></i>
+        </button>
+
+      </form>
+
+    </section>
+
+  </main>
+
+  <footer class="dole">
+    <p>&copy; 2025 Autoškola Blažek</p>
+    <a href="https://filahl.github.io/portfolio/portfolio.html">Design by Filip Hloušek</a>
+  </footer>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+</body>
+</html>

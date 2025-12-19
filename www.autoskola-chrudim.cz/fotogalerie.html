@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <title>Fotogalerie | Autoškola Chrudim Blažek</title>
+  
+  <meta name="description" content="Prohlédněte si náš vozový park a moderní učebny.">
+  <meta name="keywords" content="fotogalerie autoskola, vozovy park, ucebna autoskoly, kymco, toyota, kawasaki">
+  
+  <link rel="icon" href="favicon.ico">
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  
+  <link rel="stylesheet" href="css/modern.css">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+</head>
+
+<body>
+
+<div class="obal d-flex flex-column min-vh-100">
+
+  <header class="horni">
+    <img class="logo" src="obr/autoskola.svg" alt="Autoškola Blažek" onerror="this.style.display='none'">
+  </header>
+
+  <nav class="menu">
+    <a href="index.html" class="odkaz"><p>Úvod</p></a>
+    <a href="kurzy.html" class="odkaz"><p>Kurzy a ceník</p></a>
+    <a href="prihlaska.html" class="odkaz"><p>Přihláška</p></a>
+    <a href="kontakty.html" class="odkaz"><p>Kontakt</p></a>
+    <a href="fotogalerie.html" class="odkaz active"><p>Fotogalerie</p></a>
+  </nav>
+
+  <main class="vpravo flex-grow-1">
+    
+    <section class="hlavni" style="width: 100%;">
+      
+      <div class="moto">
+        <h2>Nahlédněte k nám</h2>
+      </div>
+
+      <div class="gallery-controls">
+          <button class="btn-tab active" onclick="switchTab('fleet')">Vozový park <i class="fa-solid fa-car"></i></button>
+          <button class="btn-tab" onclick="switchTab('classroom')">Učebna <i class="fa-solid fa-graduation-cap"></i></button>
+      </div>
+
+      <div id="gallery-fleet" class="gallery-grid">
+          
+          <div class="gallery-item" onclick="openLightbox('Foto/Foto1/skutr .jpg')">
+            <img src="Foto/Foto1/mini/skutrPro.jpg" alt="Skútr" onerror="this.src='https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400'">
+          </div>
+
+          <div class="gallery-item" onclick="openLightbox('Foto/Foto1/zluta.jpg')">
+            <img src="Foto/Foto1/mini/zlutaPro.jpg" alt="Motorka" onerror="this.src='https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?w=400'">
+          </div>
+
+          <div class="gallery-item" onclick="openLightbox('Foto/Foto1/verso ostry.jpg')">
+            <img src="Foto/Foto1/mini/verso ostryPro.jpg" alt="Toyota Verso" onerror="this.src='https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=400'">
+          </div>
+
+          <div class="gallery-item" onclick="openLightbox('Foto/Foto1/zelená.jpg')">
+            <img src="Foto/Foto1/mini/zelenaPro.jpg" alt="Kawasaki" onerror="this.src='https://images.unsplash.com/photo-1609630875171-b1321377ee65?w=400'">
+          </div>
+
+          <div class="gallery-item" onclick="openLightbox('Foto/Foto1/obr2.jpg')">
+            <img src="Foto/Foto1/mini/obr2Pro.jpg" alt="Autoškola" onerror="this.src='https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=400'">
+          </div>
+
+          <div class="gallery-item" onclick="openLightbox('Foto/Foto1/raw.jpg')">
+            <img src="Foto/Foto1/mini/rawPro.jpg" alt="Toyota RAV4" onerror="this.src='https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=400'">
+          </div>
+          
+
+      </div>
+
+      <div id="gallery-classroom" class="gallery-grid hidden">
+          
+          <div class="gallery-item" onclick="openLightbox('Foto/Foto2/ucebna1.jpg')">
+             <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600" alt="Učebna 1">
+          </div>
+          
+          <div class="gallery-item" onclick="openLightbox('Foto/Foto2/ucebna2.jpg')">
+             <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600" alt="Učebna 2">
+          </div>
+
+           <div class="gallery-item" onclick="openLightbox('Foto/Foto2/ucebna3.jpg')">
+             <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600" alt="Učebna 3">
+          </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="dole">
+    <p>© 2025 Autoškola Blažek</p>
+    <a href="https://filahl.github.io/portfolio/portfolio.html">Design by Filip Hloušek</a>
+  </footer>
+
+</div>
+
+<div id="lightbox" class="lightbox-modal" onclick="closeLightbox()">
+    <span class="lightbox-close">&times;</span>
+    <img id="lightbox-img" class="lightbox-content" src="" alt="Náhled">
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+<script>
+    // Funkce pro přepínání záložek
+    function switchTab(tabName) {
+        // Skrýt všechny galerie
+        document.getElementById('gallery-fleet').classList.add('hidden');
+        document.getElementById('gallery-classroom').classList.add('hidden');
+        
+        // Zrušit aktivní třídu u tlačítek
+        const buttons = document.querySelectorAll('.btn-tab');
+        buttons.forEach(btn => btn.classList.remove('active'));
+
+        // Zobrazit vybranou galerii
+        document.getElementById('gallery-' + tabName).classList.remove('hidden');
+        
+        // Přidat aktivní třídu kliknutému tlačítku (event.target by byl lepší, ale toto stačí)
+        if(tabName === 'fleet') {
+            buttons[0].classList.add('active');
+        } else {
+            buttons[1].classList.add('active');
+        }
+    }
+
+    // Funkce pro otevření Lightboxu
+    function openLightbox(imageSrc) {
+        const lightbox = document.getElementById('lightbox');
+        const img = document.getElementById('lightbox-img');
+        
+        // Pokud je to placeholder z internetu (pro demo účely), použijeme src z elementu
+        // V reálu to bude fungovat s cestou předanou v argumentu
+        if (imageSrc.includes('unsplash') || imageSrc === '') {
+             // Fallback logic
+             img.src = event.target.src.replace('mini/', ''); // Zkusit načíst velkou fotku
+        } else {
+             img.src = imageSrc;
+        }
+
+        // Pokud používáš placeholdery v img tagu v HTML, musíme zajistit, aby se v lightboxu otevřely
+        // Pro jednoduchost, pokud imageSrc neexistuje (chyba 404), můžeš sem dát fallback
+        
+        lightbox.classList.add('active');
+    }
+
+    // Funkce pro zavření
+    function closeLightbox() {
+        document.getElementById('lightbox').classList.remove('active');
+    }
+</script>
+
+</body>
+</html>

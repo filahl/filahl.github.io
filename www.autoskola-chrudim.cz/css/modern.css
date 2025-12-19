@@ -1,0 +1,621 @@
+/* =========================
+   1. IMPORT FONTS & VARIABLES
+========================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@500;700&display=swap');
+
+:root {
+  --primary: #4f46e5;       /* Modern Indigo */
+  --primary-dark: #4338ca;
+  --secondary: #2a8aca;     /* Gradient Pink */
+  --bg-body: #e5e6e7;
+  --bg-card: #ffffff;
+  --text-main: #1f2937;
+  --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.08);
+  --shadow-hover: 0 20px 50px -12px rgba(79, 70, 229, 0.25);
+  --radius-lg: 24px;
+  --radius-sm: 12px;
+}
+
+/* =========================
+   2. GLOBAL RESET
+========================= */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-body);
+  /* Moderní jemné pozadí */
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.05) 0%, transparent 40%);
+  color: var(--text-main);
+  line-height: 1.6;
+}
+
+.obal {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 20px;
+  animation: fadeIn 0.8s ease-out;
+
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+img { max-width: 100%; height: auto; display: block; width: 300px; }
+
+/* =========================
+   3. HEADER & MENU
+========================= */
+.horni { padding: 40px 0; text-align: center; }
+.logo { max-width: 250px; margin: 0 auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+
+/* Glassmorphism Menu */
+.menu {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 40px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(255,255,255,0.6);
+  position: sticky;
+  top: 20px;
+  z-index: 1000;
+}
+
+.odkaz {
+  padding: 10px 24px;
+  border-radius: 12px;
+  text-decoration: none !important;
+  transition: all 0.3s ease;
+}
+
+.odkaz p { margin: 0; font-weight: 600; color: var(--text-main); }
+.odkaz:hover, .odkaz.active { background: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(79,70,229,0.3); }
+.odkaz:hover p, .odkaz.active p { color: white; }
+
+/* =========================
+   4. LAYOUT & CARDS
+========================= */
+.vpravo { display: flex; gap: 32px; align-items: flex-start; flex: 1;}
+.hlavni { flex: 1; }
+.sidebar { width: 380px; display: flex; flex-direction: column; gap: 24px; }
+
+/* Responzivita */
+@media (max-width: 991px) {
+  .vpravo { flex-direction: column; }
+  .sidebar { width: 100%; }
+}
+
+/* Karta (společný styl) */
+.text, .karta-obal, .aktuality {
+  background: var(--bg-card);
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(255,255,255,0.8);
+}
+
+/* =========================
+   5. TEXT & CONTENT
+========================= */
+/* Motto */
+.moto h2 {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  padding: 40px 20px;
+  border-radius: var(--radius-lg);
+  text-align: center;
+  margin: 0 0 32px 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.5rem;
+  box-shadow: 0 10px 30px -5px rgba(236, 72, 153, 0.4);
+}
+
+/* Vizitka Hero Section */
+.vizitka-hero { text-align: center; margin-bottom: 30px; }
+.vizitka-hero h1 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.kontakty-grid {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-contact {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #eff6ff;
+  color: var(--primary);
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.btn-contact:hover { background: var(--primary); color: white; transform: translateY(-3px); }
+
+/* Nadpisy v textu */
+.text h3 {
+  font-family: 'Poppins', sans-serif;
+  color: #111827;
+  font-size: 1.4rem;
+  margin-top: 0;
+  border-left: 4px solid var(--secondary);
+  padding-left: 12px;
+}
+
+/* Moderní seznamy */
+ul.seznam-moderni { list-style: none; padding: 0; }
+ul.seznam-moderni li {
+  padding: 8px 0;
+  padding-left: 30px;
+  position: relative;
+  border-bottom: 1px dashed #e5e7eb;
+}
+ul.seznam-moderni li::before {
+  content: "✔";
+  position: absolute; left: 0; top: 8px;
+  color: var(--primary); font-weight: bold;
+}
+
+/* Tag Cloud (AM, A1...) */
+.tag-cloud { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.tag-cloud span {
+  background: #e5e6e7; padding: 6px 12px; border-radius: 8px;
+  font-weight: 700; color: var(--text-main); font-size: 0.9rem;
+}
+
+/* Oddělovač */
+.divider { border: 0; height: 1px; background: linear-gradient(to right, transparent, #e5e7eb, transparent); margin: 40px 0; }
+
+/* =========================
+   6. SIDEBAR COMPONENTS
+========================= */
+/* Carousel Override */
+.modern-carousel { border-radius: 16px; overflow: hidden; }
+.carousel-item img { width: 100%; height: 250px; object-fit: cover; }
+
+/* Tabulka */
+.tabulka-container table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.tabulka-container th {
+  background: var(--primary); color: white;
+  padding: 12px; text-align: left;
+  border-radius: 8px 8px 0 0;
+}
+.tabulka-container td {
+  padding: 12px; border-bottom: 1px solid #f3f4f6;
+  font-size: 0.95rem; color: #4b5563;
+}
+.tabulka-container tr:last-child td { border-bottom: 0; }
+.tabulka-container a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+/* Aktuality */
+.aktuality { border-left: 5px solid #f59e0b; background: #fffbeb; }
+.aktuality h4 { color: #92400e; margin-top: 0; }
+.aktuality p { margin-bottom: 8px; color: #78350f; }
+
+/* =========================
+   7. FOOTER
+========================= */
+.dole {
+  margin-top: 60px;
+  padding: 10px;
+  text-align: center;
+  background: #111827;
+  color: #9ca3af;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.dole a:hover { color: #ffffff; 
+  border-bottom-color: #ffffff; 
+  
+}
+.dole a { color: white; text-decoration: none; font-weight: 800; 
+transition: color 0.2s ease, border-bottom-color 0.2s ease;
+  border-bottom: 1px solid transparent; }
+
+
+/* =========================
+   8. SPECIFICKÉ STYLY PRO KURZY (Grid)
+========================= */
+.courses-grid {
+  display: grid;
+  /* Automatická mřížka: vejdou se, kolikrát to jde, minimálně 280px šířka */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.course-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.course-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--primary);
+}
+
+.card-img-wrapper {
+  position: relative;
+  height: 180px;
+  overflow: hidden;
+}
+
+.card-img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.course-card:hover .card-img-wrapper img {
+  transform: scale(1.1);
+}
+
+.age-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--primary);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.card-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* Aby se karty natáhly stejně */
+}
+
+.card-content h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.25rem;
+  color: #111827;
+  font-family: 'Poppins', sans-serif;
+}
+
+.card-content p {
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  flex: 1;
+}
+
+.vehicle-info {
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px dashed #e5e7eb;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Tabulka Ceník - vylepšení */
+.price-table-wrapper {
+  overflow-x: auto; /* Aby se na mobilu dala posouvat */
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow-soft);
+}
+
+.price-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.price-table th {
+  background: var(--primary);
+  color: white;
+  padding: 16px;
+  text-align: left;
+}
+
+.price-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+}
+
+.price-table tr:hover td {
+  background: #f9fafb;
+}
+
+.price-highlight {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.section-title {
+  text-align: center;
+  margin: 40px 0 20px 0;
+  font-family: 'Poppins', sans-serif;
+  color: #111827;
+}
+/* =========================
+   9. FOTOGALERIE & LIGHTBOX
+========================= */
+.gallery-controls {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.btn-tab {
+  background: white;
+  border: 1px solid #e5e7eb;
+  padding: 12px 24px;
+  border-radius: 99px;
+  font-weight: 600;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Poppins', sans-serif;
+  box-shadow: var(--shadow-soft);
+}
+
+.btn-tab:hover {
+  transform: translateY(-2px);
+  color: var(--primary);
+}
+
+.btn-tab.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+}
+
+/* Mřížka galerie */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.gallery-grid.hidden {
+  display: none;
+}
+
+.gallery-item {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: var(--shadow-soft);
+  aspect-ratio: 4/3; /* Sjednotí poměr stran fotek */
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.gallery-item:hover img {
+  transform: scale(1.1);
+}
+
+/* Overlay efekt při najetí */
+/* Overlay efekt při najetí - UPDATE: Místo lupy čisté PLUS */
+.gallery-item::after {
+  content: '+';             /* Změna na plus */
+  font-family: 'Poppins', sans-serif; /* Použijeme hezký font */
+  font-weight: 300;         /* Tenké písmo */
+  font-size: 4rem;          /* Velké plus */
+  color: white;             /* Bílá barva */
+  
+  /* Pozicování na střed */
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Tmavé pozadí s průhledností */
+  background: rgba(0, 0, 0, 0.4); 
+  backdrop-filter: blur(2px); /* Jemné rozostření pozadí */
+  
+  /* Animace */
+  opacity: 0;
+  transition: all 0.3s ease;
+  transform: scale(0.9); /* Efekt mírného zvětšení */
+}
+
+.gallery-item:hover::after {
+  opacity: 1;
+  transform: scale(1);
+}
+/* =========================
+   LIGHTBOX - SMOOTH ANIMACE
+========================= */
+
+.lightbox-modal {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 2000;
+  
+  /* Flexbox pro vystředění musí být zapnutý pořád */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(5px);
+
+  /* Výchozí stav: Skryté, ale animovatelné */
+  opacity: 0;
+  visibility: hidden; 
+  pointer-events: none; /* Aby se přes to dalo klikat, když je to skryté */
+  
+  /* Plynulý přechod pro zmizení (0.4s) */
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+/* Aktivní stav - když přidáme třídu .active */
+.lightbox-modal.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto; /* Zapneme klikání */
+}
+
+/* Samotná fotka uvnitř */
+.lightbox-content {
+  max-width: 90%;
+  max-height: 90vh;
+  border-radius: 8px;
+  
+  
+  /* Výchozí stav fotky: Zmenšená */
+  transform: scale(0.9);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* Efekt "pružiny" při otevření */
+
+  width: 90%;       /* Roztáhne obrázek na šířku rodiče (90% okna) */
+  object-fit: contain;
+}
+
+/* Fotka, když je lightbox aktivní: Normální velikost */
+.lightbox-modal.active .lightbox-content {
+  transform: scale(1);
+}
+
+/* Křížek pro zavření */
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  color: white;
+  font-size: 40px;
+  cursor: pointer;
+  z-index: 2001;
+  opacity: 0.7;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.lightbox-close:hover {
+  opacity: 1;
+  transform: rotate(90deg); /* Křížek se při najetí zatočí */
+}
+/* =========================
+   COOKIES LIŠTA (s animací)
+========================= */
+#cookie-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(31, 41, 55, 0.95); /* Tmavá barva s lehkou průhledností */
+  color: white;
+  padding: 20px;
+  text-align: center;
+  z-index: 9999;
+  box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+  backdrop-filter: blur(5px); /* Rozostří pozadí pod lištou */
+  border-top: 1px solid rgba(255,255,255,0.1);
+  
+  /* VÝCHOZÍ STAV = SCHOVÁNO DOLE */
+  transform: translateY(100%);
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); /* Smooth animace */
+}
+
+/* Třída pro zobrazení */
+#cookie-bar.show {
+  transform: translateY(0);
+}
+
+/* Tlačítko v liště */
+.btn-cookie {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  margin-left: 15px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+}
+
+.btn-cookie:hover {
+  background: var(--primary-dark);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+}
+/* =========================
+   FIX: OPRAVA PŘIHLÁŠKY NA MOBILU
+========================= */
+@media (max-width: 768px) {
+  
+  /* Karty ke stažení - prvky pod sebe */
+  .file-card {
+    flex-direction: column; /* Místo vedle sebe to dá pod sebe */
+    text-align: center;     /* Zarovná text na střed */
+    padding: 24px 16px;
+    gap: 16px;              /* Větší mezery mezi prvky */
+  }
+
+  /* Ikona */
+  .file-icon {
+    margin-bottom: 5px;
+  }
+
+  /* Textová část */
+  .file-info {
+    width: 100%;
+  }
+
+  /* Tlačítko Stáhnout */
+  .btn-download {
+    width: 100%;           /* Tlačítko přes celou šířku */
+    text-align: center;
+    margin-top: 10px;
+    padding: 12px;
+  }
+
+  /* Žlutý boxík s varováním */
+  .alert-box {
+    text-align: left;      /* Text uvnitř varování necháme vlevo, lépe se čte */
+    margin-top: 15px;
+    font-size: 0.85rem;    /* Trochu zmenšíme písmo, ať to není tak obří */
+  }
+}

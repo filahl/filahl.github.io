@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <title>404 - Slepá ulice | Autoškola Chrudim Blažek</title>
+  
+  <meta name="robots" content="noindex, follow"> <link rel="icon" href="favicon.ico">
+
+  <link rel="stylesheet" href="css/modern.css">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+
+  <style>
+    /* Specifické styly jen pro 404ku */
+    .error-container {
+        text-align: center;
+        padding: 60px 20px;
+        min-height: 60vh; /* Aby to bylo na středu obrazovky */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .error-code {
+        font-size: 8rem;
+        font-weight: 800;
+        font-family: 'Poppins', sans-serif;
+        line-height: 1;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 20px;
+        position: relative;
+    }
+
+    /* Efekt stínu pod číslem */
+    .error-code::after {
+        content: '404';
+        position: absolute;
+        left: 0; top: 0;
+        width: 100%; height: 100%;
+        background: none;
+        -webkit-text-fill-color: rgba(0,0,0,0.05);
+        z-index: -1;
+        transform: translateY(10px);
+        filter: blur(4px);
+    }
+
+    .error-title {
+        font-size: 2rem;
+        color: #1f2937;
+        margin-bottom: 20px;
+        font-weight: 700;
+    }
+
+    .error-text {
+        font-size: 1.1rem;
+        color: #6b7280;
+        max-width: 500px;
+        margin-bottom: 40px;
+    }
+
+    .btn-home {
+        background: var(--primary);
+        color: white;
+        padding: 15px 30px;
+        border-radius: 99px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-home:hover {
+        background: var(--primary-dark);
+        transform: translateY(-3px);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Animace značky */
+    .traffic-sign {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="obal">
+
+  <header class="horni">
+    <img class="logo" src="obr/autoskola.svg" alt="Autoškola Blažek" onerror="this.style.display='none'">
+  </header>
+
+  <main class="error-container">
+      
+      <div class="traffic-sign"><i class="fa-solid fa-hand"></i></div>
+      
+      <div class="error-code">404</div>
+      
+      <h1 class="error-title">Jejda, slepá ulice!</h1>
+      
+      <p class="error-text">
+          Vypadá to, že jste sjeli z trasy. Stránka, kterou hledáte, zaparkovala jinde nebo vůbec neexistuje.
+      </p>
+
+      <a href="index.html" class="btn-home">
+         <span><i class="fa-solid fa-arrow-left"></i></span> Zpět na hlavní silnici
+      </a>
+
+  </main>
+
+  <footer class="dole">
+    <p>&copy; 2025 Autoškola Blažek</p>
+    <a href="https://filahl.github.io/portfolio/portfolio.html">Design by Filip Hloušek</a>
+  </footer>
+
+</div>
+
+</body>
+</html>

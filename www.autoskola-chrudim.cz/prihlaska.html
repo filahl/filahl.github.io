@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Přihláška ke stažení | Autoškola Chrudim Blažek</title>
+
+    <meta name="description" content="Stáhněte si přihlášku do autoškoly a posudek o zdravotní způsobilosti.">
+    <meta name="keywords"
+        content="prihlaska autoskola, zadost o ridicske opravneni, zdravotni posudek, autoskola formular">
+
+    <link rel="icon" href="favicon.ico">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/modern.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+
+    <style>
+        /* === 1. NOVÉ STYLY PRO ONLINE FORMULÁŘ === */
+        .form-wrapper {
+            background: white;
+            padding: 40px;
+            border-radius: 24px;
+            /* Stejné zaoblení jako vaše radius-lg */
+            box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            margin-bottom: 60px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .form-control,
+        select.form-control {
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            padding: 16px;
+            height: auto !important;
+            min-height: 56px;
+            background: #f9fafb;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            background: #ffffff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        select.form-control {
+            padding-top: 14px;
+            padding-bottom: 14px;
+            line-height: 1.5;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            padding-left: 0;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-check-input {
+            position: static !important;
+            margin-top: 0 !important;
+            margin-right: 12px !important;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .form-check-label {
+            cursor: pointer;
+            color: #6b7280;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .btn-odeslat {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 0 32px;
+            font-weight: 700;
+            border-radius: 99px;
+            width: 100%;
+            min-height: 56px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-soft);
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-odeslat:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* Oddělovací čára mezi sekcemi */
+        .divider-section {
+            border-top: 1px dashed #e5e7eb;
+            margin: 60px 0;
+            position: relative;
+            text-align: center;
+        }
+
+        .divider-label {
+            background: var(--bg-body);
+            padding: 0 20px;
+            color: #9ca3af;
+            position: relative;
+            top: -12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        /* === 2. VAŠE PŮVODNÍ STYLY (BEZE ZMĚNY) === */
+        .steps-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 50px;
+            flex-wrap: wrap;
+        }
+
+        .step-card {
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+            background: #fff;
+            padding: 30px 20px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            border: 1px solid #f3f4f6;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .step-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #111827;
+        }
+
+        .step-card p {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin: 0;
+        }
+
+        /* Karty ke stažení */
+        .download-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 30px;
+        }
+
+        .file-card {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid #e5e7eb;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .file-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--primary);
+        }
+
+        .file-icon {
+            width: 60px;
+            height: 60px;
+            background: #fee2e2;
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 1.8rem;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-info h4 {
+            margin: 0 0 5px 0;
+            font-size: 1.1rem;
+            color: #1f2937;
+        }
+
+        .file-info p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .btn-download {
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-download:hover {
+            background: var(--primary-dark);
+            color: white;
+            text-decoration: none;
+        }
+
+        .alert-box {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #92400e;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="obal">
+
+        <header class="horni">
+            <img class="logo" src="obr/autoskola.svg" alt="Autoškola Blažek" onerror="this.style.display='none'">
+        </header>
+
+        <nav class="menu">
+            <a href="index.html" class="odkaz">
+                <p>Úvod</p>
+            </a>
+            <a href="kurzy.html" class="odkaz">
+                <p>Kurzy a ceník</p>
+            </a>
+            <a href="prihlaska.html" class="odkaz active">
+                <p>Přihláška</p>
+            </a>
+            <a href="kontakty.html" class="odkaz">
+                <p>Kontakt</p>
+            </a>
+            <a href="fotogalerie.html" class="odkaz">
+                <p>Fotogalerie</p>
+            </a>
+        </nav>
+
+        <main class="vpravo">
+
+            <section class="hlavni" style="width: 100%;">
+
+                <div class="moto">
+                    <h2>Online registrace</h2>
+                </div>
+
+                <div class="form-wrapper">
+                    <p style="text-align: center; margin-bottom: 30px; color: #6b7280;">
+                        Máte zájem o kurz? Vyplňte formulář a my se vám ozveme.
+                    </p>
+                    <!-- tady zmenit email-->
+                    <form action="https://formsubmit.co/7filiphlousek@gmail.com" method="POST">
+
+                        <input type="hidden" name="_subject" value="Nová přihláška z webu!">
+                        <input type="hidden" name="_captcha" value="false">
+                        <input type="hidden" name="_next" value="http://127.0.0.1:5500/dekujeme.html"> <!-- Změnit URL po odeslání -->
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Jméno a příjmení *</label>
+                                <input type="text" name="jmeno" class="form-control" placeholder="Jan Novák" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Datum narození *</label>
+                                <input type="date" name="datum_narozeni_rrrr_mm_dd" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+    <label>Telefon *</label>
+    
+    <div class="input-group">
+        <span class="input-group-text" style="border-top-right-radius: 0; border-bottom-right-radius: 0;">+420</span>
+        <input type="tel" name="telefon" class="form-control" placeholder="777 777 777" required>
+    </div>
+    
+</div>
+                            <div class="col-md-6 mb-3">
+                                <label>E-mail *</label>
+                                <input type="email" name="email" class="form-control" placeholder="vas@email.cz"
+                                    required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>O jaký kurz máte zájem? *</label>
+                            <select name="kurz" class="form-control" required>
+                                <option value="" selected disabled>-- Vyberte kurz --</option>
+                                <option value="Skupina B (Auto)">Skupina B (Auto)</option>
+                                <option value="Skupina B Automat">Skupina B Automat</option>
+                                <option value="Motorka A1 (16 let)">Motorka A1</option>
+                                <option value="Motorka A2 (18 let)">Motorka A2</option>
+                                <option value="Motorka A (Neomezená)">Motorka A (Neomezená)</option>
+                                <option value="Traktor T">Traktor T</option>
+                                <option value="Kondiční jízdy">Kondiční jízdy</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Poznámka</label>
+                            <textarea name="zprava" class="form-control" rows="3"
+                                placeholder="Např. chci začít až v září..."></textarea>
+                        </div>
+
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="gdpr" required>
+                            <label class="form-check-label" for="gdpr">
+                                Souhlasím se zpracováním osobních údajů pro účely kontaktování autoškolou.
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn-odeslat">
+                            Odeslat přihlášku <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="divider-section">
+                    <span class="divider-label">Co bude následovat?</span>
+                </div>
+
+                <div class="steps-container">
+                    <div class="step-card">
+                        <span class="step-number">1</span>
+                        <h3>Online přihláška</h3>
+                        <p>Odešlete formulář výše, abychom o vás věděli a mohli vám držet místo.</p>
+                    </div>
+                    <div class="step-card">
+                        <span class="step-number">2</span>
+                        <h3>Lékař</h3>
+                        <p>Stáhněte si posudek níže a nechte si ho potvrdit od lékaře.</p>
+                    </div>
+                    <div class="step-card">
+                        <span class="step-number">3</span>
+                        <h3>Zahájení</h3>
+                        <p>S potvrzením od lékaře dorazte k nám a můžeme začít jezdit.</p>
+                    </div>
+                </div>
+
+                <article class="text">
+                    <h2 style="text-align: center; margin-bottom: 10px;">Dokumenty ke stažení</h2>
+                    <p style="text-align: center; color: #6b7280; margin-bottom: 30px;">
+                        Nemáte tiskárnu? <a href="kontakty.html">Zavolejte nám</a> a my vám dáme vytištěné formuláře.
+                    </p>
+
+                    <div class="download-section">
+
+                        <div class="file-card">
+                            <div class="file-icon"><i class="fa-solid fa-file"></i></div>
+                            <div class="file-info">
+                                <h4>Žádost o řidičské oprávnění</h4>
+                                <p>Formulář přihlášky do autoškoly.</p>
+                                <div class="alert-box">
+                                    <strong><i class="fa-solid fa-triangle-exclamation"></i> Důležité:</strong> Nutno
+                                    vytisknout <u>oboustranně</u> na jeden list papíru!
+                                </div>
+                            </div>
+                            <a href="pdf/prih.pdf" class="btn-download" download>Stáhnout PDF</a>
+                        </div>
+
+                        <div class="file-card">
+                            <div class="file-icon"><i class="fa-solid fa-user-doctor"></i></div>
+                            <div class="file-info">
+                                <h4>Zdravotní posudek</h4>
+                                <p>Posudek o zdravotní způsobilosti.</p>
+                                <p style="font-size: 0.8rem; margin-top: 5px; color: #9ca3af;">Potvrzuje praktický
+                                    lékař.</p>
+                            </div>
+                            <a href="pdf/posudek.pdf" class="btn-download" download>Stáhnout PDF</a>
+                        </div>
+
+                    </div>
+
+                </article>
+
+            </section>
+
+        </main>
+
+        <footer class="dole">
+            <p>© 2025 Autoškola Blažek</p>
+            <a href="https://filahl.github.io/portfolio/portfolio.html">Design by Filip Hloušek</a>
+        </footer>
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+</body>
+
+</html>

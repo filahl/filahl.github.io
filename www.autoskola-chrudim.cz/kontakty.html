@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Kontakty | Autoškola Chrudim Blažek</title>
+
+  <meta name="description" content="Kontakty na instruktory Autoškoly Blažek. Výuka Chrudim, Luže, Slatiňany.">
+  <meta name="keywords"
+    content="kontakt autoskola chrudim, vladimir blazek, lena musilova, ucebna chrudim, ucebna luze">
+
+  <link rel="icon" href="favicon.ico">
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+
+  <link rel="stylesheet" href="css/modern.css">
+
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+
+  <style>
+    /* Malé lokální úpravy specifické pro kontakty */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .contact-card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 24px;
+      transition: transform 0.2s;
+    }
+
+    .contact-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--primary);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .contact-card h3 {
+      margin-top: 0;
+      color: var(--primary);
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 10px;
+      margin-bottom: 15px;
+    }
+
+    .contact-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      color: #4b5563;
+    }
+
+    .map-container {
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-top: 10px;
+    }
+
+    .billing-info {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px dashed #d1d5db;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="obal">
+
+    <header class="horni">
+      <img class="logo" src="obr/autoskola.svg" alt="Autoškola Blažek" onerror="this.style.display='none'">
+    </header>
+
+    <nav class="menu">
+      <a href="index.html" class="odkaz">
+        <p>Úvod</p>
+      </a>
+      <a href="kurzy.html" class="odkaz">
+        <p>Kurzy a ceník</p>
+      </a>
+      <a href="prihlaska.html" class="odkaz">
+        <p>Přihláška</p>
+      </a>
+      <a href="kontakty.html" class="odkaz active">
+        <p>Kontakt</p>
+      </a>
+      <a href="fotogalerie.html" class="odkaz">
+        <p>Fotogalerie</p>
+      </a>
+    </nav>
+
+    <main class="vpravo">
+
+      <section class="hlavni" style="width: 100%;">
+
+        <div class="moto">
+          <h2>Jsme tu pro vás</h2>
+        </div>
+
+        <article class="text">
+
+          <h2 style="text-align: center; margin-bottom: 30px;">Náš tým</h2>
+
+          <div class="contact-grid">
+
+            <div class="contact-card">
+              <h3>Vladimír Blažek</h3>
+              <p><strong>Instruktor / Majitel</strong></p>
+
+              <div class="contact-row">
+                <span><i class="fa-solid fa-phone"></i></span>
+                <a href="tel:+420737184821" style="font-weight:bold; color:#1f2937; text-decoration:none;">+420 737 184
+                  821</a>
+              </div>
+              <div class="contact-row">
+                <span><i class="fa-solid fa-envelope"></i></span>
+                <a href="mailto:vladimir@autoskola-blazek.cz"
+                  style="color:#1f2937; text-decoration:none;">vladimir@autoskola-blazek.cz</a>
+              </div>
+
+              <div class="billing-info">
+                <strong>Fakturační údaje:</strong><br>
+                IČ: 73653829<br>
+                Rabštejnská Lhota 99, 537 01 Chrudim<br>
+                <em style="font-size: 0.8rem">Fyzická osoba zapsaná v Živnostenském rejstříku od 28.12.2004</em>
+              </div>
+            </div>
+
+            <div class="contact-card">
+              <h3>Lena Musilová</h3>
+              <p><strong>Instruktorka</strong></p>
+
+              <div class="contact-row">
+                <span><i class="fa-solid fa-phone"></i></span>
+                <a href="tel:+420603263497" style="font-weight:bold; color:#1f2937; text-decoration:none;">+420 603 263
+                  497</a>
+              </div>
+              <div class="contact-row">
+                <span><i class="fa-solid fa-envelope"></i></span>
+                <a href="mailto:lena.prudicova@seznam.cz"
+                  style="color:#1f2937; text-decoration:none;">lena.prudicova@seznam.cz</a>
+              </div>
+
+              <div class="contact-row" style="margin-top: 15px;">
+                <span><i class="fa-solid fa-id-card"></i></span> IČO: 44399049
+              </div>
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <h2 style="text-align: center; margin-bottom: 30px;">Kde nás najdete?</h2>
+
+          <div class="contact-grid">
+
+            <div class="contact-card">
+              <h3>Učebna Chrudim <i class="fa-solid fa-map-pin"></i></h3>
+              <p><strong>Hotel ALFA</strong><br>Čs. partyzánů 24, Chrudim</p>
+              <div class="map-container">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d5272.952458751004!2d15.793312573087498!3d49.95134529847002!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x470dca3d6fb44fc5%3A0x46ba3a1300163ede!2sHotel%20a%20Restaurace%20Alfa!5e0!3m2!1sen!2scz!4v1765639144110!5m2!1sen!2scz"
+                  width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+              </div>
+            </div>
+
+            <div class="contact-card">
+              <h3>Učebna Luže <i class="fa-solid fa-map-pin"></i></h3>
+              <p><strong>Budova České pošty</strong><br>Komenského 241, Luže</p>
+              <div class="map-container">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2571.2587654321!2d16.02654321!3d49.8954321!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x470dc5b123456789%3A0x123456789abcdef!2sKomensk%C3%A9ho%20241%2C%20538%2054%20Lu%C5%BEe!5e0!3m2!1scs!2scz!4v1620000000000!5m2!1scs!2scz"
+                  width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+              </div>
+            </div>
+
+          </div>
+
+        </article>
+      </section>
+
+    </main>
+
+    <footer class="dole">
+      <p>&copy; 2025 Autoškola Blažek</p>
+      <a href="https://filahl.github.io/portfolio/portfolio.html">Design by Filip Hloušek</a>
+    </footer>
+
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+</body>
+
+</html>
