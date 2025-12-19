@@ -24,7 +24,6 @@
             background: white;
             padding: 40px;
             border-radius: 24px;
-            /* Stejné zaoblení jako vaše radius-lg */
             box-shadow: var(--shadow-soft);
             border: 1px solid rgba(0, 0, 0, 0.05);
             margin-bottom: 60px;
@@ -49,6 +48,18 @@
             background: #ffffff;
             border-color: var(--primary);
             box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        /* Styl pro validaci - červený rámeček při chybě */
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            background-image: none; /* Odstranění defaultní ikony bootstrapu, pokud vadí */
+        }
+        
+        /* Styl pro validaci - zelený rámeček, když je to OK */
+        .form-control.is-valid {
+            border-color: #198754;
+            background-image: none;
         }
 
         select.form-control {
@@ -127,7 +138,7 @@
             letter-spacing: 1px;
         }
 
-        /* === 2. VAŠE PŮVODNÍ STYLY (BEZE ZMĚNY) === */
+        /* === 2. VAŠE PŮVODNÍ STYLY === */
         .steps-container {
             display: flex;
             justify-content: space-between;
@@ -295,38 +306,43 @@
                     <p style="text-align: center; margin-bottom: 30px; color: #6b7280;">
                         Máte zájem o kurz? Vyplňte formulář a my se vám ozveme.
                     </p>
-                    <!-- tady zmenit email-->
-                    <form action="https://formsubmit.co/7filiphlousek@gmail.com" method="POST">
+                    
+                    <form action="https://formsubmit.co/7filiphlousek@gmail.com" method="POST" id="contactForm" novalidate>
 
                         <input type="hidden" name="_subject" value="Nová přihláška z webu!">
                         <input type="hidden" name="_captcha" value="false">
-                        <input type="hidden" name="_next" value="https://filahl.github.io//www.autoskola-chrudim.cz/dekujeme.html"> <!-- Změnit URL po odeslání -->
+                        <input type="hidden" name="_next" value="https://filahl.github.io//www.autoskola-chrudim.cz/dekujeme.html">
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label>Jméno a příjmení *</label>
                                 <input type="text" name="jmeno" class="form-control" placeholder="Jan Novák" required>
+                                <div class="invalid-feedback">Vyplňte prosím jméno.</div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Rok narození *</label>
                                 <input type="number" max="2100" min="1900" name="rok_narozeni" class="form-control" placeholder="2001" required>
+                                <div class="invalid-feedback">Vyplňte platný rok narození.</div>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-    <label>Telefon *</label>
-    
-    <div class="input-group">
-        <span class="input-group-text" style="border-top-right-radius: 0; border-bottom-right-radius: 0;">+420</span>
-        <input type="tel" name="telefon" class="form-control" placeholder="777 777 777" pattern="([0-9]{3}\s?[0-9]{3}\s?[0-9]{3})" required>
-    </div>
-    
-</div>
+                                <label>Telefon *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="border-top-right-radius: 0; border-bottom-right-radius: 0;">+420</span>
+                                    <input type="tel" name="telefon" id="phoneInput" class="form-control" placeholder="777 777 777" required>
+                                    <div class="invalid-feedback">
+                                        Zadejte prosím platné číslo (9 číslic).
+                                    </div>
+                                </div>
+                            </div>
                             <div class="col-md-6 mb-3">
                                 <label>E-mail *</label>
-                                <input type="email" name="email" class="form-control" placeholder="vas@email.cz"
-                                    required>
+                                <input type="email" name="email" id="emailInput" class="form-control" placeholder="vas@email.cz" required>
+                                <div class="invalid-feedback">
+                                    Zadejte platný e-mail (např. jan@post.cz).
+                                </div>
                             </div>
                         </div>
 
@@ -342,6 +358,7 @@
                                 <option value="Traktor T">Traktor T</option>
                                 <option value="Kondiční jízdy">Kondiční jízdy</option>
                             </select>
+                            <div class="invalid-feedback">Vyberte prosím kurz.</div>
                         </div>
 
                         <div class="mb-3">
@@ -355,6 +372,9 @@
                             <label class="form-check-label" for="gdpr">
                                 Souhlasím se zpracováním osobních údajů pro účely kontaktování autoškolou.
                             </label>
+                            <div class="invalid-feedback" style="margin-left: 32px;">
+                                Musíte souhlasit se zpracováním údajů.
+                            </div>
                         </div>
 
                         <button type="submit" class="btn-odeslat">
@@ -436,7 +456,70 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('contactForm');
+            const phoneInput = document.getElementById('phoneInput');
+            const emailInput = document.getElementById('emailInput');
+
+            form.addEventListener('submit', function (event) {
+                let isValid = true;
+
+                // 1. Validace Telefonu (české číslo bez předvolby, 9 číslic)
+                // Odstraníme mezery pro kontrolu
+                const phoneValue = phoneInput.value.replace(/\s/g, '');
+                // Regex: přesně 9 číslic
+                const phoneRegex = /^\d{9}$/;
+
+                if (!phoneRegex.test(phoneValue)) {
+                    phoneInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    phoneInput.classList.remove('is-invalid');
+                    phoneInput.classList.add('is-valid');
+                }
+
+                // 2. Validace Emailu (jednoduchý regex)
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                
+                if (!emailRegex.test(emailInput.value)) {
+                    emailInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    emailInput.classList.remove('is-invalid');
+                    emailInput.classList.add('is-valid');
+                }
+
+                // 3. Validace ostatních polí (Bootstrap nativní validace)
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    form.classList.add('was-validated'); 
+                    isValid = false; 
+                }
+
+                // Pokud vlastní validace neprošla, zastavíme odeslání
+                if (!isValid) {
+                    event.preventDefault();
+                    // Rolování k první chybě (UX vylepšení)
+                    const firstError = document.querySelector('.is-invalid, :invalid');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            });
+
+            // Vymazání chybového stavu, když uživatel začne psát
+            [phoneInput, emailInput].forEach(input => {
+                input.addEventListener('input', function() {
+                    if (this.classList.contains('is-invalid')) {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            });
+        });
+    </script>
+
 </body>
 
 </html>
-
