@@ -1,52 +1,203 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="cs">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kampak dal?</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://use.typekit.net/giv2hdk.css">
+    <title>DISTORTION // INDEX</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
-        </style>
-</head>
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=JetBrains+Mono:wght@400&display=swap');
 
+        :root {
+            --bg: #080808;
+            --accent: #bc13fe; 
+            --font-main: 'Lexend', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: var(--font-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+
+        .distort-filter {
+            position: absolute;
+            width: 0; height: 0;
+        }
+
+        /* --- HLAVNÍ INDEX --- */
+        #buttony {
+            width: 100%;
+            max-width: 1200px;
+            padding: 40px;
+            z-index: 10;
+        }
+
+        .test {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .button {
+            position: relative;
+            text-decoration: none;
+            color: white;
+            font-size: clamp(2rem, 7vw, 5rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            filter: url('#liquid'); 
+        }
+
+        
+        .mod-info {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--accent);
+            letter-spacing: 2px;
+            margin-right: 30px;
+            opacity: 0.5;
+        }
+
+        /* Efekt při hoveru */
+        .button:hover {
+            color: var(--accent);
+            transform: translateX(40px) scale(1.05);
+            filter: none; 
+        }
+
+        .button .desc {
+            position: absolute;
+            right: 0;
+            font-size: 0.8rem;
+            letter-spacing: 10px;
+            color: rgba(255,255,255,0.1);
+            pointer-events: none;
+            transition: 0.5s;
+        }
+
+        .button:hover .desc {
+            right: 10%;
+            color: var(--accent);
+            opacity: 0.3;
+        }
+
+        /* --- CUSTOM CURSOR --- */
+        #cursor {
+            position: fixed;
+            width: 8px; height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        #ring {
+            position: fixed;
+            width: 40px; height: 40px;
+            border: 1px solid var(--accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 999;
+            transition: 0.1s ease-out;
+        }
+
+
+        .bg-text {
+            position: fixed;
+            font-family: var(--font-mono);
+            font-size: 15vh;
+            color: rgba(255,255,255,0.02);
+            font-weight: 900;
+            z-index: -1;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+    </style>
+</head>
 <body>
+
+    <svg class="distort-filter">
+        <filter id="liquid">
+            <feTurbulence type="fractalNoise" baseFrequency="0.01 0.02" numOctaves="3" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="15" />
+        </filter>
+    </svg>
+
+    <div id="cursor"></div>
+    <div id="ring"></div>
+
+   <!-- <div class="bg-text" style="top: 10%; left: -5%;">PROJECTS_2026</div> -->
+
     <div id="buttony">
-        <h1>Vyber si kam dal</h1>
         <div class="test">
-            
             <a class="button" href="/kara/kara.html">
-                Jiří Kára
+                <span class="mod-info">TX_01</span> Jiří Kára <span class="desc">ENTRY_FILE</span>
             </a>
             <a class="button" href="/slonik/Slonik.html">
-                Růžový slon
+                <span class="mod-info">TX_02</span> Růžový slon <span class="desc">VOID_ENTITY</span>
             </a>
             <a class="button" href="/bota/bota.html">
-                Bota
+                <span class="mod-info">TX_03</span> Bota <span class="desc">OBJECT_REF</span>
             </a>
             <a class="button" href="/portfolio/portfolio.html">
-                Portfolio
+                <span class="mod-info">USR_00</span> Portfolio <span class="desc">MAIN_ROOT</span>
             </a>
             <a class="button" href="/cukrarna/index.html">
-                Cukrárna
+                <span class="mod-info">TX_04</span> Cukrárna <span class="desc">DATA_STREAM</span>
             </a>
-            <a class="button" href="/gallery/gallery.html">
-                Galerie
+            <a class="button" href="/slide">
+                <span class="mod-info">TX_05</span> RWB <span class="desc">VISUAL_CORE</span>
             </a>
-           <a class="button" href="/soon/soon.html">
-                --SOON--
+            <a class="button" href="/soon/soon.html" style="opacity: 0.1">
+                <span class="mod-info">NULL</span> --SOON--
             </a>
-            <a class="button" href="/soon/soon.html">
-                --SOON--
-            </a>
-            <a class="button" href="/soon/soon.html">
-                --SOON--
-            </a>
-           
         </div>
     </div>
-</body>
 
+    <script>
+        const cursor = document.getElementById('cursor');
+        const ring = document.getElementById('ring');
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            
+            
+            ring.style.left = (e.clientX - 20) + 'px';
+            ring.style.top = (e.clientY - 20) + 'px';
+        });
+
+        
+        document.querySelectorAll('.button').forEach(b => {
+            b.addEventListener('mouseenter', () => {
+                ring.style.transform = 'scale(2.5)';
+                ring.style.backgroundColor = 'rgba(188, 19, 254, 0.1)';
+            });
+            b.addEventListener('mouseleave', () => {
+                ring.style.transform = 'scale(1)';
+                ring.style.backgroundColor = 'transparent';
+            });
+        });
+    </script>
+</body>
 </html>
