@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RWB Porsche | Final Edition</title>
+    <style>
+        :root {
+            --accent-color: #ffb400; 
+            --bg-color: #0a0a0a;
+            --slider-pos: 50%;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 20% 30%, #1a1a1a 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, #141414 0%, transparent 40%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-size: clamp(2rem, 10vw, 4rem);
+            letter-spacing: 15px;
+            text-transform: uppercase;
+            font-weight: 900;
+            background: linear-gradient(to bottom, #fff 40%, #666 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--accent-color);
+            letter-spacing: 5px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        
+        .container {
+            position: relative;
+            width: 90%;
+            max-width: 1100px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+        }
+
+        .comparison-slider {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            border-radius: 12px;
+            cursor: ew-resize;
+        }
+
+        .img-base, .img-overlay {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+            -webkit-user-drag: none;
+        }
+
+        .img-overlay-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: var(--slider-pos);
+            height: 100%;
+            overflow: hidden;
+            z-index: 2;
+            border-right: 3px solid var(--accent-color);
+            box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+        }
+
+        .img-overlay-container .img-overlay {
+            width: 1100px; 
+        }
+
+        
+        .label {
+            position: absolute;
+            bottom: 30px;
+            padding: 8px 20px;
+            background: rgba(0,0,0,0.75);
+            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            border-radius: 4px;
+            z-index: 5;
+            pointer-events: none;
+        }
+        .label-left { 
+            left: 30px; 
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        .label-right { 
+            right: 30px; 
+            color: white;
+        }
+
+        
+        .slider-handle {
+            position: absolute;
+            top: 0;
+            left: var(--slider-pos);
+            width: 2px;
+            height: 100%;
+            background: var(--accent-color);
+            z-index: 10;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .handle-circle {
+            width: 50px;
+            height: 50px;
+            border: 2px solid var(--accent-color);
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 20px var(--accent-color);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .slider-handle:active .handle-circle {
+            transform: scale(1.15);
+            background: var(--accent-color);
+        }
+
+        .handle-circle svg {
+            width: 22px;
+            fill: var(--accent-color);
+            transition: fill 0.2s;
+        }
+
+        .slider-handle:active .handle-circle svg {
+            fill: black;
+        }
+
+        
+        .corner-decor {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--accent-color);
+            z-index: -1;
+            opacity: 0.5;
+        }
+        .top-left { top: -10px; left: -10px; border-right: none; border-bottom: none; }
+        .bottom-right { bottom: -10px; right: -10px; border-left: none; border-top: none; }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>RWB</h1>
+        <p>Draft to Reality \/\/ Stella Artois 964</p>
+    </div>
+
+    <div class="container">
+        <div class="corner-decor top-left"></div>
+        <div class="corner-decor bottom-right"></div>
+
+        <div class="comparison-slider" id="slider">
+            <div class="label label-left">Blueprint</div>
+            <div class="label label-right">Final Build</div>
+
+            <img src="2.png" class="img-base">
+
+            <div class="img-overlay-container" id="overlay">
+                <img src="3.png" class="img-overlay" id="overlay-img">
+            </div>
+
+            <div class="slider-handle" id="handle">
+                <div class="handle-circle">
+                    <svg viewBox="0 0 24 24"><path d="M8.59,16.59L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.59Z" /><path d="M15.41,16.59L10.83,12L15.41,7.41L14,6L8,12L14,18L15.41,16.59Z" /></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const slider = document.getElementById('slider');
+        const overlayImg = document.getElementById('overlay-img');
+        const handle = document.getElementById('handle');
+
+        let isDragging = false;
+
+        function syncSize() {
+            overlayImg.style.width = slider.offsetWidth + 'px';
+        }
+
+        window.addEventListener('load', syncSize);
+        window.addEventListener('resize', syncSize);
+
+        function move(e) {
+            if (!isDragging) return;
+            if (e.cancelable) e.preventDefault();
+
+            let rect = slider.getBoundingClientRect();
+            let x = (e.pageX || (e.touches ? e.touches[0].pageX : 0)) - rect.left;
+            
+            let pos = (x / rect.width) * 100;
+            pos = Math.max(0, Math.min(pos, 100));
+
+            document.documentElement.style.setProperty('--slider-pos', pos + '%');
+        }
+
+        const start = (e) => {
+            isDragging = true;
+            move(e);
+        };
+        const end = () => isDragging = false;
+
+        handle.addEventListener('mousedown', start);
+        slider.addEventListener('mousedown', start);
+        window.addEventListener('mouseup', end);
+        window.addEventListener('mousemove', move);
+
+        handle.addEventListener('touchstart', start, {passive: false});
+        window.addEventListener('touchend', end);
+        window.addEventListener('touchmove', move, {passive: false});
+
+        syncSize();
+    </script>
+</body>
+</html>
