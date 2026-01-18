@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RWB Porsche | Hologram Edition</title>
+    <style>
+        :root {
+            --accent-color: #ffb400;
+            --bg-color: #0a0a0a;
+            --scan-y: 50%;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 20% 30%, #1a1a1a 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, #141414 0%, transparent 40%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-size: clamp(2rem, 10vw, 4rem);
+            letter-spacing: 15px;
+            text-transform: uppercase;
+            font-weight: 900;
+            background: linear-gradient(to bottom, #fff 40%, #666 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--accent-color);
+            letter-spacing: 5px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        .container {
+            position: relative;
+            width: 90%;
+            max-width: 1100px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+        }
+
+        .scanner-scene {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #000;
+        }
+
+        .img-base {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.8;
+        }
+
+        .hologram-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            mix-blend-mode: screen;
+            mask-image: linear-gradient(
+                to bottom,
+                transparent calc(var(--scan-y) - 15%),
+                black var(--scan-y),
+                transparent calc(var(--scan-y) + 15%)
+            );
+            -webkit-mask-image: linear-gradient(
+                to bottom,
+                transparent calc(var(--scan-y) - 15%),
+                black var(--scan-y),
+                transparent calc(var(--scan-y) + 15%)
+            );
+        }
+
+        .img-blueprint {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(1.2) contrast(1.2);
+        }
+
+        .scanner-line {
+            position: absolute;
+            top: var(--scan-y);
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent-color);
+            z-index: 3;
+            box-shadow: 0 0 15px var(--accent-color), 0 0 5px #fff;
+            pointer-events: none;
+        }
+
+        .scanner-line::before {
+            content: 'SYSTEM SCANNING...';
+            position: absolute;
+            right: 20px;
+            bottom: 5px;
+            font-size: 8px;
+            color: var(--accent-color);
+            letter-spacing: 2px;
+        }
+
+        .corner-decor {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--accent-color);
+            z-index: -1;
+            opacity: 0.5;
+        }
+        .top-left { top: -10px; left: -10px; border-right: none; border-bottom: none; }
+        .bottom-right { bottom: -10px; right: -10px; border-left: none; border-top: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>RWB</h1>
+        <p>Holographic Scan // Stella Artois 964</p>
+    </div>
+
+    <div class="container">
+        <div class="corner-decor top-left"></div>
+        <div class="corner-decor bottom-right"></div>
+
+        <div class="scanner-scene" id="scene">
+            <img src="2.png" class="img-base">
+            
+            <div class="hologram-layer">
+                <img src="3.png" class="img-blueprint">
+            </div>
+
+            <div class="scanner-line"></div>
+        </div>
+    </div>
+
+    <script>
+        const scene = document.getElementById('scene');
+
+        function moveScanner(e) {
+            const rect = scene.getBoundingClientRect();
+            const y = (e.clientY || (e.touches ? e.touches[0].clientY : 0)) - rect.top;
+            let yPercent = (y / rect.height) * 100;
+            
+            yPercent = Math.max(0, Math.min(yPercent, 100));
+
+            document.documentElement.style.setProperty('--scan-y', yPercent + '%');
+        }
+
+        scene.addEventListener('mousemove', moveScanner);
+        scene.addEventListener('touchmove', (e) => {
+            if (e.cancelable) e.preventDefault();
+            moveScanner(e);
+        }, { passive: false });
+    </script>
+</body>
+</html>

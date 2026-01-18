@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RWB | System Terminal</title>
+    <style>
+        :root {
+            --accent: #ffb400;
+            --bg: #0a0a0a;
+            --card-bg: rgba(255, 180, 0, 0.03);
+            --card-border: rgba(255, 180, 0, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at 50% 50%, #1a1a1a 0%, #000 100%),
+                linear-gradient(rgba(255, 180, 0, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 180, 0, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
+            color: white;
+            font-family: 'Segoe UI', Roboto, 'Courier New', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        /* --- HLAVIČKA --- */
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            z-index: 10;
+        }
+
+        .header h1 {
+            font-size: clamp(2rem, 8vw, 3.5rem);
+            letter-spacing: 15px;
+            text-transform: uppercase;
+            font-weight: 900;
+            background: linear-gradient(to bottom, #fff 40%, #666 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header .status {
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            font-size: 0.8rem;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .blink { animation: blink 1s steps(2, start) infinite; }
+        @keyframes blink { to { visibility: hidden; } }
+
+        /* --- GRID MODULŮ --- */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            width: 90%;
+            max-width: 1000px;
+            z-index: 5;
+        }
+
+        .module-card {
+            position: relative;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 30px 20px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+
+        .module-card:hover {
+            border-color: var(--accent);
+            background: rgba(255, 180, 0, 0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(255, 180, 0, 0.2);
+        }
+
+        .module-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 2px;
+            background: var(--accent);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .module-card:hover::before { transform: scaleX(1); }
+
+        .module-id {
+            font-size: 0.7rem;
+            color: var(--accent);
+            margin-bottom: 10px;
+            font-family: monospace;
+        }
+
+        .module-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        /* --- DEKORACE --- */
+        .corner {
+            position: absolute;
+            width: 10px; height: 10px;
+            border: 1px solid var(--accent);
+        }
+        .tl { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+        .br { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+        /* --- STATUS BAR --- */
+        .footer {
+            margin-top: 50px;
+            font-size: 0.7rem;
+            color: #444;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>RAUH-WELT systems</h1>
+        <div class="status">
+            <span class="blink">●</span> SYSTEM READY // ACCESS GRANTED!
+        </div>
+    </div>
+
+    <div class="menu-grid">
+        <a href="radar.html" class="module-card">
+            <div class="corner tl"></div>
+            <div class="corner br"></div>
+            <div class="module-id">MOD_01</div>
+            <div class="module-title">Radar Scanner</div>
+        </a>
+
+        <a href="tech.html" class="module-card">
+            <div class="corner tl"></div>
+            <div class="corner br"></div>
+            <div class="module-id">MOD_02</div>
+            <div class="module-title">Tech Specs</div>
+        </a>
+
+        <a href="xray2.html" class="module-card">
+            <div class="corner tl"></div>
+            <div class="corner br"></div>
+            <div class="module-id">MOD_03</div>
+            <div class="module-title">X-RAY VISION_1</div>
+        </a>
+
+        <a href="flashlight.html" class="module-card">
+            <div class="corner tl"></div>
+            <div class="corner br"></div>
+            <div class="module-id">MOD_04</div>
+            <div class="module-title">Illuminator</div>
+        </a>
+
+        <a href="xray.html" class="module-card">
+            <div class="corner tl"></div>
+            <div class="corner br"></div>
+            <div class="module-id">MOD_05</div>
+            <div class="module-title">X-Ray Vision_2_alpha</div>
+        </a>
+<a href="xray.html" class="module-card">
+            <div class="corner tl"></div>
+            <div class="corner br"></div>
+            <div class="module-id">MOD_06</div>
+            <div class="module-title">X-Ray Vision</div>
+        </a>
+    </div>
+
+    <div class="footer">
+        © 2026 RWB TACTICAL SYSTEMS // TERMINAL 0.94-B
+    </div>
+
+</body>
+</html>
