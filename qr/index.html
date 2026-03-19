@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  background:#0a0a0a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100dvh;
+  font-family:'DM Sans',-apple-system,sans-serif;
+  overflow-x:hidden;
+}
+
+.phone {
+  width:100%;
+  max-width:390px;
+  min-height:100dvh;
+  background:#0a0a0a;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  position:relative;
+}
+
+/* gradient bg orb */
+.phone::before {
+  content:'';
+  position:fixed;
+  top:-120px; left:50%;
+  transform:translateX(-50%);
+  width:500px; height:400px;
+  background:radial-gradient(ellipse,rgba(99,102,241,0.18) 0%,transparent 70%);
+  pointer-events:none;
+  z-index:0;
+}
+
+.status-bar {
+  flex-shrink:0;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 28px 6px;
+  position:relative;
+  z-index:1;
+}
+.status-time { font-size:15px; font-weight:600; color:#fff; letter-spacing:-0.3px; }
+
+/* ── HEADER ── */
+.header {
+  position:relative; z-index:1;
+  padding:24px 24px 0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.header-left h1 {
+  font-size:28px; font-weight:700;
+  color:#fff; letter-spacing:-0.8px;
+  line-height:1;
+}
+.header-left p {
+  font-size:13px; color:rgba(255,255,255,0.35);
+  margin-top:4px; font-weight:400;
+}
+.header-icon {
+  width:44px; height:44px;
+  background:rgba(99,102,241,0.15);
+  border:1px solid rgba(99,102,241,0.25);
+  border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px;
+}
+
+/* ── TABS ── */
+.tabs {
+  position:relative; z-index:1;
+  display:flex;
+  gap:8px;
+  padding:20px 24px 0;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar { display:none; }
+.tab-btn {
+  flex-shrink:0;
+  padding:8px 16px;
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,0.08);
+  background:transparent;
+  color:rgba(255,255,255,0.35);
+  font-family:'DM Sans',sans-serif;
+  font-size:13px; font-weight:500;
+  cursor:pointer;
+  transition:all 0.18s;
+}
+.tab-btn.active {
+  background:rgba(99,102,241,0.18);
+  border-color:rgba(99,102,241,0.4);
+  color:#818cf8;
+}
+
+/* ── INPUT AREA ── */
+.input-area {
+  position:relative; z-index:1;
+  padding:16px 24px 0;
+}
+
+.input-card {
+  background:#161618;
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:18px;
+  padding:16px;
+  transition:border-color 0.2s;
+}
+.input-card:focus-within {
+  border-color:rgba(99,102,241,0.4);
+}
+
+.input-label {
+  font-size:11px; font-weight:600;
+  color:rgba(255,255,255,0.3);
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  margin-bottom:8px;
+}
+
+.main-input {
+  width:100%;
+  background:transparent;
+  border:none; outline:none;
+  color:#fff;
+  font-family:'DM Sans',sans-serif;
+  font-size:15px; font-weight:400;
+  line-height:1.5;
+  resize:none;
+  min-height:52px;
+  max-height:100px;
+}
+.main-input::placeholder { color:rgba(255,255,255,0.2); }
+
+.input-actions {
+  display:flex; align-items:center;
+  justify-content:space-between;
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,0.05);
+}
+.char-count { font-size:11px; color:rgba(255,255,255,0.2); }
+
+.gen-btn {
+  padding:9px 20px;
+  background:#6366f1;
+  border:none; border-radius:12px;
+  color:#fff;
+  font-family:'DM Sans',sans-serif;
+  font-size:13px; font-weight:600;
+  cursor:pointer;
+  transition:all 0.15s;
+  display:flex; align-items:center; gap:6px;
+}
+.gen-btn:active { transform:scale(0.96); filter:brightness(0.9); }
+.gen-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+/* ── OPTIONS ── */
+.options-row {
+  position:relative; z-index:1;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  padding:12px 24px 0;
+}
+
+.opt-card {
+  background:#161618;
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:14px;
+  padding:12px 14px;
+}
+.opt-card-label {
+  font-size:10px; font-weight:600;
+  color:rgba(255,255,255,0.3);
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  margin-bottom:8px;
+}
+
+.color-row {
+  display:flex; gap:6px;
+}
+.color-dot {
+  width:24px; height:24px;
+  border-radius:50%;
+  cursor:pointer;
+  border:2px solid transparent;
+  transition:all 0.15s;
+  flex-shrink:0;
+}
+.color-dot.active { border-color:#fff; transform:scale(1.15); }
+
+.size-btns {
+  display:flex; gap:4px;
+}
+.size-btn {
+  flex:1; padding:5px 0;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:8px;
+  color:rgba(255,255,255,0.4);
+  font-family:'DM Sans',sans-serif;
+  font-size:11px; font-weight:500;
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.size-btn.active {
+  background:rgba(99,102,241,0.18);
+  border-color:rgba(99,102,241,0.35);
+  color:#818cf8;
+}
+
+/* ── QR PREVIEW ── */
+.qr-section {
+  position:relative; z-index:1;
+  padding:16px 24px 24px;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:0;
+}
+
+.qr-preview-wrap {
+  background:#161618;
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:20px;
+  padding:28px 24px 20px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  position:relative;
+  overflow:hidden;
+  min-height:280px;
+  justify-content:center;
+}
+
+/* empty state */
+.empty-state {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+  opacity:0.35;
+}
+.empty-icon {
+  width:60px; height:60px;
+  border:2px dashed rgba(255,255,255,0.25);
+  border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:26px;
+}
+.empty-state p {
+  font-size:13px; color:rgba(255,255,255,0.5);
+}
+
+/* QR container */
+#qr-container {
+  display:none;
+  position:relative;
+}
+#qr-canvas-wrap {
+  position:relative;
+  border-radius:12px;
+  overflow:hidden;
+}
+#qr-canvas-wrap canvas,
+#qr-canvas-wrap img {
+  display:block;
+  border-radius:8px;
+}
+
+.qr-blur-overlay {
+  position:absolute; inset:0;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  background:rgba(10,10,10,0.3);
+  border-radius:8px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  cursor:pointer;
+  transition:opacity 0.3s;
+}
+.qr-blur-overlay.hidden { display:none; }
+
+.lock-badge {
+  background:rgba(99,102,241,0.2);
+  border:1px solid rgba(99,102,241,0.4);
+  border-radius:20px;
+  padding:7px 16px;
+  display:flex; align-items:center; gap:7px;
+  font-size:13px; font-weight:600;
+  color:#818cf8;
+}
+.blur-hint {
+  font-size:11px; color:rgba(255,255,255,0.35); font-weight:400;
+}
+
+/* corner marks for QR reveal */
+.qr-corner {
+  position:absolute;
+  width:16px; height:16px;
+  border-color:#6366f1;
+  border-style:solid;
+  opacity:0;
+  transition:opacity 0.5s 0.3s;
+}
+.qr-corner.tl { top:0; left:0;  border-width:2px 0 0 2px; }
+.qr-corner.tr { top:0; right:0; border-width:2px 2px 0 0; }
+.qr-corner.bl { bottom:0; left:0;  border-width:0 0 2px 2px; }
+.qr-corner.br { bottom:0; right:0; border-width:0 2px 2px 0; }
+#qr-container.revealed .qr-corner { opacity:1; }
+
+.qr-label {
+  margin-top:14px;
+  font-size:11px; font-weight:600;
+  color:rgba(255,255,255,0.2);
+  text-transform:uppercase;
+  letter-spacing:0.1em;
+  text-align:center;
+}
+.qr-label-val {
+  font-size:13px; font-weight:500;
+  color:rgba(255,255,255,0.45);
+  text-align:center;
+  max-width:220px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  margin-top:3px;
+}
+
+/* download btn (shown after unlock) */
+.dl-btn {
+  margin-top:14px;
+  display:none;
+  align-items:center; justify-content:center; gap:8px;
+  width:100%;
+  padding:13px;
+  background:rgba(99,102,241,0.12);
+  border:1px solid rgba(99,102,241,0.25);
+  border-radius:12px;
+  color:#818cf8;
+  font-family:'DM Sans',sans-serif;
+  font-size:14px; font-weight:600;
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.dl-btn:active { filter:brightness(1.2); }
+.dl-btn.show { display:flex; }
+
+/* ════════════════════════════════
+   PAYMENT OVERLAY  (same as calc)
+════════════════════════════════ */
+.overlay {
+  position:fixed; inset:0; z-index:100;
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.25s;
+}
+.overlay-bg { position:absolute; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(8px); }
+.overlay.show { opacity:1; pointer-events:all; }
+
+.sheet {
+  position:relative; z-index:1;
+  background:#1c1c1e;
+  border-radius:20px 20px 0 0;
+  width:100%; max-width:390px;
+  padding-bottom:34px;
+  transform:translateY(100%);
+  transition:transform 0.42s cubic-bezier(0.32,0.72,0,1);
+  max-height:94vh;
+  overflow-y:auto;
+}
+.sheet::-webkit-scrollbar { display:none; }
+.overlay.show .sheet { transform:translateY(0); }
+
+.sheet-handle { width:36px; height:5px; background:#3a3a3c; border-radius:3px; margin:10px auto 0; }
+.sheet-header { padding:20px 20px 0; display:flex; align-items:center; justify-content:space-between; }
+.sheet-title  { font-size:17px; font-weight:600; color:#fff; }
+.x-btn { width:30px; height:30px; background:#3a3a3c; border-radius:50%; border:none; color:#fff; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:600; }
+.sheet-body { padding:0 20px; }
+
+.section-label { font-size:13px; font-weight:600; color:#8e8e93; text-transform:uppercase; letter-spacing:0.05em; margin:20px 0 8px; }
+
+/* QR preview mini */
+.qr-mini-box {
+  background:#2c2c2e;
+  border-radius:12px;
+  padding:14px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-top:16px;
+}
+.qr-mini-thumb {
+  width:56px; height:56px;
+  border-radius:8px;
+  background:#1c1c1e;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+  flex-shrink:0;
+  filter:blur(4px);
+  transition:filter 0.4s;
+}
+.qr-mini-thumb.clear { filter:none; }
+.qr-mini-thumb canvas,
+.qr-mini-thumb img { width:100%; height:100%; object-fit:cover; }
+.qr-mini-info { flex:1; }
+.qr-mini-title { font-size:14px; font-weight:600; color:#fff; }
+.qr-mini-sub   { font-size:12px; color:#636366; margin-top:2px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+.price-row {
+  background:#2c2c2e;
+  border-radius:12px;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:10px;
+}
+.price-row-label { font-size:14px; color:#aeaeb2; }
+.price-row-val   { font-size:20px; font-weight:700; color:#818cf8; letter-spacing:-0.5px; }
+
+/* payment methods */
+.method-list { display:flex; flex-direction:column; gap:8px; }
+.method-item { background:#2c2c2e; border:1.5px solid #3a3a3c; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:14px; cursor:pointer; transition:all 0.15s; }
+.method-item.sel { border-color:#6366f1; background:rgba(99,102,241,0.07); }
+.method-icon-wrap { width:44px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; }
+.method-icon-wrap.gpay-wrap { background:#fff; padding:4px 6px; }
+.method-icon-wrap.apay-wrap { background:#000; border:1px solid #3a3a3c; }
+.method-icon-wrap.card-wrap { background:linear-gradient(135deg,#1a3a6b,#2355a0); }
+.method-text { flex:1; }
+.method-name { font-size:15px; font-weight:500; color:#fff; }
+.method-sub  { font-size:12px; color:#636366; margin-top:1px; }
+.method-radio { width:22px; height:22px; border-radius:50%; border:2px solid #3a3a3c; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.15s; }
+.method-item.sel .method-radio { border-color:#6366f1; background:#6366f1; }
+.method-item.sel .method-radio::after { content:''; width:7px; height:7px; background:#fff; border-radius:50%; }
+
+/* card section */
+.card-section { overflow:hidden; max-height:0; transition:max-height 0.35s cubic-bezier(0.4,0,0.2,1); }
+.card-section.open { max-height:500px; }
+
+.mini-card { background:linear-gradient(135deg,#1a2f5a,#1e3d7a 40%,#1a2f5a); border-radius:16px; padding:18px 20px; margin-top:14px; position:relative; overflow:hidden; }
+.mini-card::after { content:''; position:absolute; top:-30%; right:-15%; width:50%; height:170%; background:radial-gradient(ellipse,rgba(255,255,255,0.07) 0%,transparent 70%); }
+.mc-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+.mc-chip { width:32px; height:24px; background:linear-gradient(135deg,#d4a017,#f0c040); border-radius:5px; }
+.mc-brand { display:flex; }
+.mc-circle { width:22px; height:22px; border-radius:50%; }
+.mc-circle:first-child { background:#eb001b; }
+.mc-circle:last-child  { background:#f79e1b; margin-left:-9px; opacity:0.9; }
+.mc-number { font-size:15px; color:rgba(255,255,255,0.9); letter-spacing:0.18em; margin-bottom:16px; }
+.mc-footer { display:flex; justify-content:space-between; }
+.mc-field-lbl { font-size:8px; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.12em; }
+.mc-field-val { font-size:13px; color:rgba(255,255,255,0.85); margin-top:3px; }
+.mc-demo-badge { position:absolute; top:0; right:0; background:rgba(255,255,255,0.1); border-radius:0 16px 0 10px; padding:4px 10px; font-size:9px; color:rgba(255,255,255,0.35); }
+
+.input-group { margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+.input-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.inp-wrap { display:flex; flex-direction:column; gap:4px; }
+.inp-lbl { font-size:11px; font-weight:500; color:#8e8e93; }
+.inp-wrap input { width:100%; background:#2c2c2e; border:1px solid #3a3a3c; border-radius:10px; padding:11px 14px; color:#fff; font-family:'DM Sans',sans-serif; font-size:15px; outline:none; transition:border-color 0.15s; }
+.inp-wrap input:focus { border-color:#6366f1; }
+
+.pay-btn-wrap { margin-top:20px; }
+.pay-main-btn { width:100%; padding:17px; background:#6366f1; border:none; border-radius:14px; color:#fff; font-family:'DM Sans',sans-serif; font-size:17px; font-weight:600; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; gap:8px; letter-spacing:-0.2px; position:relative; }
+.pay-main-btn:active { transform:scale(0.98); filter:brightness(0.9); }
+.pay-main-btn .spin { width:18px; height:18px; border:2px solid rgba(255,255,255,0.35); border-top-color:#fff; border-radius:50%; animation:spin 0.7s linear infinite; display:none; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.pay-main-btn.loading .lbl { opacity:0; }
+.pay-main-btn.loading .spin { display:block; position:absolute; }
+.fine-print { text-align:center; font-size:11px; color:#636366; margin-top:10px; line-height:1.5; }
+
+/* ── PROCESSING ── */
+.proc-screen { position:fixed; inset:0; background:#000; z-index:300; display:none; flex-direction:column; align-items:center; justify-content:center; }
+.proc-screen.show { display:flex; }
+.proc-card { background:#1c1c1e; border-radius:24px; padding:36px 32px; width:300px; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,0.5); }
+.proc-icon-ring { width:64px; height:64px; border-radius:50%; border:2px solid #2c2c2e; border-top-color:#6366f1; border-right-color:#6366f1; animation:spin 1s linear infinite; margin:0 auto 20px; transition:border-color 0.3s; }
+.proc-title { font-size:17px; font-weight:600; color:#fff; margin-bottom:8px; }
+.proc-sub   { font-size:13px; color:#8e8e93; line-height:1.5; }
+.proc-steps { margin-top:24px; display:flex; flex-direction:column; gap:10px; }
+.proc-step  { display:flex; align-items:center; gap:10px; opacity:0.3; transition:opacity 0.3s; }
+.proc-step.done,.proc-step.active { opacity:1; }
+.step-dot { width:20px; height:20px; border-radius:50%; border:1.5px solid #3a3a3c; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:10px; color:transparent; transition:all 0.3s; }
+.proc-step.done   .step-dot { background:#30d158; border-color:#30d158; color:#fff; }
+.proc-step.active .step-dot { border-color:#6366f1; animation:pulse-dot 1s ease-in-out infinite; }
+@keyframes pulse-dot { 0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,0.4)} 50%{box-shadow:0 0 0 6px rgba(99,102,241,0)} }
+.step-text { font-size:13px; color:#fff; text-align:left; }
+.proc-step:not(.done):not(.active) .step-text { color:#636366; }
+
+/* ── SUCCESS ── */
+#succ-view { padding-bottom:8px; }
+.succ-icon-wrap { width:68px; height:68px; background:#30d158; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:20px auto 16px; animation:pop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes pop { from{transform:scale(0.2);opacity:0} to{transform:scale(1);opacity:1} }
+.succ-icon-wrap svg { width:34px; height:34px; fill:#fff; }
+#succ-view h3 { text-align:center; font-size:20px; font-weight:700; color:#fff; margin-bottom:4px; }
+.succ-meta { text-align:center; font-size:13px; color:#8e8e93; margin-bottom:20px; }
+
+.succ-qr-box {
+  background:#2c2c2e; border-radius:16px; padding:24px;
+  display:flex; flex-direction:column; align-items:center;
+  margin-bottom:20px; gap:12px;
+}
+.succ-qr-box canvas, .succ-qr-box img { border-radius:8px; }
+
+.share-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:16px; }
+.sh-btn { aspect-ratio:1; border-radius:14px; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; transition:all 0.14s; }
+.sh-btn:active { transform:scale(0.94); }
+.sh-btn .sh-icon { font-size:22px; line-height:1; }
+.sh-btn span:last-child { font-size:9px; font-weight:600; }
+.sh-btn.ig { background:linear-gradient(135deg,#f09433,#dc2743,#bc1888); color:#fff; }
+.sh-btn.fb { background:#1877f2; color:#fff; }
+.sh-btn.tw { background:#000; color:#fff; border:1px solid #2c2c2e; }
+.sh-btn.wa { background:#25d366; color:#fff; }
+.sh-btn.cp { background:#2c2c2e; color:#fff; }
+
+.new-qr-btn { width:100%; padding:16px; background:#2c2c2e; border:none; border-radius:14px; color:#fff; font-family:'DM Sans',sans-serif; font-size:16px; font-weight:500; cursor:pointer; transition:all 0.15s; }
+.new-qr-btn:active { filter:brightness(1.2); }
+
+.toast { position:fixed; top:60px; left:50%; transform:translateX(-50%) translateY(-20px); background:#fff; color:#000; padding:10px 20px; border-radius:50px; font-size:13px; font-weight:500; z-index:999; opacity:0; pointer-events:none; transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); white-space:nowrap; box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+@media (max-height:720px) {
+  .header { padding:16px 24px 0; }
+  .header-left h1 { font-size:24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="status-bar">
+    <div class="status-time" id="clock">9:41</div>
+  </div>
+
+  <div class="header">
+    <div class="header-left">
+      <h1>QR Generator</h1>
+      <p>Generate and unlock your QR code</p>
+    </div>
+    <div class="header-icon">⬛</div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="setTab('url',this)">🔗 URL</button>
+    <button class="tab-btn" onclick="setTab('text',this)">📝 Text</button>
+    <button class="tab-btn" onclick="setTab('wifi',this)">📶 Wi-Fi</button>
+    <button class="tab-btn" onclick="setTab('email',this)">✉️ Email</button>
+    <button class="tab-btn" onclick="setTab('phone',this)">📞 Phone</button>
+  </div>
+
+  <!-- INPUT -->
+  <div class="input-area">
+    <div class="input-card">
+      <div class="input-label" id="input-label">Website URL</div>
+      <textarea class="main-input" id="main-input" placeholder="https://example.com" rows="2"
+        oninput="onInputChange()"></textarea>
+      <div class="input-actions">
+        <span class="char-count" id="char-count">0 characters</span>
+        <button class="gen-btn" id="gen-btn" onclick="generateQR()" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>
+          Generate
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTIONS -->
+  <div class="options-row">
+    <div class="opt-card">
+      <div class="opt-card-label">Color</div>
+      <div class="color-row" id="color-row">
+        <div class="color-dot active" style="background:#000" data-color="#000000" onclick="setColor(this)"></div>
+        <div class="color-dot" style="background:#6366f1" data-color="#6366f1" onclick="setColor(this)"></div>
+        <div class="color-dot" style="background:#ef4444" data-color="#ef4444" onclick="setColor(this)"></div>
+        <div class="color-dot" style="background:#10b981" data-color="#10b981" onclick="setColor(this)"></div>
+        <div class="color-dot" style="background:#f59e0b" data-color="#f59e0b" onclick="setColor(this)"></div>
+      </div>
+    </div>
+    <div class="opt-card">
+      <div class="opt-card-label">Size</div>
+      <div class="size-btns">
+        <button class="size-btn" data-size="128" onclick="setSize(this)">S</button>
+        <button class="size-btn active" data-size="200" onclick="setSize(this)">M</button>
+        <button class="size-btn" data-size="256" onclick="setSize(this)">L</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR PREVIEW -->
+  <div class="qr-section">
+    <div class="qr-preview-wrap">
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">⬛</div>
+        <p>Enter content and click Generate</p>
+      </div>
+
+      <div id="qr-container">
+        <div id="qr-canvas-wrap">
+          <div id="qr-render"></div>
+          <!-- QR corners -->
+          <div class="qr-corner tl"></div>
+          <div class="qr-corner tr"></div>
+          <div class="qr-corner bl"></div>
+          <div class="qr-corner br"></div>
+          <!-- blur overlay -->
+          <div class="qr-blur-overlay" id="blur-overlay" onclick="openPayment()">
+            <div class="lock-badge">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 0a4 4 0 0 1 4 4v2.05a2.5 2.5 0 0 1 2 2.45v5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 2 13.5v-5a2.5 2.5 0 0 1 2-2.45V4a4 4 0 0 1 4-4m0 1a3 3 0 0 0-3 3v2h6V4a3 3 0 0 0-3-3"/>
+              </svg>
+              Pay to unlock
+            </div>
+            <div class="blur-hint">One-time fee $0.50</div>
+          </div>
+        </div>
+
+        <div class="qr-label">QR CODE CONTENT</div>
+        <div class="qr-label-val" id="qr-label-val">—</div>
+
+        <button class="dl-btn" id="dl-btn" onclick="downloadQR()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PNG
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAYMENT OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="overlay-bg" onclick="handleBgClick()"></div>
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+
+    <div id="pay-view">
+      <div class="sheet-header">
+        <div class="sheet-title">Unlock QR Code</div>
+        <button class="x-btn" onclick="closeSheet()">✕</button>
+      </div>
+      <div class="sheet-body">
+
+        <!-- mini QR preview -->
+        <div class="qr-mini-box">
+          <div class="qr-mini-thumb" id="mini-thumb">
+            <div id="qr-mini-render"></div>
+          </div>
+          <div class="qr-mini-info">
+            <div class="qr-mini-title">Your QR Code</div>
+            <div class="qr-mini-sub" id="mini-sub-text">—</div>
+          </div>
+        </div>
+
+        <div class="price-row">
+          <span class="price-row-label">One-time fee</span>
+          <span class="price-row-val">$0.50</span>
+        </div>
+
+        <div class="section-label">Payment Method</div>
+        <div class="method-list">
+          <div class="method-item" id="mi-gpay" onclick="selMethod('gpay')">
+            <div class="method-icon-wrap gpay-wrap">
+              <svg height="18" viewBox="0 0 2387.3 948" xmlns="http://www.w3.org/2000/svg">
+                <style>.s0{fill:#5F6368}.s1{fill:#4285F4}.s2{fill:#34A853}.s3{fill:#FBBC04}.s4{fill:#EA4335}</style>
+                <g><path class="s0" d="M1129.1,463.2V741h-88.2V54.8h233.8c56.4-1.2,110.9,20.2,151.4,59.4c41,36.9,64.1,89.7,63.2,144.8c1.2,55.5-21.9,108.7-63.2,145.7c-40.9,39-91.4,58.5-151.4,58.4L1129.1,463.2L1129.1,463.2z M1129.1,139.3v239.6h147.8c32.8,1,64.4-11.9,87.2-35.5c46.3-45,47.4-119.1,2.3-165.4c-0.8-0.8-1.5-1.6-2.3-2.3c-22.5-24.1-54.3-37.3-87.2-36.4L1129.1,139.3L1129.1,139.3z M1692.5,256.2c65.2,0,116.6,17.4,154.3,52.2c37.7,34.8,56.5,82.6,56.5,143.2V741H1819v-65.2h-3.8c-36.5,53.7-85.1,80.5-145.7,80.5c-51.7,0-95-15.3-129.8-46c-33.8-28.5-53-70.7-52.2-115c0-48.6,18.4-87.2,55.1-115.9c36.7-28.7,85.7-43.1,147.1-43.1c52.3,0,95.5,9.6,129.3,28.7v-20.2c0.2-30.2-13.2-58.8-36.4-78c-23.3-21-53.7-32.5-85.1-32.1c-49.2,0-88.2,20.8-116.9,62.3l-77.6-48.9C1545.6,286.8,1608.8,256.2,1692.5,256.2L1692.5,256.2z M1578.4,597.3c-0.1,22.8,10.8,44.2,29.2,57.5c19.5,15.3,43.7,23.5,68.5,23c37.2-0.1,72.9-14.9,99.2-41.2c29.2-27.5,43.8-59.7,43.8-96.8c-27.5-21.9-65.8-32.9-115-32.9c-35.8,0-65.7,8.6-89.6,25.9C1590.4,550.4,1578.4,571.7,1578.4,597.3L1578.4,597.3z M2387.3,271.5L2093,948h-91l109.2-236.7l-193.6-439.8h95.8l139.9,337.3h1.9l136.1-337.3L2387.3,271.5z"/></g>
+                <path class="s1" d="M772.8,403.2c0-26.9-2.2-53.7-6.8-80.2H394.2v151.8h212.9c-8.8,49-37.2,92.3-78.7,119.8v98.6h127.1C729.9,624.7,772.8,523.2,772.8,403.2L772.8,403.2z"/>
+                <path class="s2" d="M394.2,788.5c106.4,0,196-34.9,261.3-95.2l-127.1-98.6c-35.4,24-80.9,37.7-134.2,37.7c-102.8,0-190.1-69.3-221.3-162.7H42v101.6C108.9,704.5,245.2,788.5,394.2,788.5z"/>
+                <path class="s3" d="M172.9,469.7c-16.5-48.9-16.5-102,0-150.9V217.2H42c-56,111.4-56,242.7,0,354.1L172.9,469.7z"/>
+                <path class="s4" d="M394.2,156.1c56.2-0.9,110.5,20.3,151.2,59.1L658,102.7C586.6,35.7,492.1-1.1,394.2,0C245.2,0,108.9,84.1,42,217.2l130.9,101.6C204.1,225.4,291.4,156.1,394.2,156.1z"/>
+              </svg>
+            </div>
+            <div class="method-text"><div class="method-name">Google Pay</div><div class="method-sub">Pay with your Google account</div></div>
+            <div class="method-radio"></div>
+          </div>
+
+          <div class="method-item" id="mi-apay" onclick="selMethod('apay')">
+            <div class="method-icon-wrap apay-wrap">
+              <svg height="20" viewBox="0 0 24 24" fill="white"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.39-1.32 2.76-2.54 3.99zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+            </div>
+            <div class="method-text"><div class="method-name">Apple Pay</div><div class="method-sub">Face ID · Touch ID</div></div>
+            <div class="method-radio"></div>
+          </div>
+
+          <div class="method-item sel" id="mi-card" onclick="selMethod('card')">
+            <div class="method-icon-wrap card-wrap">
+              <svg width="22" height="16" viewBox="0 0 22 16" fill="none"><rect y="4" width="22" height="4" fill="rgba(255,255,255,0.3)"/><rect x="2" y="10" width="6" height="2" rx="1" fill="rgba(255,255,255,0.6)"/></svg>
+            </div>
+            <div class="method-text"><div class="method-name">Credit / Debit Card</div><div class="method-sub">Visa, Mastercard, Amex</div></div>
+            <div class="method-radio"></div>
+          </div>
+        </div>
+
+        <div class="card-section open" id="card-section">
+          <div class="mini-card">
+            <div class="mc-demo-badge">Card</div>
+            <div class="mc-top"><div class="mc-chip"></div><div class="mc-brand"><div class="mc-circle"></div><div class="mc-circle"></div></div></div>
+            <div class="mc-number" id="mc-number">4242  4242  4242  4242</div>
+            <div class="mc-footer">
+              <div><div class="mc-field-lbl">Card Holder</div><div class="mc-field-val" id="mc-name">Demo User</div></div>
+              <div><div class="mc-field-lbl">Expires</div><div class="mc-field-val" id="mc-exp">12/28</div></div>
+              <div><div class="mc-field-lbl">CVC</div><div class="mc-field-val" id="mc-cvc">123</div></div>
+            </div>
+          </div>
+          <div class="input-group">
+            <div class="inp-wrap"><div class="inp-lbl">Card Number</div><input type="text" value="4242 4242 4242 4242" maxlength="19" oninput="fmtCard(this)" inputmode="numeric"></div>
+            <div class="input-row-2">
+              <div class="inp-wrap"><div class="inp-lbl">Expiry</div><input type="text" value="12/28" maxlength="5" placeholder="MM/YY" oninput="fmtExp(this)"></div>
+              <div class="inp-wrap"><div class="inp-lbl">CVC</div><input type="text" value="123" maxlength="3" inputmode="numeric" oninput="fmtCvc(this)"></div>
+            </div>
+            <div class="inp-wrap"><div class="inp-lbl">Cardholder Name</div><input type="text" value="Demo User" oninput="fmtName(this)"></div>
+          </div>
+        </div>
+
+        <div class="pay-btn-wrap">
+          <button class="pay-main-btn" id="pay-main-btn" onclick="startPay()">
+            <span class="lbl">Pay $0.50</span>
+            <div class="spin"></div>
+          </button>
+          <div class="fine-print">Secured by 256-bit SSL encryption</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUCCESS VIEW -->
+    <div id="succ-view" style="display:none">
+      <div class="sheet-header"><div class="sheet-title">Payment Complete</div></div>
+      <div class="sheet-body">
+        <div class="succ-icon-wrap"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div>
+        <h3>Unlocked!</h3>
+        <div class="succ-meta">One-time unlock · $0.50</div>
+        <div class="succ-qr-box">
+          <div id="succ-qr-render"></div>
+        </div>
+        <div class="section-label">Share</div>
+        <div class="share-grid">
+          <button class="sh-btn ig" onclick="shareIG()"><div class="sh-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/></svg></div><span>Instagram</span></button>
+          <button class="sh-btn fb" onclick="shareFB()"><div class="sh-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/></svg></div><span>Facebook</span></button>
+          <button class="sh-btn tw" onclick="shareTW()"><div class="sh-icon">𝕏</div><span>Twitter</span></button>
+          <button class="sh-btn wa" onclick="shareWA()"><div class="sh-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/></svg></div><span>WhatsApp</span></button>
+          <button class="sh-btn cp" onclick="copyLink()"><div class="sh-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/></svg></div><span>Copy</span></button>
+        </div>
+        <button class="new-qr-btn" onclick="doReset()">New QR Code</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROCESSING -->
+<div class="proc-screen" id="proc-screen">
+  <div class="proc-card">
+    <div class="proc-icon-ring" id="proc-ring"></div>
+    <div class="proc-title" id="proc-title">Processing Payment</div>
+    <div class="proc-sub" id="proc-sub">Please wait...</div>
+    <div class="proc-steps">
+      <div class="proc-step active" id="step-0"><div class="step-dot">✓</div><div class="step-text">Verifying payment details</div></div>
+      <div class="proc-step" id="step-1"><div class="step-dot">✓</div><div class="step-text">Connecting to payment gateway</div></div>
+      <div class="proc-step" id="step-2"><div class="step-dot">✓</div><div class="step-text">Authorizing transaction</div></div>
+      <div class="proc-step" id="step-3"><div class="step-dot">✓</div><div class="step-text">Unlocking your QR code</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────
+let currentContent = '';
+let currentQRSize  = 200;
+let currentColor   = '#000000';
+let currentTab     = 'url';
+let qrGenerated    = false;
+let qrRevealed     = false;
+let curMethod      = 'card';
+
+// Tab configs
+const TAB_CONFIGS = {
+  url:   { label:'Website URL',            placeholder:'https://example.com' },
+  text:  { label:'Text / Message',          placeholder:'Any text...' },
+  wifi:  { label:'Wi-Fi (SSID:password)',   placeholder:'WIFI:T:WPA;S:NetworkName;P:password123;;' },
+  email: { label:'Email Address',           placeholder:'mailto:you@email.com?subject=Hello' },
+  phone: { label:'Phone Number',            placeholder:'tel:+1234567890' },
+};
+
+// ── CLOCK ──────────────────────────────────────────────
+function updateClock() {
+  const d = new Date();
+  document.getElementById('clock').textContent =
+    String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+// ── TABS ──────────────────────────────────────────────
+function setTab(tab, el) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const cfg = TAB_CONFIGS[tab];
+  document.getElementById('input-label').textContent = cfg.label;
+  document.getElementById('main-input').placeholder = cfg.placeholder;
+  document.getElementById('main-input').value = '';
+  onInputChange();
+}
+
+// ── INPUT ──────────────────────────────────────────────
+function onInputChange() {
+  const val = document.getElementById('main-input').value.trim();
+  document.getElementById('char-count').textContent = val.length + ' characters';
+  document.getElementById('gen-btn').disabled = val.length === 0;
+}
+
+// ── COLOR ──────────────────────────────────────────────
+function setColor(el) {
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
+  currentColor = el.dataset.color;
+  if (qrGenerated) generateQR();
+}
+
+// ── SIZE ───────────────────────────────────────────────
+function setSize(el) {
+  document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentQRSize = parseInt(el.dataset.size);
+  if (qrGenerated) generateQR();
+}
+
+// ── GENERATE QR ────────────────────────────────────────
+function generateQR() {
+  const val = document.getElementById('main-input').value.trim();
+  if (!val) return;
+  currentContent = val;
+  qrGenerated = true;
+
+  // show container, hide empty state
+  document.getElementById('empty-state').style.display = 'none';
+  const container = document.getElementById('qr-container');
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.alignItems = 'center';
+
+  // clear previous
+  document.getElementById('qr-render').innerHTML = '';
+
+  // generate main QR
+  new QRCode(document.getElementById('qr-render'), {
+    text: val,
+    width: currentQRSize,
+    height: currentQRSize,
+    colorDark: currentColor,
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
+  // set canvas wrap size
+  const wrap = document.getElementById('qr-canvas-wrap');
+  wrap.style.width  = currentQRSize + 'px';
+  wrap.style.height = currentQRSize + 'px';
+
+  document.getElementById('qr-label-val').textContent = val.length > 40 ? val.slice(0,37)+'...' : val;
+
+  // if not yet revealed, show blur
+  if (!qrRevealed) {
+    document.getElementById('blur-overlay').classList.remove('hidden');
+    document.getElementById('dl-btn').classList.remove('show');
+  } else {
+    document.getElementById('blur-overlay').classList.add('hidden');
+    document.getElementById('qr-container').classList.add('revealed');
+    document.getElementById('dl-btn').classList.add('show');
+  }
+}
+
+// ── PAYMENT ────────────────────────────────────────────
+function openPayment() {
+  if (!qrGenerated) return;
+  document.getElementById('mini-sub-text').textContent = currentContent.length > 35
+    ? currentContent.slice(0,32)+'...' : currentContent;
+
+  // mini QR in sheet
+  document.getElementById('qr-mini-render').innerHTML = '';
+  new QRCode(document.getElementById('qr-mini-render'), {
+    text: currentContent,
+    width: 56, height: 56,
+    colorDark: currentColor, colorLight:'#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  document.getElementById('pay-view').style.display = '';
+  document.getElementById('succ-view').style.display = 'none';
+  document.getElementById('overlay').classList.add('show');
+}
+
+function selMethod(m) {
+  curMethod = m;
+  ['gpay','apay','card'].forEach(id =>
+    document.getElementById('mi-'+id).classList.toggle('sel', id === m));
+  document.getElementById('card-section').classList.toggle('open', m === 'card');
+}
+
+function closeSheet() {
+  document.getElementById('overlay').classList.remove('show');
+}
+function handleBgClick() {
+  if (document.getElementById('succ-view').style.display !== 'none') doReset();
+  else closeSheet();
+}
+
+// ── CARD FORMAT ────────────────────────────────────────
+function fmtCard(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,16);
+  el.value = v.replace(/(.{4})/g,'$1 ').trim();
+  document.getElementById('mc-number').textContent = el.value || '#### #### #### ####';
+}
+function fmtExp(el) {
+  let v = el.value.replace(/\D/g,'').substring(0,4);
+  if (v.length > 2) v = v.substring(0,2)+'/'+v.substring(2,4);
+  el.value = v;
+  document.getElementById('mc-exp').textContent = v || 'MM/YY';
+}
+function fmtCvc(el) {
+  el.value = el.value.replace(/\D/g,'').substring(0,3);
+  document.getElementById('mc-cvc').textContent = el.value || 'CVC';
+}
+function fmtName(el) {
+  document.getElementById('mc-name').textContent = el.value || 'CARDHOLDER NAME';
+}
+
+// ── PAYMENT FLOW ───────────────────────────────────────
+const procSteps = [
+  { title:'Processing Payment', sub:'Verifying your details...' },
+  { title:'Connecting',         sub:'Reaching payment gateway...' },
+  { title:'Authorizing',        sub:'Confirming transaction...' },
+  { title:'Almost done!',       sub:'Unlocking your QR code...' },
+];
+
+function startPay() {
+  document.getElementById('pay-main-btn').classList.add('loading');
+  document.getElementById('overlay').classList.remove('show');
+  for (let i = 0; i < 4; i++) {
+    const s = document.getElementById('step-'+i);
+    s.classList.remove('done','active');
+    if (i === 0) s.classList.add('active');
+  }
+  const ring = document.getElementById('proc-ring');
+  ring.style.borderColor = '';
+  ring.style.animation   = 'spin 1s linear infinite';
+  document.getElementById('proc-title').textContent = procSteps[0].title;
+  document.getElementById('proc-sub').textContent   = procSteps[0].sub;
+
+  setTimeout(() => {
+    document.getElementById('proc-screen').classList.add('show');
+    let s = 0;
+    const iv = setInterval(() => {
+      document.getElementById('step-'+s).classList.remove('active');
+      document.getElementById('step-'+s).classList.add('done');
+      s++;
+      if (s < 4) {
+        document.getElementById('step-'+s).classList.add('active');
+        document.getElementById('proc-title').textContent = procSteps[s].title;
+        document.getElementById('proc-sub').textContent   = procSteps[s].sub;
+      } else {
+        clearInterval(iv);
+        ring.style.animation   = 'none';
+        ring.style.borderColor = '#30d158';
+        setTimeout(() => {
+          document.getElementById('proc-screen').classList.remove('show');
+          document.getElementById('pay-main-btn').classList.remove('loading');
+          showSuccess();
+        }, 500);
+      }
+    }, 680);
+  }, 280);
+}
+
+function showSuccess() {
+  qrRevealed = true;
+
+  // remove blur on main preview
+  document.getElementById('blur-overlay').classList.add('hidden');
+  document.getElementById('qr-container').classList.add('revealed');
+  document.getElementById('dl-btn').classList.add('show');
+
+  // mini thumb clear
+  document.getElementById('mini-thumb').classList.add('clear');
+
+  // build success QR
+  document.getElementById('succ-qr-render').innerHTML = '';
+  new QRCode(document.getElementById('succ-qr-render'), {
+    text: currentContent,
+    width: 200, height: 200,
+    colorDark: currentColor, colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
+  document.getElementById('pay-view').style.display  = 'none';
+  document.getElementById('succ-view').style.display = '';
+  document.getElementById('overlay').classList.add('show');
+}
+
+function doReset() {
+  document.getElementById('overlay').classList.remove('show');
+  setTimeout(() => {
+    qrGenerated = false;
+    qrRevealed  = false;
+    currentContent = '';
+    document.getElementById('main-input').value = '';
+    document.getElementById('char-count').textContent = '0 characters';
+    document.getElementById('gen-btn').disabled = true;
+    document.getElementById('empty-state').style.display = '';
+    document.getElementById('qr-container').style.display = 'none';
+    document.getElementById('qr-container').classList.remove('revealed');
+    document.getElementById('dl-btn').classList.remove('show');
+    document.getElementById('mini-thumb').classList.remove('clear');
+  }, 400);
+}
+
+// ── DOWNLOAD ──────────────────────────────────────────
+function downloadQR() {
+  const canvas = document.querySelector('#qr-render canvas');
+  if (!canvas) return;
+  const a = document.createElement('a');
+  a.href     = canvas.toDataURL('image/png');
+  a.download = 'qr-code.png';
+  a.click();
+}
+
+// ── SHARE ─────────────────────────────────────────────
+function shareText() { return '⬛ QR code for: ' + currentContent; }
+function shareIG()   { try{navigator.clipboard.writeText(shareText());}catch(e){} showToast('Copied! Paste it on Instagram 📸'); }
+function shareFB()   { window.open('https://www.facebook.com/sharer/sharer.php?quote='+encodeURIComponent(shareText()),'_blank'); }
+function shareTW()   { window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(shareText()),'_blank'); }
+function shareWA()   { window.open('https://wa.me/?text='+encodeURIComponent(shareText()),'_blank'); }
+function copyLink()  { try{navigator.clipboard.writeText(currentContent);}catch(e){} showToast('Link copied!'); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+</script>
+</body>
+</html>
