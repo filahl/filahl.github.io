@@ -1,111 +1,934 @@
-<html><head>
-  <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/6821/6821173.png">
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Portfolio</title>
-    <link rel="stylesheet" href="/portfolio/portfolio.css">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
-    <link href="https://fonts.googleapis.com/css?family=Poppins:200i,300,400&amp;display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Raleway:700&amp;display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <!-- zacatek NAV -->
+  <title>Filip — Portfolio</title>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/6821/6821173.png">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" crossorigin="anonymous">
+  <style>
+    :root {
+      --bg: #262624;
+      --bg-raised: #2e2e2b;
+      --bg-card: #323230;
+      --border: rgba(255, 255, 255, 0.06);
+      --border-md: rgba(255, 255, 255, 0.11);
+      --accent: #f97316;
+      --accent-lo: rgba(249, 115, 22, 0.10);
+      --accent-md: rgba(249, 115, 22, 0.28);
+      --text: #ede9e2;
+      --muted: #888880;
+      --faint: rgba(237, 233, 226, 0.045);
+    }
 
-    <nav id="navbar" class="nav">
-      <ul class="nav-list">
-        <li>
-          <a href="#welcome-section">About</a>
-        </li>
-        <li>
-          <a href="#projects">Work</a>
-        </li>
-        <li>
-          <a href="#contact">Contact</a>
-        </li>
-      </ul>
-    </nav>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    <!-- koenc NAV -->
+    html {
+      scroll-behavior: smooth;
+    }
 
-    <!-- zacatek WELCOME  -->
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Geist', system-ui, sans-serif;
+      font-weight: 300;
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
 
-    <section id="welcome-section" class="welcome-section">
-      <img src="/portfolio/avatar.jpg" alt="avatar" class="avatar">
-      <h1 class="fancy-heading">Hi! I am Filip.</h1>
-      <p class="fancy-podheading">an IT student & low budget photographer from Czech Republic</p>
-    </section>
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 200;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      background: rgba(38, 38, 36, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
 
-    <!-- konec WELCOME  -->
+    .nav-brand {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-style: italic;
+      font-size: 1.4rem;
+      color: var(--text);
+      text-decoration: none;
+    }
 
-    <!-- zacatek PROJECTS  -->
+    .nav-brand span {
+      color: var(--accent);
+    }
 
-    <section id="projects" class="projects-section">
-      <h2 class="projects-section-header">These are some of my projects</h2>
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
 
-      <div class="projects-grid">
-        <a href="https://filahl.github.io/kara/kara.html" target="_blank" class="project project-tile">
-          <img class="project-image" src="https://s.wordpress.com/mshots/v1/filahl.github.io/kara/kara.html?width=200" alt="project">
-          <p class="project-title">
-            <span class="code">&lt;</span>
-            Jirka Kara
-            <span class="code">/&gt;</span>
-          </p>
-        </a>
-        <a href="https://filahl.github.io/slonik/Slonik.html" target="_blank" class="project project-tile">
-          <img class="project-image" src="https://s.wordpress.com/mshots/v1/filahl.github.io/slonik/Slonik.html?width=200" alt="project">
-          <p class="project-title">
-            <span class="code">&lt;</span>
-            Ruzovy slon
-            <span class="code">/&gt;</span>
-          </p>
-        </a>
-        <a href="https://filahl.github.io/bota/bota.html" target="_blank" class="project project-tile">
-          <img class="project-image" src="https://s.wordpress.com/mshots/v1/filahl.github.io/bota/bota.html?width=200" alt="project">
-          <p class="project-title">
-            <span class="code">&lt;</span>
-            Bota
-            <span class="code">/&gt;</span>
-          </p>
-        </a>
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.78rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
 
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .nav-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: blink 2.5s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .25
+      }
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100svh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 4rem;
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 5rem 3rem 3rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--accent-lo);
+      border: 1px solid var(--accent-md);
+      padding: 0.28rem 0.85rem;
+      border-radius: 100px;
+      margin-bottom: 1.75rem;
+      animation: rise 0.6s ease both;
+    }
+
+    .badge-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .hero-name {
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: clamp(3.8rem, 8vw, 7rem);
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: -0.025em;
+      color: var(--text);
+      animation: rise 0.6s 0.07s ease both;
+    }
+
+    .hero-name em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-role {
+      margin-top: 1.5rem;
+      font-size: 0.98rem;
+      color: var(--muted);
+      max-width: 360px;
+      animation: rise 0.6s 0.14s ease both;
+    }
+
+    .hero-ctas {
+      margin-top: 2.25rem;
+      display: flex;
+      gap: 0.875rem;
+      animation: rise 0.6s 0.21s ease both;
+    }
+
+    .btn-fill {
+      background: var(--accent);
+      color: #1a1108;
+      padding: 0.62rem 1.4rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.84rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: opacity .18s, transform .18s;
+    }
+
+    .btn-fill:hover {
+      opacity: .87;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      border: 1px solid var(--border-md);
+      color: var(--muted);
+      padding: 0.62rem 1.4rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.84rem;
+      transition: border-color .2s, color .2s;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .hero-right {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      animation: rise 0.8s 0.18s ease both;
+    }
+
+    .avatar-wrap {
+      position: relative;
+      width: 300px;
+      height: 370px;
+    }
+
+    .avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+      display: block;
+      filter: grayscale(15%) contrast(1.04);
+    }
+
+    .avatar-wrap::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 13px;
+      background: linear-gradient(140deg, var(--accent) 0%, transparent 55%);
+      z-index: -1;
+    }
+
+    .avatar-chip {
+      position: absolute;
+      bottom: -18px;
+      left: -18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-md);
+      border-radius: 10px;
+      padding: 0.7rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.8rem;
+    }
+
+    .chip-icon {
+      color: var(--accent);
+    }
+
+    .chip-label {
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+
+    .chip-val {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    /* DIVIDER */
+    .divider {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 3rem 3rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .divider-text {
+      font-size: 0.66rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ABOUT */
+    .about-strip {
+      background: var(--bg-raised);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 4rem 3rem;
+    }
+
+    .about-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 5rem;
+      align-items: start;
+    }
+
+    .eyebrow {
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+
+    .about-left h2 {
+      font-family: 'Instrument Serif', serif;
+      font-size: 2.2rem;
+      font-weight: 400;
+      line-height: 1.2;
+      color: var(--text);
+    }
+
+    .about-right p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.85;
+      margin-bottom: 1.1rem;
+    }
+
+    .about-right p:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .skill-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 1.5rem;
+    }
+
+    .skill-tag {
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      padding: 0.28rem 0.75rem;
+      border-radius: 4px;
+      background: var(--faint);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      transition: border-color .2s, color .2s;
+    }
+
+    .skill-tag:hover {
+      border-color: var(--accent-md);
+      color: var(--text);
+    }
+
+    /* PROJECTS */
+    #projects {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 6rem 3rem;
+    }
+
+    .section-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .sec-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .sec-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--accent-md), transparent);
+    }
+
+    .projects-title {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .projects-sub {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 2.75rem;
+    }
+
+    .proj-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1.125rem;
+    }
+
+    .span-7 {
+      grid-column: span 7;
+    }
+
+    .span-5 {
+      grid-column: span 5;
+    }
+
+    .span-6 {
+      grid-column: span 6;
+    }
+
+    .proj-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: border-color .25s, transform .25s, box-shadow .25s;
+    }
+
+    .proj-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent-lo) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity .3s;
+      pointer-events: none;
+    }
+
+    .proj-card:hover {
+      border-color: rgba(249, 115, 22, .22);
+      transform: translateY(-3px);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, .38);
+    }
+
+    .proj-card:hover::after {
+      opacity: 1;
+    }
+
+    .proj-img {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      background: var(--bg-raised);
+      display: block;
+      transition: filter .3s;
+      filter: brightness(.88) saturate(.85);
+    }
+
+    .proj-card:hover .proj-img {
+      filter: brightness(1) saturate(1);
+    }
+
+    .proj-body {
+      padding: 1.2rem 1.4rem 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1;
+    }
+
+    .proj-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.55rem;
+    }
+
+    .proj-tag {
+      font-size: 0.62rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: var(--accent-lo);
+      color: var(--accent);
+      border: 1px solid var(--accent-md);
+      padding: 0.18rem 0.52rem;
+      border-radius: 3px;
+    }
+
+    .proj-year {
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+
+    .proj-title {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.2rem;
+      font-weight: 400;
+      color: var(--text);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .proj-arrow {
+      color: var(--accent);
+      transition: transform .2s;
+      font-style: normal;
+    }
+
+    .proj-card:hover .proj-arrow {
+      transform: translate(3px, -3px);
+    }
+
+    .proj-desc {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 0.4rem;
+      line-height: 1.65;
+    }
+
+    .more-card {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 165px;
+      background: var(--faint);
+    }
+
+    .more-card-inner {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .more-plus {
+      font-size: 1.8rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+    }
+
+    .more-title {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    .more-sub {
+      font-size: 0.74rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    /* CONTACT */
+    #contact {
+      background: var(--bg-raised);
+      border-top: 1px solid var(--border);
+      padding: 6rem 3rem;
+    }
+
+    .contact-wrap {
+      max-width: 1160px;
+      margin: 0 auto;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: start;
+      margin-top: 2.5rem;
+    }
+
+    .contact-heading {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      line-height: 1.1;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+
+    .contact-heading em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .contact-body {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.8;
+    }
+
+    .contact-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .c-link {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.88rem 1.2rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--text);
+      font-size: 0.86rem;
+      font-weight: 400;
+      transition: border-color .2s, background .2s;
+    }
+
+    .c-link:hover {
+      border-color: var(--accent-md);
+      background: var(--accent-lo);
+    }
+
+    .c-link i {
+      color: var(--accent);
+      width: 18px;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+
+    .c-sub {
+      margin-left: auto;
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    /* FOOTER */
+    footer {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 2rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(14px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @media (max-width: 860px) {
+      nav {
+        padding: 0 1.5rem;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        padding: 5rem 1.5rem 2rem;
+        gap: 2rem;
+      }
+
+      .hero-right {
+        display: none;
+      }
+
+      .about-inner {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .proj-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .span-7,
+      .span-5,
+      .span-6 {
+        grid-column: span 1;
+      }
+
+      .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+      }
+
+      #projects,
+      #contact,
+      .about-strip {
+        padding: 4rem 1.5rem;
+      }
+
+      footer {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+        padding: 1.5rem;
+      }
+    }
+    /* Oprava gridu a nové efekty */
+.proj-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1.5rem; /* Větší mezera pro čistší vzhled */
+}
+
+.span-12 {
+  grid-column: span 12;
+}
+
+/* Obal obrázku pro zoom efekt */
+.proj-img-wrapper {
+  width: 100%;
+  height: 280px; /* Fixní výška pro konzistenci */
+  overflow: hidden;
+  background: var(--bg-raised);
+}
+
+.proj-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.proj-card:hover .proj-img {
+  transform: scale(1.05); /* Jemný zoom */
+}
+
+/* Vylepšení GitHub karty */
+.more-card {
+  min-height: 120px !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, var(--bg-card), var(--faint));
+}
+
+.more-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.more-plus {
+  margin-bottom: 0 !important;
+  color: var(--accent);
+  width: 40px;
+  height: 40px;
+  line-height: 38px;
+  border-radius: 50%;
+  font-weight: 600;
+}
+
+/* Responzivita pro tablety */
+@media (max-width: 1024px) {
+  .span-7, .span-5 {
+    grid-column: span 6;
+  }
+}
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <a href="#welcome-section" class="nav-brand">filip<span>.</span></a>
+    <ul class="nav-links">
+      <li><a href="#welcome-section">About</a></li>
+      <li><a href="#projects">Work</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+
+  </nav>
+
+  <section id="welcome-section" class="hero">
+    <div class="hero-left">
+
+      <h1 class="hero-name">Hi,<br>I'm <em>Filip</em>.</h1>
+      <p class="hero-role">IT student &amp; photographer from Czech Republic. I craft things for the web.</p>
+      <div class="hero-ctas">
+        <a href="#projects" class="btn-fill">View work <i class="fas fa-arrow-right" style="font-size:.72rem"></i></a>
+        <a href="#contact" class="btn-outline">Get in touch</a>
       </div>
-
-      <a href="https://filahl.github.io/" class="btn btn-show-all" target="_blank">Show all <i class="fas fa-chevron-right"></i></a>
-    </section>
-
-    <!-- konec PROJECTS  -->
-
-    <!-- zacatek CONTACT  -->
-
-    <section id="contact" class="contact-section">
-      <div class="contact-section-header">
-        <h2 class="nakytext">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Consectetur qui eveniet nam distinctio architecto soluta harum, doloribus...</h2>
-        <p>Lorem ipsum dolor, sit amet consectetur</p>
+    </div>
+    <div class="hero-right">
+      <div class="avatar-wrap">
+        <img src="/portfolio/avatar.jpg" alt="Filip" onerror="this.closest('.avatar-wrap').style.display='none'">
+        <div class="avatar-chip">
+          <span class="chip-icon"><i class="fas fa-map-marker-alt"></i></span>
+          <div>
+            <div class="chip-label">Based in</div>
+            <div class="chip-val">Czech Republic</div>
+          </div>
+        </div>
       </div>
-      <div class="contact-links">
-        <a href="https://instagram.com/001kmh" target="_blank" class="btn contact-details"><i class="fab fa-instagram"></i> Instagram</a>
-        <a id="profile-link" href="https://filahl.github.io/" target="_blank" class="btn contact-details"><i class="fab fa-github"></i> GitHub</a>
-        <a href="https://steamcommunity.com/id/7fil1p/" target="_blank" class="btn contact-details"><i class="fab fa-steam"></i> Steam</a>
-        <a href="mailto:nereknu@example.com" class="btn contact-details"><i class="fas fa-at"></i> Send a mail</a>
-        <a href="tel:777 777 777" class="btn contact-details"><i class="fas fa-mobile-alt"></i> Call me</a>
+    </div>
+  </section>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <span class="divider-text">Selected work below</span>
+    <div class="divider-line"></div>
+  </div>
+
+  <div class="about-strip">
+    <div class="about-inner">
+      <div class="about-left">
+        <div class="eyebrow">About me</div>
+        <h2>Student.<br>Collector.<br>Photographer.</h2>
       </div>
-    </section>
+      <div class="about-right">
+        <p>I study IT and spend my free time building web projects and shooting photos on a shoestring budget. </p>
+        <div class="skill-tags">
+          <span class="skill-tag">HTML / CSS</span>
+          <span class="skill-tag">JavaScript</span>
+          <span class="skill-tag">Photography</span>
+          <span class="skill-tag">UI Design</span>
+          <span class="skill-tag">Git</span>
+          <span class="skill-tag">Czech Republic</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- konec CONTACT  -->
+ <section id="projects">
+  <div class="section-eyebrow">
+    <span class="sec-label">Portfolio</span>
+    <div class="sec-line"></div>
+  </div>
+  <h2 class="projects-title">Selected work</h2>
+  <p class="projects-sub">A few things I've built recently.</p>
 
-    <!-- zacatek FOOTER  -->
+  <div class="proj-grid">
+    <a href="7fil1p.xo.je" target="_blank" class="proj-card span-5">
+      <div class="proj-img-wrapper">
+        <img class="proj-img" src="https://s.wordpress.com/mshots/v1/7fil1p.xo.je?width=500&height=500" alt="Autoskola" loading="lazy">
+      </div>
+      <div class="proj-body">
+        <div class="proj-meta"><span class="proj-tag">Commercial</span><span class="proj-year">2026</span></div>
+        <div class="proj-title">Autoskola Chrudim <em class="proj-arrow">↗</em></div>
+        <p class="proj-desc">Full website for a local driving school including an admin panel.</p>
+      </div>
+    </a>
+    
+    <a href="https://filahl.github.io/calc/index.html" target="_blank" class="proj-card span-7">
+      <div class="proj-img-wrapper">
+        <img class="proj-img" src="https://s.wordpress.com/mshots/v1/filahl.github.io%2Fcalc%2Findex.html?width=800&height=600" alt="Calculator" loading="lazy">
+      </div>
+      <div class="proj-body">
+        <div class="proj-meta"><span class="proj-tag">SaaS Concept</span><span class="proj-year">2026</span></div>
+        <div class="proj-title">Calc with "paywall" <em class="proj-arrow">↗</em></div>
+        <p class="proj-desc">A simple calculator with a subscription model. Billion dollar idea.</p>
+      </div>
+    </a>
 
-    <footer>
-      <p>
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Earum vel esse, ex velit libero modi, doloremque perferendis hic, sapiente voluptate consequuntur cum! Maiores, delectus officiis eaque esse vero alias dolorum.
-      </p>
-      <p>
-        
-        <a href="https://instagram.com/001kmh" target="_blank">001kmh <i class="fab fa-instagram"></i></a>
-      </p>
-    </footer>
+    
 
-    <!-- koec FOOTER  -->
-  
+    <a href="https://filahl.github.io/" target="_blank" class="proj-card span-12 more-card">
+      <div class="more-card-inner">
+        <div class="more-plus">+</div>
+        <div class="more-title">More on GitHub</div>
+        <div class="more-sub">Check out my other things at filahl.github.io ↗</div>
+      </div>
+    </a>
+  </div>
+</section>
 
-</body></html>
+  <section id="contact">
+    <div class="contact-wrap">
+      <div class="section-eyebrow">
+        <span class="sec-label">Contact</span>
+        <div class="sec-line"></div>
+      </div>
+      <div class="contact-grid">
+        <div>
+          <h2 class="contact-heading">Let's build something <em>together.</em></h2>
+          <p class="contact-body">Whether it's a project, a collaboration, or just a friendly hello — feel free to reach
+            out. I'm always open to interesting conversations.</p>
+        </div>
+        <div class="contact-list">
+          <a href="https://instagram.com/001kmh" target="_blank" class="c-link">
+            <i class="fab fa-instagram"></i> Instagram <span class="c-sub">@001kmh</span>
+          </a>
+          <a href="https://filahl.github.io/" target="_blank" class="c-link">
+            <i class="fab fa-github"></i> GitHub <span class="c-sub">filahl</span>
+          </a>
+
+          <a href="mailto:7fil1p@seznam.cz" class="c-link">
+            <i class="fas fa-at"></i> Send a mail <span class="c-sub">7fil1p@seznam.cz</span>
+          </a>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>© 2025 \ 001kmh. \ All rights reserved.</span>
+    <a href="https://instagram.com/001kmh" target="_blank">@001kmh <i class="fab fa-instagram"></i></a>
+  </footer>
+
+</body>
+
+</html>
