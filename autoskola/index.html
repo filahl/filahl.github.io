@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kvíz Dopravních Značek ČR</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --asphalt: #1a1a1e;
+    --asphalt-mid: #25252b;
+    --asphalt-light: #2e2e36;
+    --stripe: #f5c518;
+    --stripe-dim: #c9a010;
+    --white: #f0ede8;
+    --muted: #888890;
+    --danger: #e84040;
+    --success: #4caf6a;
+    --border: rgba(245,197,24,0.15);
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--asphalt);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 2rem 1rem;
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 48px,
+        rgba(255,255,255,0.015) 48px,
+        rgba(255,255,255,0.015) 50px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 48px,
+        rgba(255,255,255,0.015) 48px,
+        rgba(255,255,255,0.015) 50px
+      );
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 0 1.5rem;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: var(--stripe);
+    line-height: 1;
+  }
+
+  .logo span {
+    color: var(--white);
+    opacity: 0.5;
+    font-size: 13px;
+    display: block;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 3px;
+    margin-top: 2px;
+  }
+
+  .streak-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .streak-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .streak-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 36px;
+    color: var(--stripe);
+    line-height: 1;
+    transition: transform 0.15s, color 0.2s;
+  }
+
+  .streak-count.bump {
+    transform: scale(1.3);
+    color: #fff;
+  }
+
+  /* MAIN CARD */
+  .card {
+    background: var(--asphalt-mid);
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .card::before {
+    content: '';
+    display: block;
+    height: 4px;
+    background: var(--stripe);
+  }
+
+  /* SIGN STAGE */
+  .sign-stage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    background: var(--asphalt-light);
+    position: relative;
+  }
+
+  .sign-stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, var(--asphalt-light) 100%);
+  }
+
+  #sign-img {
+    max-height: 140px;
+    max-width: 200px;
+    position: relative;
+    z-index: 1;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  /* QUESTION AREA */
+  .question-area {
+    padding: 1.5rem 1.5rem 1rem;
+  }
+
+  .question-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+
+  .question-text {
+    font-size: 17px;
+    color: var(--white);
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  /* OPTIONS */
+  .options-wrap {
+    padding: 0 1.5rem 1.5rem;
+    display: grid;
+    gap: 8px;
+  }
+
+  .opt-btn {
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: var(--asphalt-light);
+    color: var(--white);
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    transition: border-color 0.15s, background 0.15s;
+    line-height: 1.3;
+  }
+
+  .opt-btn:hover:not(:disabled) {
+    border-color: var(--stripe);
+    background: rgba(245,197,24,0.07);
+  }
+
+  .opt-btn .key {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 16px;
+    transition: color 0.15s;
+  }
+
+  .opt-btn:hover:not(:disabled) .key {
+    color: var(--stripe);
+  }
+
+  .opt-btn.correct {
+    border-color: var(--success);
+    background: rgba(76,175,106,0.12);
+    color: var(--success);
+  }
+  .opt-btn.correct .key { color: var(--success); }
+
+  .opt-btn.wrong {
+    border-color: var(--danger);
+    background: rgba(232,64,64,0.1);
+    color: var(--danger);
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+
+  .opt-btn:disabled { cursor: not-allowed; }
+
+  /* FEEDBACK */
+  .feedback {
+    margin: 0 1.5rem 1.5rem;
+    padding: 14px 16px;
+    border-radius: 3px;
+    background: var(--asphalt);
+    border-left: 3px solid var(--stripe);
+    display: none;
+    animation: slideDown 0.2s ease;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .feedback.show { display: block; }
+
+  .result-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .result-title.ok { color: var(--success); }
+  .result-title.fail { color: var(--danger); }
+
+  .info-row {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .info-row strong {
+    color: var(--white);
+    font-weight: 500;
+  }
+
+  /* NEXT BTN */
+  .next-wrap {
+    padding: 0 1.5rem 1.5rem;
+  }
+
+  .next-btn {
+    all: unset;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    background: var(--stripe);
+    color: var(--asphalt);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    padding: 13px;
+    border-radius: 3px;
+    transition: background 0.15s, transform 0.1s;
+    display: none;
+  }
+
+  .next-btn.show { display: block; }
+  .next-btn:hover { background: #ffd438; }
+  .next-btn:active { transform: scale(0.98); }
+
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo">
+      Znáš Značky
+      <span>KVÍZ ČR</span>
+    </div>
+    <div class="streak-badge">
+      <div class="streak-label">streak</div>
+      <div class="streak-count" id="streak">0</div>
+    </div>
+  </div>
+
+  <div class="card" id="quiz-card">
+    <div class="sign-stage">
+      <img id="sign-img" src="" alt="Dopravní značka">
+    </div>
+
+    <div class="question-area">
+      <div class="question-label">Jaká je tato značka?</div>
+      <div class="question-text" id="question-text">Vyberte správnou odpověď</div>
+    </div>
+
+    <div class="options-wrap" id="options"></div>
+
+    <div class="feedback" id="feedback">
+      <div class="result-title" id="result-title"></div>
+      <div class="info-row" id="info-row">
+        <strong>Typ:</strong> <span id="info-type"></span><br>
+        <strong>Popis:</strong> <span id="info-desc"></span>
+      </div>
+    </div>
+
+    <div class="next-wrap">
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">Další značka →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const signsData = [
+    // ===== VÝSTRAŽNÉ (A) =====
+    { id: 'A1a', name: 'Zatáčka vpravo', type: 'Výstražná značka', desc: 'Upozorňuje na směrový oblouk vpravo.', img: 'Czech_Republic_road_sign_A_1a.svg' },
+    { id: 'A1b', name: 'Zatáčka vlevo', type: 'Výstražná značka', desc: 'Upozorňuje na směrový oblouk vlevo.', img: 'Czech_Republic_road_sign_A_1b.svg' },
+    { id: 'A2a', name: 'Dvojitá zatáčka, první vpravo', type: 'Výstražná značka', desc: 'Upozorňuje na dva po sobě následující protisměrné směrové oblouky, první vpravo.', img: 'Czech_Republic_road_sign_A_2a.svg' },
+    { id: 'A2b', name: 'Dvojitá zatáčka, první vlevo', type: 'Výstražná značka', desc: 'Upozorňuje na dva po sobě následující protisměrné směrové oblouky, první vlevo.', img: 'Czech_Republic_road_sign_A_2b.svg' },
+    { id: 'A3', name: 'Křižovatka', type: 'Výstražná značka', desc: 'Upozorňuje na křižovatku, kde není přednost v jízdě upravena svislými dopravními značkami.', img: 'Czech_Republic_road_sign_A_3.svg' },
+    { id: 'A4', name: 'Křižovatka s kruhovým objezdem', type: 'Výstražná značka', desc: 'Upozorňuje na křižovatku s kruhovým objezdem.', img: 'Czech_Republic_road_sign_A_4.svg' },
+    { id: 'A5a', name: 'Nebezpečné klesání', type: 'Výstražná značka', desc: 'Upozorňuje na úsek, kde klesání pozemní komunikace přesahuje 10 % nebo kde místní podmínky činí klesání nebezpečným.', img: 'Czech_Republic_road_sign_A_5a.svg' },
+    { id: 'A5b', name: 'Nebezpečné stoupání', type: 'Výstražná značka', desc: 'Upozorňuje na úsek, kde stoupání pozemní komunikace přesahuje 10 % nebo kde místní podmínky činí stoupání nebezpečným.', img: 'Czech_Republic_road_sign_A_5b.svg' },
+    { id: 'A6a', name: 'Zúžená vozovka (z obou stran)', type: 'Výstražná značka', desc: 'Upozorňuje na místo, kde se oproti předcházejícímu úseku zužuje vozovka z obou stran.', img: 'Czech_Republic_road_sign_A_6a.svg' },
+    { id: 'A6b', name: 'Zúžená vozovka (z jedné strany)', type: 'Výstražná značka', desc: 'Upozorňuje na místo, kde se oproti předcházejícímu úseku zužuje vozovka z jedné strany.', img: 'Czech_Republic_road_sign_A_6b.svg' },
+    { id: 'A7a', name: 'Nerovnost vozovky', type: 'Výstražná značka', desc: 'Upozorňuje na jednotlivé hrboly, výtluky, stružky nebo na úsek s nerovným povrchem vozovky.', img: 'Czech_Republic_road_sign_A_7a.svg' },
+    { id: 'A7b', name: 'Zpomalovací práh', type: 'Výstražná značka', desc: 'Upozorňuje na umělou nerovnost na vozovce.', img: 'Czech_Republic_road_sign_A_7b.svg' },
+    { id: 'A8', name: 'Nebezpečí smyku', type: 'Výstražná značka', desc: 'Upozorňuje na místo nebo úsek pozemní komunikace, kde může dojít ke smyku vozidla.', img: 'Czech_Republic_road_sign_A_8.svg' },
+    { id: 'A9', name: 'Provoz v obou směrech', type: 'Výstražná značka', desc: 'Upozorňuje na úsek pozemní komunikace, kde je na rozdíl od předcházejícího úseku provoz v obou směrech.', img: 'Czech_Republic_road_sign_A_9.svg' },
+    { id: 'A10', name: 'Světelné signály', type: 'Výstražná značka', desc: 'Upozorňuje řidiče na místo, kde je provoz na pozemní komunikaci řízen světelnými signály.', img: 'Czech_Republic_road_sign_A_10.svg' },
+    { id: 'A11', name: 'Přechod pro chodce', type: 'Výstražná značka', desc: 'Upozorňuje na přechod pro chodce.', img: 'Czech_Republic_road_sign_A_11.svg' },
+    { id: 'A12a', name: 'Chodci', type: 'Výstražná značka', desc: 'Upozorňuje na místo nebo úsek pozemní komunikace s možností zvýšeného výskytu chodců.', img: 'Czech_Republic_road_sign_A_12a.svg' },
+    { id: 'A12b', name: 'Děti', type: 'Výstražná značka', desc: 'Upozorňuje na místo nebo úsek pozemní komunikace, kde se v její blízkosti děti často pohybují nebo shromažďují.', img: 'Czech_Republic_road_sign_A_12.svg' },
+    { id: 'A12c', name: 'Osoby na osobních přepravnících', type: 'Výstražná značka', desc: 'Upozorňuje na místo nebo úsek pozemní komunikace, kde se osoby na osobních přepravnících pohybují.', img: 'CZ-A12c_Osoby_na_osobních_přepravnících_(2016).jpg' },
+    { id: 'A13', name: 'Zvířata', type: 'Výstražná značka', desc: 'Upozorňuje na místo nebo úsek pozemní komunikace, kde může docházet k častému výskytu domácích zvířat.', img: 'Czech_Republic_road_sign_A_13.svg' },
+    { id: 'A14', name: 'Zvěř', type: 'Výstražná značka', desc: 'Upozorňuje na místo nebo úsek pozemní komunikace, kde může docházet k častému výskytu zvěře.', img: 'Czech_Republic_road_sign_A_14.svg' },
+    { id: 'A15', name: 'Práce na silnici', type: 'Výstražná značka', desc: 'Upozorňuje na práci na pozemní komunikaci, která by mohla ohrozit bezpečnost provozu.', img: 'Czech_Republic_road_sign_A_15.svg' },
+    { id: 'A16', name: 'Boční vítr', type: 'Výstražná značka', desc: 'Upozorňuje na úsek pozemní komunikace, kde nenadálý prudký boční vítr může ohrozit bezpečnost provozu.', img: 'Czech_Republic_road_sign_A_16.svg' },
+    { id: 'A17', name: 'Odlétávající štěrk', type: 'Výstražná značka', desc: 'Upozorňuje na místo nebo úsek pozemní komunikace, kde je na vozovce ve větší míře volný štěrk.', img: 'Czech_Republic_road_sign_A_17.svg' },
+    { id: 'A18', name: 'Kamení na vozovce', type: 'Výstražná značka', desc: 'Upozorňuje na místo nebo úsek pozemní komunikace, kde může dojít k sesuvům nebo padání kamenů na vozovku.', img: 'Czech_Republic_road_sign_A_18.svg' },
+    { id: 'A19', name: 'Cyklisté', type: 'Výstražná značka', desc: 'Upozorňuje na místo, kde cyklisté vjíždějí na vozovku nebo ji přejíždějí.', img: 'Czech_Republic_road_sign_A_19.svg' },
+    { id: 'A20', name: 'Letadla', type: 'Výstražná značka', desc: 'Upozorňuje na místo, kde v malé výšce nad pozemní komunikací přelétávají letadla.', img: 'Czech_Republic_road_sign_A_20.svg' },
+    { id: 'A21', name: 'Tunel', type: 'Výstražná značka', desc: 'Upozorňuje na tunel, kde platí pravidla provozu pro chování v tunelu.', img: 'Czech_Republic_road_sign_A_21.svg' },
+    { id: 'A22', name: 'Jiné nebezpečí', type: 'Výstražná značka', desc: 'Upozorňuje na jiná nebezpečí než ta, která je možno označit příslušnou výstražnou značkou.', img: 'Czech_Republic_road_sign_A_22.svg' },
+    { id: 'A23', name: 'Kolona', type: 'Výstražná značka', desc: 'Upozorňuje na nebezpečí výskytu kolony stojících nebo pomalu jedoucích vozidel.', img: 'Czech_Republic_road_sign_A_23.svg' },
+    { id: 'A24', name: 'Náledí', type: 'Výstražná značka', desc: 'Upozorňuje na úsek se zvýšeným nebezpečím častého výskytu náledí na vozovce.', img: 'Czech_Republic_road_sign_A_24.svg' },
+    { id: 'A25', name: 'Tramvaj', type: 'Výstražná značka', desc: 'Upozorňuje na místo, kde tramvaj křižuje směr jízdy ostatních vozidel.', img: 'Czech_Republic_road_sign_A_25.svg' },
+    { id: 'A26', name: 'Mlha', type: 'Výstražná značka', desc: 'Upozorňuje na výskyt mlhy, případně kouře, snižujících viditelnost.', img: 'Czech_Republic_road_sign_A_26.svg' },
+    { id: 'A27', name: 'Nehoda', type: 'Výstražná značka', desc: 'Upozorňuje na místo dopravní nehody.', img: 'Czech_Republic_road_sign_A_27.svg' },
+    { id: 'A28', name: 'Nebezpečná krajnice', type: 'Výstražná značka', desc: 'Upozorňuje na úsek pozemní komunikace, kde je nebezpečné vjet na krajnici.', img: 'Czech_Republic_road_sign_A_28.svg' },
+    { id: 'A29', name: 'Železniční přejezd se závorami', type: 'Výstražná značka', desc: 'Upozorňuje na železniční přejezd vybavený celými nebo polovičními závorami.', img: 'Czech_Republic_road_sign_A_29.svg' },
+    { id: 'A30', name: 'Železniční přejezd bez závor', type: 'Výstražná značka', desc: 'Upozorňuje na železniční přejezd nevybavený závorami.', img: 'Czech_Republic_road_sign_A_30.svg' },
+    { id: 'A31a', name: 'Návěstní deska (240 m)', type: 'Výstražná značka', desc: 'Předem upozorňuje na železniční přejezd ve vzdálenosti 240 m.', img: 'Czech_road_sign_A31a.svg' },
+    { id: 'A31b', name: 'Návěstní deska (160 m)', type: 'Výstražná značka', desc: 'Předem upozorňuje na železniční přejezd ve vzdálenosti 160 m.', img: 'Czech_road_sign_A31b.svg' },
+    { id: 'A31c', name: 'Návěstní deska (80 m)', type: 'Výstražná značka', desc: 'Předem upozorňuje na železniční přejezd ve vzdálenosti 80 m.', img: 'A31c.svg' },
+    { id: 'A32a', name: 'Výstražný kříž pro železniční přejezd jednokolejný', type: 'Výstražná značka', desc: 'Označuje jednokolejný železniční přejezd. Umísťuje se bezprostředně před přejezdem.', img: 'Czech_Republic_road_sign_A_32a.svg' },
+    { id: 'A32b', name: 'Výstražný kříž pro železniční přejezd vícekolejný', type: 'Výstražná značka', desc: 'Označuje vícekolejný železniční přejezd. Umísťuje se bezprostředně před přejezdem.', img: 'A32b_CZ.svg' },
+    { id: 'A33', name: 'Pohyblivý most', type: 'Výstražná značka', desc: 'Upozorňuje na blízkost pohyblivého mostu.', img: 'Czech_Republic_road_sign_A_33.svg' },
+    { id: 'A34', name: 'Nábřeží', type: 'Výstražná značka', desc: 'Upozorňuje na úsek pozemní komunikace směřující na nechráněné nábřeží nebo břeh vodní plochy.', img: 'Czech_Republic_road_sign_A_34.svg' },
+
+    // ===== PŘEDNOST (P) =====
+    { id: 'P1', name: 'Křižovatka s vedlejší pozemní komunikací', type: 'Značka upravující přednost', desc: 'Upozorňuje na křižovatku s vedlejší pozemní komunikací mimo obec a označuje hlavní pozemní komunikaci.', img: 'Czech_Republic_road_sign_P_1.svg' },
+    { id: 'P2', name: 'Hlavní pozemní komunikace', type: 'Značka upravující přednost', desc: 'Označuje hlavní pozemní komunikaci, a to zejména v obci.', img: 'CZ-P02_Hlavní_pozemní_komunikace.svg' },
+    { id: 'P3', name: 'Konec hlavní pozemní komunikace', type: 'Značka upravující přednost', desc: 'Informuje o tom, že na nejbližší křižovatce tato pozemní komunikace již není hlavní.', img: 'CZ-P03_Konec_hlavní_pozemní_komunikace.svg' },
+    { id: 'P4', name: 'Dej přednost v jízdě!', type: 'Značka upravující přednost', desc: 'Označuje vedlejší pozemní komunikaci; přikazuje dát přednost v jízdě.', img: 'Czech_Republic_road_sign_P_4.svg' },
+    { id: 'P5', name: 'Dej přednost v jízdě tramvaji!', type: 'Značka upravující přednost', desc: 'Užívá se na místě, kde je nutno přikázat nebo zdůraznit řidiči, že má dát přednost v jízdě tramvaji.', img: 'P05_CZ.svg' },
+    { id: 'P6', name: 'Stůj, dej přednost v jízdě!', type: 'Značka upravující přednost', desc: 'Označuje vedlejší pozemní komunikaci; řidič je povinen zastavit vozidlo a dát přednost v jízdě.', img: 'Czech_Republic_road_sign_P_6.svg' },
+    { id: 'P7', name: 'Přednost protijedoucích vozidel', type: 'Značka upravující přednost', desc: 'Přikazuje řidiči dát přednost v jízdě protijedoucímu vozidlu, kdy se protijedoucí vozidla nemohou bezpečně vyhnout.', img: 'P07_CZ.svg' },
+    { id: 'P8', name: 'Přednost před protijedoucími vozidly', type: 'Značka upravující přednost', desc: 'Stanoví přednost před protijedoucím vozidlem v případě, kdy se protijedoucí vozidla nemohou bezpečně vyhnout.', img: 'CZ_road_sign_P-8.svg' },
+
+    // ===== ZÁKAZOVÉ (B) =====
+    { id: 'B1', name: 'Zákaz vjezdu všech vozidel (v obou směrech)', type: 'Zákazová značka', desc: 'Zakazuje vjezd všech vozidel v obou směrech.', img: 'CZ_road_sign_B-1.svg' },
+    { id: 'B2', name: 'Zákaz vjezdu všech vozidel', type: 'Zákazová značka', desc: 'Zakazuje vjezd v protisměru do jednosměrné pozemní komunikace.', img: 'CZ_road_sign_B-2.svg' },
+    { id: 'B3', name: 'Zákaz vjezdu všech motorových vozidel s výjimkou motocyklů bez postranního vozíku', type: 'Zákazová značka', desc: 'Zakazuje vjezd všech motorových vozidel s výjimkou motocyklů bez postranního vozíku.', img: 'B03acr.jpg' },
+    { id: 'B4', name: 'Zákaz vjezdu nákladních automobilů', type: 'Zákazová značka', desc: 'Zakazuje vjezd nákladních vozidel.', img: 'B04cr.jpg' },
+    { id: 'B5', name: 'Zákaz vjezdu autobusů', type: 'Zákazová značka', desc: 'Zakazuje vjezd všem autobusům.', img: 'B05cr.jpg' },
+    { id: 'B6', name: 'Zákaz vjezdu traktorů', type: 'Zákazová značka', desc: 'Zakazuje vjezd všem traktorům.', img: 'B06cr.jpg' },
+    { id: 'B7', name: 'Zákaz vjezdu motocyklů', type: 'Zákazová značka', desc: 'Zakazuje vjezd všech motocyklům i mopedům.', img: 'B07cr.jpg' },
+    { id: 'B8', name: 'Zákaz vjezdu jízdních kol', type: 'Zákazová značka', desc: 'Zakazuje vjezd všech jízdním kolům včetně koloběžek.', img: 'B08cr.jpg' },
+    { id: 'B9', name: 'Zákaz vjezdu potahových vozidel', type: 'Zákazová značka', desc: 'Zakazuje vjezd potahových vozidel.', img: 'B09cr.jpg' },
+    { id: 'B10', name: 'Zákaz vjezdu ručních vozíků', type: 'Zákazová značka', desc: 'Zakazuje vjezd ručním vozíkům o celkové šířce větší než 600 mm.', img: 'B10cr.jpg' },
+    { id: 'B11', name: 'Zákaz vjezdu všech motorových vozidel', type: 'Zákazová značka', desc: 'Zakazuje vjezd všech motorových vozidel.', img: 'B11cr.jpg' },
+    { id: 'B12', name: 'Zákaz vjezdu vyznačených vozidel', type: 'Zákazová značka', desc: 'Zakazuje vjezd vozidlům druhů vyznačených symboly.', img: 'B12cr.jpg' },
+    { id: 'B13', name: 'Zákaz vjezdu vozidel, jejichž okamžitá hmotnost přesahuje vyznačenou mez', type: 'Zákazová značka', desc: 'Zakazuje vjezd vozidlům, jejichž okamžitá hmotnost přesahuje vyznačenou mez.', img: 'B13cr.jpg' },
+    { id: 'B14', name: 'Zákaz vjezdu vozidel, jejichž okamžitá hmotnost na nápravu přesahuje vyznačenou mez', type: 'Zákazová značka', desc: 'Zakazuje vjezd vozidlům, jejichž hmotnost na nápravu přesahuje vyznačenou mez.', img: 'B14cr.jpg' },
+    { id: 'B15', name: 'Zákaz vjezdu vozidel, jejichž šířka přesahuje vyznačenou mez', type: 'Zákazová značka', desc: 'Zakazuje vjezd vozidlům, jejichž šířka přesahuje vyznačenou mez.', img: 'B15cr.jpg' },
+    { id: 'B16', name: 'Zákaz vjezdu vozidel, jejichž výška přesahuje vyznačenou mez', type: 'Zákazová značka', desc: 'Zakazuje vjezd vozidlům, jejichž výška přesahuje vyznačenou mez.', img: 'B16cr.jpg' },
+    { id: 'B17', name: 'Zákaz vjezdu vozidel nebo souprav vozidel, jejichž délka přesahuje vyznačenou mez', type: 'Zákazová značka', desc: 'Zakazuje vjezd vozidlům nebo soupravám, jejichž délka přesahuje vyznačenou mez.', img: 'B17cr.jpg' },
+    { id: 'B18', name: 'Zákaz vjezdu vozidel přepravujících nebezpečný náklad', type: 'Zákazová značka', desc: 'Zakazuje vjezd vozidlům přepravujícím výbušniny, snadno hořlavý nebo jinak nebezpečný náklad.', img: 'B18cr.jpg' },
+    { id: 'B19', name: 'Zákaz vjezdu vozidel přepravujících náklad ohrožující životní prostředí', type: 'Zákazová značka', desc: 'Zakazuje vjezd vozidlům přepravujícím náklad, který může způsobit ohrožení životního prostředí.', img: 'B19cr.jpg' },
+    { id: 'B20a', name: 'Nejvyšší dovolená rychlost', type: 'Zákazová značka', desc: 'Zakazuje řidiči překročit rychlost v km/h vyjádřenou číslem na značce.', img: 'B20acr.jpg' },
+    { id: 'B20b', name: 'Konec nejvyšší dovolené rychlosti', type: 'Zákazová značka', desc: 'Ukončuje platnost značky B 20a.', img: 'B20bcr.jpg' },
+    { id: 'B21a', name: 'Zákaz předjíždění', type: 'Zákazová značka', desc: 'Zakazuje řidiči předjíždět motorové vozidlo vlevo.', img: 'B21a.svg' },
+    { id: 'B21b', name: 'Konec zákazu předjíždění', type: 'Zákazová značka', desc: 'Ukončuje platnost značky B 21a.', img: 'B21bcr.jpg' },
+    { id: 'B22a', name: 'Zákaz předjíždění pro nákladní automobily', type: 'Zákazová značka', desc: 'Zakazuje řidiči nákladního automobilu o celkové hmotnosti převyšující 3500 kg předjíždět motorové vozidlo vlevo.', img: 'B22a.svg' },
+    { id: 'B22b', name: 'Konec zákazu předjíždění pro nákladní automobily', type: 'Zákazová značka', desc: 'Ukončuje platnost značky B 22a.', img: 'B22bcr.jpg' },
+    { id: 'B23a', name: 'Zákaz zvukových výstražných znamení', type: 'Zákazová značka', desc: 'Zakazuje řidiči použít zvukové výstražné znamení.', img: 'B23acr.jpg' },
+    { id: 'B23b', name: 'Konec zákazu zvukových výstražných znamení', type: 'Zákazová značka', desc: 'Ukončuje platnost značky B 23a.', img: 'B23bcr.jpg' },
+    { id: 'B24a', name: 'Zákaz odbočování vpravo', type: 'Zákazová značka', desc: 'Zakazuje odbočování vpravo.', img: 'B24acz.jpg' },
+    { id: 'B24b', name: 'Zákaz odbočování vlevo', type: 'Zákazová značka', desc: 'Zakazuje odbočování vlevo.', img: 'B24bcz.jpg' },
+    { id: 'B25', name: 'Zákaz otáčení', type: 'Zákazová značka', desc: 'Zakazuje otáčení.', img: 'B25cr.jpg' },
+    { id: 'B26', name: 'Konec všech zákazů', type: 'Zákazová značka', desc: 'Ukončuje platnost všech značek vyjadřujících zákazy nebo omezení pro jedoucí vozidla.', img: 'CZ_road_sign_B-26.svg' },
+    { id: 'B27', name: 'Povinnost zastavit vozidlo', type: 'Zákazová značka', desc: 'Zakazuje řidiči pokračovat v jízdě bez zastavení vozidla na hraničním přechodu nebo jiném kontrolním místě.', img: 'B27cr.jpg' },
+    { id: 'B28', name: 'Zákaz zastavení', type: 'Zákazová značka', desc: 'Zakazuje zastavení na úseku pozemní komunikace.', img: 'CZ_road_sign_B-28.svg' },
+    { id: 'B29', name: 'Zákaz stání', type: 'Zákazová značka', desc: 'Zakazuje stání na úseku pozemní komunikace.', img: 'CZ_road_sign_B-29.svg' },
+    { id: 'B30', name: 'Zákaz vstupu chodců', type: 'Zákazová značka', desc: 'Zakazuje vstup chodcům.', img: 'B30cr.jpg' },
+    { id: 'B30a', name: 'Zákaz vjezdu osobních přepravníků', type: 'Zákazová značka', desc: 'Zakazuje vjezd i jízdu na osobních přepravnících.', img: 'CZ_road_sign_B-30a.svg' },
+    { id: 'B31', name: 'Zákaz vjezdu pro jezdce na zvířeti', type: 'Zákazová značka', desc: 'Zákaz platí i pro vstup osoby vedoucí takové zvíře.', img: 'B31cr.jpg' },
+    { id: 'B32', name: 'Jiný zákaz', type: 'Zákazová značka', desc: 'Stanoví jiný zákaz než ten, který je možno vyznačit jinou značkou. Zákaz je vyjádřen nápisem na značce.', img: 'B32cr.jpg' },
+    { id: 'B33', name: 'Zákaz vjezdu motorových vozidel s přípojným vozidlem', type: 'Zákazová značka', desc: 'Zákaz platí i pro motorová vozidla s návěsem.', img: 'B33cr.jpg' },
+    { id: 'B34', name: 'Nejmenší vzdálenost mezi vozidly', type: 'Zákazová značka', desc: 'Zakazuje řidiči motorového vozidla jízdu za motorovým vozidlem jedoucím před ním ve vzdálenosti menší než vyznačené na značce.', img: 'B34cr.jpg' },
+
+    // ===== PŘÍKAZOVÉ (C) =====
+    { id: 'C1', name: 'Kruhový objezd', type: 'Příkazová značka', desc: 'Přikazuje jízdu po křižovatce s kruhovým objezdem ve směru šipek na značce.', img: 'CZ_road_sign_C01.svg' },
+    { id: 'C2a', name: 'Přikázaný směr jízdy přímo', type: 'Příkazová značka', desc: 'Přikazuje jízdu směrem přímo.', img: 'CZ_road_sign_C02a.svg' },
+    { id: 'C2b', name: 'Přikázaný směr jízdy vpravo', type: 'Příkazová značka', desc: 'Přikazuje jízdu směrem vpravo.', img: 'CZ_road_sign_C02b.svg' },
+    { id: 'C2c', name: 'Přikázaný směr jízdy vlevo', type: 'Příkazová značka', desc: 'Přikazuje jízdu směrem vlevo.', img: 'CZ_road_sign_C02c.svg' },
+    { id: 'C2d', name: 'Přikázaný směr jízdy přímo a vpravo', type: 'Příkazová značka', desc: 'Přikazuje jízdu směrem přímo a vpravo.', img: 'CZ_road_sign_C02d.svg' },
+    { id: 'C2e', name: 'Přikázaný směr jízdy přímo a vlevo', type: 'Příkazová značka', desc: 'Přikazuje jízdu směrem přímo a vlevo.', img: 'CZ_road_sign_C02e.svg' },
+    { id: 'C2f', name: 'Přikázaný směr jízdy vpravo a vlevo', type: 'Příkazová značka', desc: 'Přikazuje jízdu směrem vpravo a vlevo.', img: 'CZ_road_sign_C02f.svg' },
+    { id: 'C3a', name: 'Přikázaný směr jízdy zde vpravo', type: 'Příkazová značka', desc: 'Přikazuje jízdu ve směru vpravo bezprostředně před značkou.', img: 'CZ_road_sign_C03a.svg' },
+    { id: 'C3b', name: 'Přikázaný směr jízdy zde vlevo', type: 'Příkazová značka', desc: 'Přikazuje jízdu ve směru vlevo bezprostředně před značkou.', img: 'CZ_road_sign_C03b.svg' },
+    { id: 'C4a', name: 'Přikázaný směr objíždění vpravo', type: 'Příkazová značka', desc: 'Přikazuje objíždět ostrůvek, překážku apod. vpravo.', img: 'CZ_road_sign_C04a.svg' },
+    { id: 'C4b', name: 'Přikázaný směr objíždění vlevo', type: 'Příkazová značka', desc: 'Přikazuje objíždět ostrůvek, překážku apod. vlevo.', img: 'CZ_road_sign_C04b.svg' },
+    { id: 'C4c', name: 'Přikázaný směr objíždění vpravo a vlevo', type: 'Příkazová značka', desc: 'Přikazuje objíždět ostrůvek, překážku apod. vpravo a vlevo.', img: 'CZ_road_sign_C04c.svg' },
+    { id: 'C5a', name: 'Sněhové řetězy', type: 'Příkazová značka', desc: 'Přikazuje řidiči motorového vozidla pokračovat v jízdě až po nasazení sněhových řetězů.', img: 'CZ_road_sign_C05a.svg' },
+    { id: 'C5b', name: 'Sněhové řetězy – konec', type: 'Příkazová značka', desc: 'Ukončuje platnost značky C 5a.', img: 'CZ_road_sign_C05b.svg' },
+    { id: 'C6a', name: 'Nejnižší dovolená rychlost', type: 'Příkazová značka', desc: 'Přikazuje řidiči jet nejméně rychlostí v km/h vyjádřenou číslem na značce.', img: 'CZ_road_sign_C06a.30.svg' },
+    { id: 'C6b', name: 'Konec nejnižší dovolené rychlosti', type: 'Příkazová značka', desc: 'Ukončuje platnost značky C 6a.', img: 'CZ_road_sign_C06b.30.svg' },
+    { id: 'C7a', name: 'Stezka pro chodce', type: 'Příkazová značka', desc: 'Označuje pruh nebo stezku určenou pro chodce.', img: 'CZ_road_sign_C07a.svg' },
+    { id: 'C7b', name: 'Konec stezky pro chodce', type: 'Příkazová značka', desc: 'Ukončuje platnost značky C 7a.', img: 'CZ_road_sign_C07b.svg' },
+    { id: 'C8a', name: 'Stezka pro cyklisty', type: 'Příkazová značka', desc: 'Označuje pruh nebo stezku vyhrazenou pro cyklisty.', img: 'CZ_road_sign_C08a.svg' },
+    { id: 'C8b', name: 'Konec stezky pro cyklisty', type: 'Příkazová značka', desc: 'Ukončuje platnost značky C 8a.', img: 'CZ_road_sign_C08b.svg' },
+    { id: 'C9a', name: 'Stezka pro chodce a cyklisty společná', type: 'Příkazová značka', desc: 'Označuje stezku pro chodce a cyklisty, na které není oddělen pruh pro chodce a pruh pro cyklisty.', img: 'CZ_road_sign_C09a.svg' },
+    { id: 'C9b', name: 'Konec stezky pro chodce a cyklisty společné', type: 'Příkazová značka', desc: 'Ukončuje platnost značky C 9a.', img: 'CZ_road_sign_C09b.svg' },
+    { id: 'C10a', name: 'Stezka pro chodce a cyklisty dělená', type: 'Příkazová značka', desc: 'Označuje stezku pro chodce a cyklisty, na které je oddělen pruh pro chodce a pruh pro cyklisty.', img: 'CZ_road_sign_C10a.svg' },
+    { id: 'C10b', name: 'Konec stezky pro chodce a cyklisty dělené', type: 'Příkazová značka', desc: 'Ukončuje platnost značky C 10a.', img: 'CZ-C10b_Konec_stezky_pro_chodce_a_cyklisty.svg' },
+    { id: 'C11a', name: 'Stezka pro jezdce na zvířeti', type: 'Příkazová značka', desc: 'Označuje pruh nebo stezku pro jezdce na zvířeti.', img: 'CZ_road_sign_C11a.svg' },
+    { id: 'C11b', name: 'Konec stezky pro jezdce na zvířeti', type: 'Příkazová značka', desc: 'Ukončuje platnost značky C 11a.', img: 'CZ_road_sign_C11b.svg' },
+    { id: 'C12a', name: 'Přikázaný jízdní pruh', type: 'Příkazová značka', desc: 'Přikazuje řidiči vyznačeného druhu vozidla užít v daném směru takto označený jízdní pruh.', img: 'CZ_road_sign_C12a.svg' },
+    { id: 'C12b', name: 'Konec přikázaného jízdního pruhu', type: 'Příkazová značka', desc: 'Ukončuje platnost značky C 12a.', img: 'CZ_road_sign_C12b.svg' },
+    { id: 'C13a', name: 'Rozsviť světla', type: 'Příkazová značka', desc: 'Ukládá řidiči rozsvítit světla stanovená pro vozidlo jedoucí za snížené viditelnosti.', img: 'CZ_road_sign_C13a.svg' },
+    { id: 'C13b', name: 'Rozsviť světla – konec', type: 'Příkazová značka', desc: 'Ukončuje platnost značky C 13a.', img: 'CZ_road_sign_C13b.svg' },
+    { id: 'C14a', name: 'Jiný příkaz', type: 'Příkazová značka', desc: 'Ukládá jiný příkaz než ten, který je možno uložit jinou značkou. Příkaz je vyjádřen nápisem na značce.', img: 'CZ_road_sign_C14a.svg' },
+    { id: 'C14b', name: 'Konec jiného příkazu', type: 'Příkazová značka', desc: 'Ukončuje platnost značky C 14a.', img: 'CZ_road_sign_C14b.svg' },
+    { id: 'C15a', name: 'Zimní výbava', type: 'Příkazová značka', desc: 'Přikazuje řidiči motorového vozidla pokračovat v jízdě jen za použití zimních pneumatik.', img: 'CZ_road_sign_C-15a.svg' },
+    { id: 'C15b', name: 'Zimní výbava – konec', type: 'Příkazová značka', desc: 'Ukončuje platnost značky C 15a.', img: 'CZ_road_sign_C-15b.svg' },
+
+    // ===== INFORMATIVNÍ ZÓNOVÉ (IZ) =====
+    { id: 'IZ1a', name: 'Dálnice', type: 'Informativní zónová značka', desc: 'Označuje začátek dálnice.', img: 'CZ_traffic_sign_IZ1a.svg' },
+    { id: 'IZ1b', name: 'Konec dálnice', type: 'Informativní zónová značka', desc: 'Označuje konec dálnice.', img: 'CZ_traffic_sign_IZ1b.svg' },
+    { id: 'IZ2a', name: 'Silnice pro motorová vozidla', type: 'Informativní zónová značka', desc: 'Označuje začátek silnice pro motorová vozidla.', img: 'CZ_traffic_sign_IZ2a.svg' },
+    { id: 'IZ2b', name: 'Konec silnice pro motorová vozidla', type: 'Informativní zónová značka', desc: 'Označuje konec silnice pro motorová vozidla.', img: 'CZ_traffic_sign_IZ2b.svg' },
+    { id: 'IZ3a', name: 'Tunel', type: 'Informativní zónová značka', desc: 'Označuje blízkost vjezdu do tunelu, kde platí zvláštní pravidla provozu.', img: 'IP8a-INFZN.svg' },
+    { id: 'IZ3b', name: 'Konec tunelu', type: 'Informativní zónová značka', desc: 'Označuje místo, kde končí platnost zvláštních pravidel provozu v tunelu.', img: 'IP8b-INFZN.svg' },
+    { id: 'IZ4a', name: 'Obec', type: 'Informativní zónová značka', desc: 'Označuje začátek obce a informuje o jejím názvu.', img: 'IS12acr.jpg' },
+    { id: 'IZ4b', name: 'Konec obce', type: 'Informativní zónová značka', desc: 'Označuje konec obce.', img: 'IS12bcr.jpg' },
+    { id: 'IZ4c', name: 'Obec v jazyce národnostní menšiny', type: 'Informativní zónová značka', desc: 'Informuje o názvu obce v jazyce národnostní menšiny.', img: 'CZ-IS12c_Obec_v_jazyce_národnostní_menšiny_(2009).jpg' },
+    { id: 'IZ4d', name: 'Konec obce v jazyce národnostní menšiny', type: 'Informativní zónová značka', desc: 'Označuje konec obce v jazyce národnostní menšiny.', img: 'CZ-IS12d_Konec_obce_v_jazyce_národnostní_menšiny_(2009).jpg' },
+    { id: 'IZ5a', name: 'Obytná zóna', type: 'Informativní zónová značka', desc: 'Označuje obytnou zónu se specifickými pravidly provozu.', img: 'IP26a.svg' },
+    { id: 'IZ5b', name: 'Konec obytné zóny', type: 'Informativní zónová značka', desc: 'Označuje konec obytné zóny.', img: 'IP26b.svg' },
+    { id: 'IZ6a', name: 'Pěší zóna', type: 'Informativní zónová značka', desc: 'Označuje oblast určenou především pro chodce.', img: 'IP27a.svg' },
+    { id: 'IZ6b', name: 'Konec pěší zóny', type: 'Informativní zónová značka', desc: 'Označuje konec pěší zóny.', img: 'IP27b.svg' },
+    { id: 'IZ7a', name: 'Nízkoemisní zóna', type: 'Informativní zónová značka', desc: 'Označuje oblast, ve které je stanovena nízkoemisní zóna.', img: 'CZ-IZ07a_Emisní_zóna_(2016).jpg' },
+    { id: 'IZ7b', name: 'Konec nízkoemisní zóny', type: 'Informativní zónová značka', desc: 'Označuje konec nízkoemisní zóny.', img: 'CZ-IZ09b_Konec_emisní_zóny_(2016).jpg' },
+    { id: 'IZ8a', name: 'Zóna s dopravním omezením', type: 'Informativní zónová značka', desc: 'Označuje oblast, kde platí nebezpečí, zákaz nebo omezení vyplývající z užitých symbolů značky.', img: 'IP25a.svg' },
+    { id: 'IZ8b', name: 'Konec zóny s dopravním omezením', type: 'Informativní zónová značka', desc: 'Označuje konec zóny s dopravním omezením.', img: 'IP25b.svg' },
+    { id: 'IZ9a', name: 'Zóna pro cyklisty', type: 'Informativní zónová značka', desc: 'Označuje zónu pro cyklisty.', img: 'CZ-IZ_9a_Zóna_pro_cyklisty_(2016).jpg' },
+    { id: 'IZ9b', name: 'Konec zóny pro cyklisty', type: 'Informativní zónová značka', desc: 'Označuje konec zóny pro cyklisty.', img: 'CZ-IZ_9b_Konec_zóny_pro_cyklisty_(2016).jpg' },
+    { id: 'IZ10a', name: 'Sdílená zóna', type: 'Informativní zónová značka', desc: 'Označuje sdílenou zónu.', img: 'IZ_10a_Sdílená_zóna_(2024).jpg' },
+    { id: 'IZ10b', name: 'Konec sdílené zóny', type: 'Informativní zónová značka', desc: 'Označuje konec sdílené zóny.', img: 'IZ_10b_Konec_sdílené_zóny_(2024).jpg' },
+
+    // ===== INFORMATIVNÍ PROVOZNÍ (IP) =====
+    { id: 'IP1', name: 'Okruh', type: 'Informativní provozní značka', desc: 'Označuje dopravní okruh zřízený pro objíždění obce nebo její části.', img: 'CZ_traffic_sign_IP1a.svg' },
+    { id: 'IP2', name: 'Zpomalovací práh', type: 'Informativní provozní značka', desc: 'Informuje o místu umělé nerovnosti na vozovce.', img: 'IP2-INFZN.svg' },
+    { id: 'IP3', name: 'Podchod nebo nadchod', type: 'Informativní provozní značka', desc: 'Označuje podchod nebo nadchod.', img: 'IP3-INFZN.svg' },
+    { id: 'IP4a', name: 'Jednosměrný provoz', type: 'Informativní provozní značka', desc: 'Označuje jednosměrnou pozemní komunikaci.', img: 'IP4a-INFZN.svg' },
+    { id: 'IP4b', name: 'Jednosměrný provoz (varianta)', type: 'Informativní provozní značka', desc: 'Označuje jednosměrnou pozemní komunikaci – čtvercová tvarová varianta.', img: 'CZ_road_sign_IP-4b.svg' },
+    { id: 'IP4c', name: 'Jednosměrný provoz s povoleným provozem cyklistů v protisměru', type: 'Informativní provozní značka', desc: 'Označuje jednosměrnou komunikaci a povolení vjezdu cyklistů v protisměru.', img: 'IP_04c_Jednosměrný_provoz_s_povoleným_provozem_cyklistů_v_protisměru_(2025).tif' },
+    { id: 'IP5', name: 'Doporučená rychlost', type: 'Informativní provozní značka', desc: 'Vyjadřuje číslem uvedeným na značce doporučenou rychlost v km/h.', img: 'CZ_road_sign_IP-5_(70).svg' },
+    { id: 'IP6', name: 'Přechod pro chodce', type: 'Informativní provozní značka', desc: 'Označuje přechod pro chodce, zejména tam kde by jej řidič jinak neočekával.', img: 'CZ_road_sign_IP-6.svg' },
+    { id: 'IP7', name: 'Přejezd pro cyklisty', type: 'Informativní provozní značka', desc: 'Označuje přejezd pro cyklisty, zejména tam kde by jej řidič jinak neočekával.', img: 'CZ_road_sign_IP-7.svg' },
+    { id: 'IP9', name: 'Nouzové stání', type: 'Informativní provozní značka', desc: 'Označuje místo vyhrazené pro nouzové stání vozidla.', img: 'IP9-INFZN.svg' },
+    { id: 'IP10a', name: 'Slepá pozemní komunikace', type: 'Informativní provozní značka', desc: 'Označuje pozemní komunikaci, která dále končí nebo po které nelze dále pokračovat v jízdě.', img: 'CZ_road_sign_IP-10a.svg' },
+    { id: 'IP10b', name: 'Návěst před slepou pozemní komunikací', type: 'Informativní provozní značka', desc: 'Upozorňuje před křižovatkou na slepou pozemní komunikaci.', img: 'CZ_road_sign_IP-10b.svg' },
+    { id: 'IP11a', name: 'Parkoviště', type: 'Informativní provozní značka', desc: 'Označuje místo, kde je dovoleno zastavení a stání.', img: 'CZ-IP11a_Parkoviště.svg' },
+    { id: 'IP11b', name: 'Parkoviště (kolmé nebo šikmé stání)', type: 'Informativní provozní značka', desc: 'Označuje místo, kde je dovoleno zastavení a stání s vyznačeným způsobem stání.', img: 'IP11bcr.jpg' },
+    { id: 'IP11c', name: 'Parkoviště (podélné stání)', type: 'Informativní provozní značka', desc: 'Označuje místo, kde je dovoleno zastavení a stání s podélným stáním.', img: 'IP11ccr.jpg' },
+    { id: 'IP11d', name: 'Parkoviště (stání na chodníku kolmé nebo šikmé)', type: 'Informativní provozní značka', desc: 'Označuje místo, kde je dovoleno stání na chodníku kolmé nebo šikmé.', img: 'IP11dcr.jpg' },
+    { id: 'IP11e', name: 'Parkoviště (stání na chodníku podélné)', type: 'Informativní provozní značka', desc: 'Označuje místo, kde je dovoleno stání na chodníku podélné.', img: 'IP11ecr.jpg' },
+    { id: 'IP11f', name: 'Parkoviště (částečné stání na chodníku kolmé nebo šikmé)', type: 'Informativní provozní značka', desc: 'Označuje místo, kde je dovoleno částečné stání na chodníku kolmé nebo šikmé.', img: 'IP11fcr.jpg' },
+    { id: 'IP11g', name: 'Parkoviště (částečné stání na chodníku podélné)', type: 'Informativní provozní značka', desc: 'Označuje místo, kde je dovoleno částečné stání na chodníku podélné.', img: 'IP11gcr.jpg' },
+    { id: 'IP12', name: 'Vyhrazené parkoviště', type: 'Informativní provozní značka', desc: 'Označuje parkoviště vyhrazené pro určené vozidlo nebo skupinu vozidel.', img: 'IP12cr.jpg' },
+    { id: 'IP13a', name: 'Kryté parkoviště', type: 'Informativní provozní značka', desc: 'Informuje o krytém parkovišti nebo parkovací garáži.', img: 'IP13acr.jpg' },
+    { id: 'IP13b', name: 'Parkoviště s parkovacím kotoučem', type: 'Informativní provozní značka', desc: 'Označuje parkoviště, na kterém řidič musí při začátku stání umístit parkovací kotouč.', img: 'IP13bcr.jpg' },
+    { id: 'IP13c', name: 'Parkoviště s parkovacím automatem', type: 'Informativní provozní značka', desc: 'Označuje placené parkoviště s parkovacím automatem.', img: 'IP13ccr.jpg' },
+    { id: 'IP13d', name: 'Parkoviště P + R', type: 'Informativní provozní značka', desc: 'Označuje parkoviště, ze kterého lze pokračovat v jízdě prostředkem hromadné dopravy.', img: 'IP13dcr.jpg' },
+    { id: 'IP13e', name: 'Parkoviště K + R', type: 'Informativní provozní značka', desc: 'Označuje parkoviště, na kterém lze zastavit za účelem vystoupení a nastoupení osob.', img: 'CZ-IP13e_Parkoviště_K_+_R.jpg' },
+    { id: 'IP13f', name: 'Parkoviště P + D', type: 'Informativní provozní značka', desc: 'Označuje parkoviště pro vozidla, jejichž řidič odtud bezprostředně pokračuje jako cestující v jiném vozidle.', img: 'IP_13f_Parkoviště_P+D_(2024).jpg' },
+    { id: 'IP16', name: 'Uspořádání jízdních pruhů', type: 'Informativní provozní značka', desc: 'Vyznačuje počet a uspořádání jízdních pruhů.', img: 'IP16cr.jpg' },
+    { id: 'IP17', name: 'Uspořádání jízdních pruhů (s průběžným pruhem)', type: 'Informativní provozní značka', desc: 'Vyznačuje počet a uspořádání jízdních pruhů a průběžný jízdní pruh.', img: 'IP17cr.jpg' },
+    { id: 'IP18a', name: 'Zvýšení počtu jízdních pruhů', type: 'Informativní provozní značka', desc: 'Vyznačuje zvýšení počtu jízdních pruhů.', img: 'IP18acr.jpg' },
+    { id: 'IP18b', name: 'Snížení počtu jízdních pruhů', type: 'Informativní provozní značka', desc: 'Vyznačuje snížení počtu jízdních pruhů.', img: 'IP18bcr.jpg' },
+    { id: 'IP18c', name: 'Jízdní pruh pro pomalá vozidla', type: 'Informativní provozní značka', desc: 'Vyznačuje přídatný jízdní pruh pro motorová vozidla, která nedosáhnou vyšší rychlosti než 60 km/h.', img: 'IP18ccr.jpg' },
+    { id: 'IP19', name: 'Řadicí pruhy', type: 'Informativní provozní značka', desc: 'Vyznačuje způsob řazení do jízdních pruhů před křižovatkou nebo místem odbočení.', img: 'IP19cr.jpg' },
+    { id: 'IP20a', name: 'Vyhrazený jízdní pruh', type: 'Informativní provozní značka', desc: 'Vyznačuje jízdní pruh vyhrazený pro autobusy MHD nebo trolejbusy.', img: 'IP20a.svg' },
+    { id: 'IP20b', name: 'Konec vyhrazeného jízdního pruhu', type: 'Informativní provozní značka', desc: 'Ukončuje platnost značky IP 20a.', img: 'IP20b.svg' },
+    { id: 'IP21', name: 'Omezení v jízdním pruhu', type: 'Informativní provozní značka', desc: 'Vyznačuje počet a uspořádání jízdních pruhů a vyjadřuje pro příslušný jízdní pruh omezení.', img: 'IP21a.svg' },
+    { id: 'IP22', name: 'Změna organizace dopravy', type: 'Informativní provozní značka', desc: 'Upozorňuje vhodným nápisem a symbolem na změnu místní úpravy provozu.', img: 'IP22.svg' },
+    { id: 'IP23a', name: 'Objíždění tramvaje', type: 'Informativní provozní značka', desc: 'Označuje místo, kde lze objíždět vlevo tramvaj stojící v zastávce.', img: 'IP23a.svg' },
+    { id: 'IP23b', name: 'Objíždění tramvaje (jízda podél tramvaje vlevo)', type: 'Informativní provozní značka', desc: 'Vyznačuje úsek pozemní komunikace, kde je povolena jízda podél tramvaje vlevo.', img: 'IP23b.svg' },
+    { id: 'IP24', name: 'Únikový pruh', type: 'Informativní provozní značka', desc: 'Informuje o únikovém pruhu, kde lze v případě nouze zastavit vozidlo.', img: 'Czech_Republic_road_sign_IP_24.svg' },
+    { id: 'IP28a', name: 'Zpoplatnění provozu', type: 'Informativní provozní značka', desc: 'Informuje o povinnosti uhradit za stanovených podmínek mýtné nebo časový poplatek.', img: 'IP28a.svg' },
+    { id: 'IP28b', name: 'Nejvyšší dovolené rychlosti', type: 'Informativní provozní značka', desc: 'Informuje o vybraných nejvyšších dovolených rychlostech jízdy v obci, mimo obec, na dálnici a silnici pro motorová vozidla.', img: 'Cze_IP28_-_Nejvyšší_dovolené_rychlosti.svg' },
+    { id: 'IP29', name: 'Střídavé řazení', type: 'Informativní provozní značka', desc: 'Označuje místo, kde při souběžné jízdě platí střídavé řazení do jízdního proudu průběžného pruhu.', img: 'IP29.svg' },
+    { id: 'IP30', name: 'Státní hranice', type: 'Informativní provozní značka', desc: 'Označuje státní hranici při vstupu do České republiky.', img: 'Czech-traffic-signs-eu-cz.svg' },
+    { id: 'IP31a', name: 'Měření rychlosti', type: 'Informativní provozní značka', desc: 'Označuje začátek úseku měření rychlosti jízdy obecní policií.', img: 'IP31a.svg' },
+    { id: 'IP31b', name: 'Konec měření rychlosti', type: 'Informativní provozní značka', desc: 'Označuje konec úseku měření rychlosti jízdy obecní policií.', img: 'IP31b.svg' },
+    { id: 'IP32', name: 'Bezpečný odstup', type: 'Informativní provozní značka', desc: 'Ve spojení s příslušnou vodorovnou dopravní značkou informuje o bezpečném odstupu mezi jedoucími vozidly.', img: 'IP_32_Bezpečný_odstup_(2024).jpg' },
+
+    // ===== INFORMATIVNÍ SMĚROVÉ (IS) =====
+    { id: 'IS1a', name: 'Směrová tabule pro příjezd k dálnici (přímo)', type: 'Informativní směrová značka', desc: 'Informuje o směru k vyznačenému cíli s využitím dálnice – směr přímo.', img: 'IS1a-INFZN.svg' },
+    { id: 'IS1b', name: 'Směrová tabule pro příjezd k dálnici (vlevo)', type: 'Informativní směrová značka', desc: 'Informuje o směru k vyznačenému cíli s využitím dálnice – odbočení vlevo.', img: 'CZ-IS01b_Směrová_tabule_pro_příjezd_k_dálnici_(vlevo)_(2016_-_verze_2015-07-31).jpg' },
+    { id: 'IS1c', name: 'Směrová tabule pro příjezd k dálnici (vpravo)', type: 'Informativní směrová značka', desc: 'Informuje o směru k vyznačenému cíli s využitím dálnice – odbočení vpravo.', img: 'IS1d-INFZN.svg' },
+    { id: 'IS1d', name: 'Směrová tabule před nájezdem na dálnici (přímo)', type: 'Informativní směrová značka', desc: 'Vyznačuje směr nájezdu na dálnici, její cíl a číslo – přímo.', img: 'CZ-IS01d_Směrová_tabule_před_nájezdem_na_dálnici_(přímo)_(2016).jpg' },
+    { id: 'IS1e', name: 'Směrová tabule před nájezdem na dálnici (vlevo)', type: 'Informativní směrová značka', desc: 'Vyznačuje směr nájezdu na dálnici, její cíl a číslo – vlevo.', img: 'IS1c-INFZN.svg' },
+    { id: 'IS1f', name: 'Směrová tabule před nájezdem na dálnici (vpravo)', type: 'Informativní směrová značka', desc: 'Vyznačuje směr nájezdu na dálnici, její cíl a číslo – vpravo.', img: 'IS1f.svg' },
+    { id: 'IS2a', name: 'Směrová tabule pro příjezd k silnici pro motorová vozidla (přímo)', type: 'Informativní směrová značka', desc: 'Informuje o směru k vyznačenému cíli s využitím silnice pro motorová vozidla – přímo.', img: 'CZ-IS02a_Směrová_tabule_pro_příjezd_k_silnici_pro_motorová_vozidla_(přímo)_(2016).jpg' },
+    { id: 'IS2b', name: 'Směrová tabule pro příjezd k silnici pro motorová vozidla (vlevo)', type: 'Informativní směrová značka', desc: 'Informuje o směru k vyznačenému cíli s využitím silnice pro motorová vozidla – vlevo.', img: 'CZ-IS02b_Směrová_tabule_pro_příjezd_k_silnici_pro_motorová_vozidla_(vlevo)_(2016).jpg' },
+    { id: 'IS2c', name: 'Směrová tabule pro příjezd k silnici pro motorová vozidla (vpravo)', type: 'Informativní směrová značka', desc: 'Informuje o směru k vyznačenému cíli s využitím silnice pro motorová vozidla – vpravo.', img: 'CZ-IS02c_Směrová_tabule_pro_příjezd_k_silnici_pro_motorová_vozidla_(vpravo)_(2016).jpg' },
+    { id: 'IS2d', name: 'Směrová tabule před nájezdem na silnici pro motorová vozidla (přímo)', type: 'Informativní směrová značka', desc: 'Vyznačuje směr nájezdu na silnici pro motorová vozidla, její cíl a číslo – přímo.', img: 'CZ-IS02d_Směrová_tabule_před_nájezdem_na_silnici_pro_motorová_vozidla_(přímo)_(2016).jpg' },
+    { id: 'IS2e', name: 'Směrová tabule před nájezdem na silnici pro motorová vozidla (vlevo)', type: 'Informativní směrová značka', desc: 'Vyznačuje směr nájezdu na silnici pro motorová vozidla, její cíl a číslo – vlevo.', img: 'CZ-IS02e_Směrová_tabule_před_nájezdem_na_silnici_pro_motorová_vozidla_(vlevo)_(2016).jpg' },
+    { id: 'IS2f', name: 'Směrová tabule před nájezdem na silnici pro motorová vozidla (vpravo)', type: 'Informativní směrová značka', desc: 'Vyznačuje směr nájezdu na silnici pro motorová vozidla, její cíl a číslo – vpravo.', img: 'CZ-IS02f_Směrová_tabule_před_nájezdem_na_silnici_pro_motorová_vozidla_(vpravo)_(2016).jpg' },
+    { id: 'IS3a', name: 'Směrová tabule s cílem (přímo)', type: 'Informativní směrová značka', desc: 'Informuje o směru a vzdálenosti k vyznačenému cíli – přímo.', img: 'IS3a-INFZN.svg' },
+    { id: 'IS3b', name: 'Směrová tabule s cílem (vlevo)', type: 'Informativní směrová značka', desc: 'Informuje o směru a vzdálenosti k vyznačenému cíli – vlevo.', img: 'CZ-IS03b_Směrová_tabule_s_cílem_(vlevo)_(2016).jpg' },
+    { id: 'IS3c', name: 'Směrová tabule s cílem (vpravo)', type: 'Informativní směrová značka', desc: 'Informuje o směru a vzdálenosti k vyznačenému cíli – vpravo.', img: 'CZ-IS03c_Směrová_tabule_s_cílem_(vpravo)_(2016).jpg' },
+    { id: 'IS4a', name: 'Směrová tabule s místním cílem (přímo)', type: 'Informativní směrová značka', desc: 'Informuje o směru a vzdálenosti k vyznačenému místnímu cíli – přímo.', img: 'IS4a-INFZN.svg' },
+    { id: 'IS4b', name: 'Směrová tabule s místním cílem (vlevo)', type: 'Informativní směrová značka', desc: 'Informuje o směru a vzdálenosti k vyznačenému místnímu cíli – vlevo.', img: 'CZ-IS04b_Směrová_tabule_s_místním_cílem_(vlevo)_(2016).jpg' },
+    { id: 'IS4c', name: 'Směrová tabule s místním cílem (vpravo)', type: 'Informativní směrová značka', desc: 'Informuje o směru a vzdálenosti k vyznačenému místnímu cíli – vpravo.', img: 'IS4d-INFZN.svg' },
+    { id: 'IS5', name: 'Směrová tabule k jinému cíli', type: 'Informativní směrová značka', desc: 'Informuje o směru a vzdálenosti k jinému cíli než obci nebo její části (letiště, nádraží, průmyslová zóna apod.).', img: 'IS5-INFZN.svg' },
+    { id: 'IS6a', name: 'Označení křižovatky', type: 'Informativní směrová značka', desc: 'Informuje na dálnici a silnici pro motorová vozidla o vzdálenosti k nejbližší křižovatce a o číslu výjezdu.', img: 'CZ-IS06a_Označení_křižovatky_(2016).jpg' },
+    { id: 'IS6b', name: 'Návěst před křižovatkou', type: 'Informativní směrová značka', desc: 'Informuje na dálnici a silnici pro motorová vozidla o směru k vyznačeným cílům.', img: 'CZ-IS06b_Návěst_před_křižovatkou_(2016).jpg' },
+    { id: 'IS6d', name: 'Návěst v křižovatce', type: 'Informativní směrová značka', desc: 'Informuje na dálnici nebo silnici pro motorová vozidla o směru k vyznačeným cílům a počtu jízdních pruhů.', img: 'CZ-IS06d_Návěst_v_křižovatce_(2016).jpg' },
+    { id: 'IS6e', name: 'Směrová návěst pro směr přímo', type: 'Informativní směrová značka', desc: 'Informuje na dálnici nebo silnici pro motorová vozidla o cílech a počtu jízdních pruhů ve směru přímo.', img: 'CZ-IS06e_Návěst_v_křižovatce_(2016).jpg' },
+    { id: 'IS6f', name: 'Směrová návěst před odbočením (vlevo)', type: 'Informativní směrová značka', desc: 'Informuje na dálnici nebo silnici pro motorová vozidla o cílech a počtu jízdních pruhů ve směru odbočení.', img: 'CZ-IS06f_Návěst_v_křižovatce_(2016).jpg' },
+    { id: 'IS6g', name: 'Směrová návěst před odbočením (vpravo)', type: 'Informativní směrová značka', desc: 'Informuje na dálnici nebo silnici pro motorová vozidla o cílech a počtu jízdních pruhů ve směru odbočení vpravo.', img: 'CZ-IS06g_Návěst_v_křižovatce_(2016).jpg' },
+    { id: 'IS7a', name: 'Směrová návěst pro odbočení', type: 'Informativní směrová značka', desc: 'Informuje o cíli ve směru odbočení na dálnici nebo jiné pozemní komunikaci.', img: 'CZ-IS07a_Návěst_pro_odbočení_(2016).jpg' },
+    { id: 'IS7b', name: 'Směrová tabule pro výjezd', type: 'Informativní směrová značka', desc: 'Informuje o číslu výjezdu z dálnice nebo silnice pro motorová vozidla na jinou pozemní komunikaci.', img: 'CZ-IS07b_Výjezd_(2016).jpg' },
+    { id: 'IS8a', name: 'Dálková návěst s šipkou', type: 'Informativní směrová značka', desc: 'Informuje o cílech a o směru nebo vzdálenosti k uvedeným cílům v kilometrech.', img: 'CZ-IS08a_Dálková_návěst_(s_šipkou)_(2016).jpg' },
+    { id: 'IS8b', name: 'Dálková návěst se vzdálenostmi', type: 'Informativní směrová značka', desc: 'Informuje o cílech a vzdálenostech k nim v kilometrech.', img: 'CZ-IS08b_Dálková_návěst_(se_vzdálenostmi)_(2016).jpg' },
+    { id: 'IS9a', name: 'Návěst před úrovňovou křižovatkou', type: 'Informativní směrová značka', desc: 'Informuje o směru k vyznačeným cílům z nejbližší křižovatky, případně i o vzdálenosti k ní.', img: 'CZ-IS09a_Návěst_před_úrovňovou_křižovatkou_(2016).jpg' },
+    { id: 'IS9b', name: 'Návěst před okružní křižovatkou', type: 'Informativní směrová značka', desc: 'Informuje o směru k vyznačeným cílům z nejbližší okružní křižovatky.', img: 'CZ-IS09b_Návěst_před_okružní_křižovatkou_(2016_-_verze_2015-07-31).jpg' },
+    { id: 'IS9c', name: 'Návěst před křižovatkou s omezením', type: 'Informativní směrová značka', desc: 'Informuje o omezení provozu nebo o nebezpečí za nejbližší křižovatkou.', img: 'CZ-IS09c_Návěst_před_křižovatkou_s_omezením_(2016).jpg' },
+    { id: 'IS9d', name: 'Návěst před křižovatkou s omezením (s objížďkou)', type: 'Informativní směrová značka', desc: 'Informuje o omezení provozu nebo o nebezpečí za nejbližší křižovatkou a o směru objíždění.', img: 'CZ-IS09d_Návěst_před_křižovatkou_s_omezením_(2016).jpg' },
+    { id: 'IS9e', name: 'Návěst před křižovatkou s omezením (zákaz odbočení vlevo)', type: 'Informativní směrová značka', desc: 'Informuje o křižovatce, na které je zakázáno odbočovat vlevo, a o směru objíždění.', img: 'CZ-IS09e_Návěst_před_křižovatkou_s_omezením_(2016_-_verze_2015-07-31).jpg' },
+    { id: 'IS10a', name: 'Návěst změny směru jízdy', type: 'Informativní směrová značka', desc: 'Informuje zejména o změně směru jízdy na pozemní komunikaci a vyznačuje počet a uspořádání jízdních pruhů.', img: 'IS10a.svg' },
+    { id: 'IS10b', name: 'Návěst změny směru jízdy (varianta)', type: 'Informativní směrová značka', desc: 'Informuje o změně směru jízdy na pozemní komunikaci – variantní provedení.', img: 'IS10b.svg' },
+    { id: 'IS10c', name: 'Návěst změny směru jízdy před překážkou', type: 'Informativní směrová značka', desc: 'Informuje o změně směru jízdy před trvalou překážkou a vyznačuje počet a uspořádání jízdních pruhů.', img: 'CZ-IS10c_Návěst_změny_směru_jízdy_(2016).jpg' },
+    { id: 'IS10d', name: 'Návěst změny směru jízdy s omezením', type: 'Informativní směrová značka', desc: 'Informuje o změně směru jízdy a zároveň vyznačuje omezení platné pro příslušný jízdní pruh.', img: 'IS10e.svg' },
+    { id: 'IS10e', name: 'Návěst doporučeného způsobu odbočení cyklistů vlevo', type: 'Informativní směrová značka', desc: 'Vyznačuje doporučený způsob odbočení cyklistů vlevo příčným přejetím nebo převedením jízdního kola.', img: 'CZ-IS10e_Návěst_doporučeného_způsobu_odbočení_cyklistů_vlevo.jpg' },
+    { id: 'IS11a', name: 'Návěst před objížďkou', type: 'Informativní směrová značka', desc: 'Informuje o uzavírce nebo omezení na pozemní komunikaci a vyznačuje symbol příslušné zákazové značky.', img: 'IS11a.svg' },
+    { id: 'IS11b', name: 'Směrová tabule pro vyznačení objížďky (slovní)', type: 'Informativní směrová značka', desc: 'Vyznačuje směr a průběh objížďky se slovním označením směru.', img: 'IS11bcr.jpg' },
+    { id: 'IS11c', name: 'Směrová tabule pro vyznačení objížďky', type: 'Informativní směrová značka', desc: 'Vyznačuje směr a průběh objížďky – oranžovo-černé provedení.', img: 'CZ-IS11c_Směrová_tabule_pro_vyznačení_objížďky_(2016).jpg' },
+    { id: 'IS11d', name: 'Směrová tabule pro vyznačení objížďky (s číslem silnice)', type: 'Informativní směrová značka', desc: 'Vyznačuje směr a průběh objížďky; na značce se uvádí číslo dálnice nebo silnice, pro kterou je objížďka vyznačena.', img: 'CZ-IS11d_Směrová_tabule_pro_vyznačení_objížďky_(2016).jpg' },
+    { id: 'IS12a', name: 'Směrová tabule pro náhradní trasu dálnice (přímo)', type: 'Informativní směrová značka', desc: 'Informuje o čísle náhradní trasy dálnice a označuje směr jejího pokračování – přímo.', img: 'IS_12a_Směrová_tabule_pro_náhradní_trasu_dálnice_(přímo).tif' },
+    { id: 'IS12b', name: 'Směrová tabule pro náhradní trasu dálnice (vlevo)', type: 'Informativní směrová značka', desc: 'Informuje o čísle náhradní trasy dálnice a označuje směr jejího pokračování – vlevo.', img: 'IS_12b_Směrová_tabule_pro_náhradní_trasu_dálnice_(vlevo).tif' },
+    { id: 'IS12c', name: 'Směrová tabule pro náhradní trasu dálnice (vpravo)', type: 'Informativní směrová značka', desc: 'Informuje o čísle náhradní trasy dálnice a označuje směr jejího pokračování – vpravo.', img: 'IS_12c_Směrová_tabule_pro_náhradní_trasu_dálnice_(vpravo).tif' },
+    { id: 'IS12d', name: 'Náhradní trasa', type: 'Informativní směrová značka', desc: 'Informuje zpravidla na dálnici o začátku trvale vyznačené náhradní trasy dálnice a jejím čísle.', img: 'IS_12d_Náhradní_trasa.tif' },
+    { id: 'IS13', name: 'Blízká návěst', type: 'Informativní směrová značka', desc: 'Informuje o nejbližším cíli a o vzdálenosti v kilometrech k němu.', img: 'IS13cr.jpg' },
+    { id: 'IS14', name: 'Hranice územního celku', type: 'Informativní směrová značka', desc: 'Označuje hranici příslušného územního celku, například kraje nebo okresu.', img: 'CZ-IS14_Hranice_územního_celku_(2016).jpg' },
+    { id: 'IS15a', name: 'Jiný název', type: 'Informativní směrová značka', desc: 'Informuje například o názvu řeky, pohoří, přírodní rezervace nebo části obce.', img: 'IS15acr.jpg' },
+    { id: 'IS15b', name: 'Jiný název (délka tunelu nebo mostu)', type: 'Informativní směrová značka', desc: 'Uvádí název a délku tunelu nebo mostu.', img: 'IS15bcr.jpg' },
+    { id: 'IS16a', name: 'Číslo dálnice', type: 'Informativní směrová značka', desc: 'Informuje o číslu příslušné dálnice.', img: 'CZ_traffic_sign_IS16a_-_D5.svg' },
+    { id: 'IS16b', name: 'Číslo silnice (I. nebo II. třída)', type: 'Informativní směrová značka', desc: 'Informuje o číslu příslušné silnice I. nebo II. třídy.', img: 'SilniceI4.svg' },
+    { id: 'IS17', name: 'Číslo silnice pro mezinárodní provoz', type: 'Informativní směrová značka', desc: 'Informuje o číslu příslušné silnice pro mezinárodní provoz (E-silnice).', img: 'CZ_traffic_sign_IS17_-_E50.svg' },
+    { id: 'IS18a', name: 'Kilometrovník', type: 'Informativní směrová značka', desc: 'Označuje staničení, tj. vzdálenost od počátku pozemní komunikace.', img: 'IS18acr.jpg' },
+    { id: 'IS18b', name: 'Kilometrovník (s šipkou k hlásce)', type: 'Informativní směrová značka', desc: 'Označuje staničení a na značce se šipkou vyznačuje směr k nejbližší hlásce tísňového volání.', img: 'IS18bcr.jpg' },
+    { id: 'IS19a', name: 'Směrová tabule pro cyklisty (přímo)', type: 'Informativní směrová značka', desc: 'Informuje o směru a vzdálenosti k vyznačenému cíli cyklistické trasy a o čísle trasy – přímo.', img: 'CZ-IS19a_Směrová_tabule_pro_cyklisty_(s_jedním_cílem)_(2016).jpg' },
+    { id: 'IS19b', name: 'Směrová tabule pro cyklisty (vlevo)', type: 'Informativní směrová značka', desc: 'Informuje o směru a vzdálenosti k vyznačenému cíli cyklistické trasy a o čísle trasy – vlevo.', img: 'IS19dcr.jpg' },
+    { id: 'IS19c', name: 'Směrová tabule pro cyklisty (vpravo)', type: 'Informativní směrová značka', desc: 'Informuje o směru a vzdálenosti k vyznačenému cíli cyklistické trasy a o čísle trasy – vpravo.', img: 'IS19ccr.jpg' },
+    { id: 'IS20', name: 'Návěst pro cyklisty', type: 'Informativní směrová značka', desc: 'Informuje o směru a čísle cyklistické trasy, o jejím průběhu v místě křížení nebo křižovatky.', img: 'IS20cr.jpg' },
+    { id: 'IS21a', name: 'Směrová tabulka pro cyklisty (přímo)', type: 'Informativní směrová značka', desc: 'Označuje směr cyklistické trasy – přímo.', img: 'IS_21a_Směrová_tabulka_pro_cyklisty_(přímo).png' },
+    { id: 'IS21b', name: 'Směrová tabulka pro cyklisty (vlevo)', type: 'Informativní směrová značka', desc: 'Označuje směr cyklistické trasy – vlevo.', img: 'IS_21b_Směrová_tabulka_pro_cyklisty_(vlevo).png' },
+    { id: 'IS21c', name: 'Směrová tabulka pro cyklisty (vpravo)', type: 'Informativní směrová značka', desc: 'Označuje směr cyklistické trasy – vpravo.', img: 'IS_21c_Směrová_tabulka_pro_cyklisty_(vpravo).png' },
+    { id: 'IS21d', name: 'Konec cyklistické trasy', type: 'Informativní směrová značka', desc: 'Označuje konec cyklistické trasy.', img: 'IS_21d_Konec_cyklistické_trasy.png' },
+    { id: 'IS22a', name: 'Označení názvu ulice (přímo)', type: 'Informativní směrová značka', desc: 'Informuje o názvu a průběhu vyznačené ulice.', img: 'CZ-IS22a_Označení_názvu_ulice.jpg' },
+    { id: 'IS22b', name: 'Označení názvu ulice (vlevo)', type: 'Informativní směrová značka', desc: 'Informuje o názvu ulice a směru k ní – vlevo.', img: 'CZ-IS22b_Označení_názvu_ulice.jpg' },
+    { id: 'IS22c', name: 'Označení názvu ulice (vpravo)', type: 'Informativní směrová značka', desc: 'Informuje o názvu ulice a směru k ní – vpravo.', img: 'CZ-IS22c_Označení_názvu_ulice.jpg' },
+    { id: 'IS22d', name: 'Označení názvu ulice (průběh)', type: 'Informativní směrová značka', desc: 'Informuje o názvu a průběhu ulice – varianta.', img: 'CZ-IS22d_Označení_názvu_ulice.jpg' },
+    { id: 'IS22e', name: 'Označení názvu ulice (varianta e)', type: 'Informativní směrová značka', desc: 'Informuje o názvu a průběhu vyznačené ulice – varianta e.', img: 'CZ-IS22e_Označení_názvu_ulice.jpg' },
+    { id: 'IS22f', name: 'Označení názvu ulice (varianta f)', type: 'Informativní směrová značka', desc: 'Informuje o názvu a průběhu vyznačené ulice – varianta f.', img: 'CZ-IS22f_Označení_názvu_ulice.jpg' },
+    { id: 'IS23', name: 'Kulturní nebo turistický cíl – návěst', type: 'Informativní směrová značka', desc: 'Informuje o významném kulturním nebo turistickém cíli nebo oblasti.', img: 'CZ-IS23_Kulturní_nebo_turistický_cíl_-_návěst.svg' },
+    { id: 'IS24a', name: 'Kulturní nebo turistický cíl', type: 'Informativní směrová značka', desc: 'Informuje o směru a vzdálenosti k vyznačenému turistickému nebo kulturnímu cíli.', img: 'CZ-IS24a_Kulturní_nebo_turistický_cíl.svg' },
+    { id: 'IS24b', name: 'Směrová tabule pro kulturní nebo turistický cíl', type: 'Informativní směrová značka', desc: 'Informuje o směru a vzdálenosti k vyznačenému turistickému nebo kulturnímu cíli – šipková varianta.', img: 'CZ-IS24b_Kulturní_nebo_turistický_cíl.svg' },
+    { id: 'IS24c', name: 'Komunální cíl', type: 'Informativní směrová značka', desc: 'Informuje o směru a vzdálenosti k vyznačenému komunálnímu cíli.', img: 'CZ-IS24c_Komunální_cíl.svg' },
+
+    // ===== INFORMATIVNÍ JINÉ (IJ) =====
+    { id: 'IJ1', name: 'Policie', type: 'Informativní jiná značka', desc: 'Označuje nejbližší služebnu Policie České republiky.', img: 'IJ01cr.jpg' },
+    { id: 'IJ2', name: 'Nemocnice', type: 'Informativní jiná značka', desc: 'Označuje nejbližší nemocnici.', img: 'IJ02cr.jpg' },
+    { id: 'IJ3', name: 'První pomoc', type: 'Informativní jiná značka', desc: 'Označuje nejbližší místo s možností poskytnutí první pomoci.', img: 'CZ_road_sign_IJ-3.svg' },
+    { id: 'IJ4a', name: 'Označník zastávky (MHD)', type: 'Informativní jiná značka', desc: 'Označuje zastávku městské hromadné dopravy.', img: 'CZ_road_sign_IJ-4a.svg' },
+    { id: 'IJ4b', name: 'Označník zastávky (linková)', type: 'Informativní jiná značka', desc: 'Označuje zastávku linkové osobní dopravy.', img: 'CZ_road_sign_IJ-4b.svg' },
+    { id: 'IJ4c', name: 'Zastávka autobusu', type: 'Informativní jiná značka', desc: 'Označuje v odůvodněných případech začátek zastávky autobusu.', img: 'IJ04ccr.jpg' },
+    { id: 'IJ4d', name: 'Zastávka tramvaje', type: 'Informativní jiná značka', desc: 'Označuje v odůvodněných případech začátek zastávky tramvaje.', img: 'IJ04dcr.jpg' },
+    { id: 'IJ4e', name: 'Zastávka trolejbusu', type: 'Informativní jiná značka', desc: 'Označuje v odůvodněných případech začátek zastávky trolejbusu.', img: 'IJ04ecr.jpg' },
+    { id: 'IJ5', name: 'Informace', type: 'Informativní jiná značka', desc: 'Označuje informační středisko.', img: 'CZ_road_sign_IJ-5.svg' },
+    { id: 'IJ6', name: 'Telefon', type: 'Informativní jiná značka', desc: 'Označuje nejbližší telefonní stanici.', img: 'IJ06cz.jpg' },
+    { id: 'IJ7', name: 'Čerpací stanice', type: 'Informativní jiná značka', desc: 'Označuje nejbližší čerpací stanici pohonných hmot.', img: 'IJ07cr.jpg' },
+    { id: 'IJ8', name: 'Opravna', type: 'Informativní jiná značka', desc: 'Označuje nejbližší autoopravnu.', img: 'IJ08cr.jpg' },
+    { id: 'IJ9', name: 'Stanice technické kontroly', type: 'Informativní jiná značka', desc: 'Označuje nejbližší stanici technické kontroly.', img: 'IJ09cr.jpg' },
+    { id: 'IJ10', name: 'Hotel nebo motel', type: 'Informativní jiná značka', desc: 'Označuje nejbližší hotel nebo motel.', img: 'IJ10cr.jpg' },
+    { id: 'IJ11a', name: 'Restaurace', type: 'Informativní jiná značka', desc: 'Označuje nejbližší restauraci.', img: 'IJ11acr.jpg' },
+    { id: 'IJ11b', name: 'Občerstvení', type: 'Informativní jiná značka', desc: 'Označuje nejbližší místo s občerstvením.', img: 'IJ11bcr.jpg' },
+    { id: 'IJ12', name: 'WC', type: 'Informativní jiná značka', desc: 'Označuje nejbližší veřejné toalety.', img: 'IJ12cr.jpg' },
+    { id: 'IJ13', name: 'Místo pro odpočinek', type: 'Informativní jiná značka', desc: 'Označuje nejbližší místo pro odpočinek.', img: 'IJ13cr.jpg' },
+    { id: 'IJ14a', name: 'Tábořiště pro stany', type: 'Informativní jiná značka', desc: 'Označuje nejbližší tábořiště pro stany.', img: 'IJ14acr.jpg' },
+    { id: 'IJ14b', name: 'Tábořiště pro obytné přívěsy', type: 'Informativní jiná značka', desc: 'Označuje nejbližší tábořiště pro obytné přívěsy.', img: 'IJ14bcr.jpg' },
+    { id: 'IJ14c', name: 'Tábořiště pro stany a pro obytné přívěsy', type: 'Informativní jiná značka', desc: 'Označuje nejbližší tábořiště pro stany a pro obytné přívěsy.', img: 'IJ14ccr.jpg' },
+    { id: 'IJ15', name: 'Servisní místo pro sanitaci hygienických zařízení obytných vozidel', type: 'Informativní jiná značka', desc: 'Označuje servisní místo pro sanitaci hygienických zařízení obytných vozidel.', img: 'IJ_15_Servisní_místo_pro_sanitaci_hygienických_zařízení_obytných_vozidel_(2024).jpg' },
+    { id: 'IJ16', name: 'Silniční kaple', type: 'Informativní jiná značka', desc: 'Označuje nejbližší silniční kapli.', img: 'CZ_road_sign_IJ-16.svg' },
+    { id: 'IJ17a', name: 'Truckpark', type: 'Informativní jiná značka', desc: 'Informuje o nejbližší křižovatce, v jejíž blízkosti se nachází komplexní obslužné zařízení pro nákladní vozidla.', img: 'IJ17a-INFZN.svg' },
+    { id: 'IJ17b', name: 'Návěst před truckparkem', type: 'Informativní jiná značka', desc: 'Informuje o vzdálenosti ke komplexnímu obslužnému zařízení pro nákladní vozidla.', img: 'IJ17b-INFZN.svg' },
+    { id: 'IJ18a', name: 'Návěst před odpočívkou', type: 'Informativní jiná značka', desc: 'Informuje o vzdálenosti k nejbližší odpočívce a o službách na ní poskytovaných.', img: 'CZ-IJ18a_Návěst_před_odpočívkou_(2016).jpg' },
+    { id: 'IJ18b', name: 'Návěst před odbočením na odpočívku', type: 'Informativní jiná značka', desc: 'Informuje o začátku odbočovacího pruhu k nejbližší odpočívce.', img: 'CZ-IJ18b_Návěst_před_odbočením_na_odpočívku_(2016).jpg' },
+    { id: 'IJ18c', name: 'Návěst pro odbočení na odpočívku', type: 'Informativní jiná značka', desc: 'Informuje o místě odbočení k nejbližší odpočívce.', img: 'CZ-IJ18c_Návěst_pro_odbočení_na_odpočívku_(2016).jpg' },
+
+    // ===== DODATKOVÉ TABULKY (E) =====
+    { id: 'E1', name: 'Počet', type: 'Dodatková tabulka', desc: 'Vyznačuje skutečný počet.', img: 'E1_počet.svg' },
+    { id: 'E2a', name: 'Tvar křižovatky', type: 'Dodatková tabulka', desc: 'Vyznačuje skutečný tvar křižovatky.', img: 'Czech_Republic_road_sign_E_2a.svg' },
+    { id: 'E2b', name: 'Tvar křižovatky (s předností)', type: 'Dodatková tabulka', desc: 'Vyznačuje skutečný tvar křižovatky a hlavní a vedlejší pozemní komunikaci.', img: 'CZ-E02b_Tvar_křižovatky.svg' },
+    { id: 'E2c', name: 'Tvar křižovatky (varianta)', type: 'Dodatková tabulka', desc: 'Vyznačuje skutečný tvar křižovatky a hlavní a vedlejší pozemní komunikaci – varianta.', img: 'CZ-E02c_Tvar_křižovatky.jpg' },
+    { id: 'E2d', name: 'Tvar dvou křižovatek', type: 'Dodatková tabulka', desc: 'Vyznačuje skutečný tvar křižovatky a hlavní a vedlejší pozemní komunikaci pro dvě křižovatky po sobě.', img: 'Czech_Republic_road_sign_E_2d.svg' },
+    { id: 'E3a', name: 'Vzdálenost', type: 'Dodatková tabulka', desc: 'Vyznačuje vzdálenost k místu, od kterého platí značka, pod níž je tabulka umístěna.', img: 'CZ-E03a_Vzdálenost.jpg' },
+    { id: 'E3b', name: 'Vzdálenost (předběžná k P6)', type: 'Dodatková tabulka', desc: 'Vyznačuje vzdálenost k místu; značka P 4 s touto tabulkou je předběžnou značkou k P 6.', img: 'CZ-E03b_Vzdálenost.jpg' },
+    { id: 'E4', name: 'Délka úseku', type: 'Dodatková tabulka', desc: 'Vyznačuje délku úseku, pro který platí značka, pod níž je tabulka umístěna.', img: 'CZ-E04_Délka_úseku.jpg' },
+    { id: 'E5', name: 'Největší povolená hmotnost', type: 'Dodatková tabulka', desc: 'Omezuje platnost zákazu nebo příkazu na vozidlo, jehož celková hmotnost přesahuje údaj na tabulce.', img: 'CZ-E05_Celková_hmotnost.jpg' },
+    { id: 'E6', name: 'Za mokra (za deště)', type: 'Dodatková tabulka', desc: 'Omezuje platnost značky, pod kterou je umístěna, na podmínky mokré vozovky.', img: 'CZ-E06_Za_mokra.svg' },
+    { id: 'E7a', name: 'Směrová šipka pro směr přímo', type: 'Dodatková tabulka', desc: 'Vyznačuje směr k místu, ke kterému se vztahuje značka, pod kterou je tabulka umístěna.', img: 'CZ-E07a_Směrová_šipka.jpg' },
+    { id: 'E7b', name: 'Směrová šipka pro odbočení', type: 'Dodatková tabulka', desc: 'Vyznačuje směr odbočení k místu, ke kterému se vztahuje značka.', img: 'CZ-E07b_Směrová_šipka.jpg' },
+    { id: 'E8a', name: 'Začátek úseku', type: 'Dodatková tabulka', desc: 'Vyznačuje začátek úseku, pro který platí značka, pod níž je tabulka umístěna.', img: 'CZ-E08a_Začátek_úseku.svg' },
+    { id: 'E8b', name: 'Průběh úseku', type: 'Dodatková tabulka', desc: 'Vyznačuje průběh úseku, pro který platí značka, pod níž je tabulka umístěna.', img: 'CZ-E08b_Průběh_úseku.jpg' },
+    { id: 'E8c', name: 'Konec úseku', type: 'Dodatková tabulka', desc: 'Vyznačuje konec úseku, pro který platí značka, pod níž je tabulka umístěna.', img: 'CZ-E08c_Konec_úseku.svg' },
+    { id: 'E8d', name: 'Úsek platnosti', type: 'Dodatková tabulka', desc: 'Vyznačuje úsek platnosti v obou směrech od značky.', img: 'CZ-E08d_Úsek_platnosti.jpg' },
+    { id: 'E8e', name: 'Úsek platnosti (jednosměrný)', type: 'Dodatková tabulka', desc: 'Vyznačuje úsek platnosti v jednom směru od značky.', img: 'CZ-E08e_Úsek_platnosti.jpg' },
+    { id: 'E9', name: 'Druh vozidla', type: 'Dodatková tabulka', desc: 'Omezuje platnost značky, pod kterou je umístěna, na vyznačený druh vozidla.', img: 'E9_nákladní_vozidlo.svg' },
+    { id: 'E10', name: 'Tvar křížení pozemní komunikace s dráhou', type: 'Dodatková tabulka', desc: 'Užívá se zejména v případě ostrého úhlu křížení pozemní komunikace s dráhou.', img: 'CZ-E10_Tvar_křížení_pozemní_komunikace_s_dráhou.jpg' },
+    { id: 'E11a', name: 'Bez časového poplatku', type: 'Dodatková tabulka', desc: 'Označuje úsek dálnice, jehož užití není zpoplatněno časovým poplatkem.', img: 'CZ_road_sign_E11a_2016.svg' },
+    { id: 'E11b', name: 'S časovým poplatkem', type: 'Dodatková tabulka', desc: 'Označuje úsek silnice, jehož užití je zpoplatněno časovým poplatkem.', img: 'CZ_road_sign_E11b_2016.svg' },
+    { id: 'E11c', name: 'Bez mýtného', type: 'Dodatková tabulka', desc: 'Označuje úsek dálnice, jehož užití není zpoplatněno mýtným.', img: 'CZ_road_sign_E11c_2016.svg' },
+    { id: 'E11d', name: 'S mýtným', type: 'Dodatková tabulka', desc: 'Označuje úsek silnice, jehož užití je zpoplatněno mýtným.', img: 'CZ_road_sign_E11d_2016.svg' },
+    { id: 'E11e', name: 'Bez časového poplatku a mýtného', type: 'Dodatková tabulka', desc: 'Označuje úsek dálnice, jehož užití není zpoplatněno časovým poplatkem ani mýtným.', img: 'CZ_road_sign_E11e_2016.svg' },
+    { id: 'E11f', name: 'S časovým poplatkem a mýtným', type: 'Dodatková tabulka', desc: 'Označuje úsek silnice, jehož užití je zpoplatněno časovým poplatkem a mýtným.', img: 'CZ_road_sign_E11f_2016.svg' },
+    { id: 'E12a', name: 'Jízda cyklistů v protisměru', type: 'Dodatková tabulka', desc: 'Pod značkou jednosměrného provozu upozorňuje, že v protisměru je povolena jízda cyklistů.', img: 'E12-DODTAB.svg' },
+    { id: 'E12b', name: 'Vjezd cyklistů v protisměru povolen', type: 'Dodatková tabulka', desc: 'Pod značkou B 2 povoluje vjezd cyklistů v protisměru do jednosměrné pozemní komunikace.', img: 'CZ-E12b_Vjezd_cyklistů_v_protisměru_povolen.jpg' },
+    { id: 'E12c', name: 'Povolený směr jízdy cyklistů', type: 'Dodatková tabulka', desc: 'Vyznačuje pomocí směrových šipek možný směr jízdy cyklistů.', img: 'CZ-E12c_Povolený_směr_jízdy_cyklistů.jpg' },
+    { id: 'E13', name: 'Text nebo symbol', type: 'Dodatková tabulka', desc: 'Omezuje nebo doplňuje platnost značky, pod kterou je umístěna, vhodným nápisem nebo symbolem.', img: 'CZ-E12_Text.jpg' },
+    { id: 'E14', name: 'Tranzit', type: 'Dodatková tabulka', desc: 'Omezuje platnost značky na nákladní vozidla, pro něž užití označeného úseku není nezbytné.', img: 'E14_Tranzit.svg' },
+    { id: 'E15', name: 'Kategorie tunelu', type: 'Dodatková tabulka', desc: 'Doplňuje značku zákazu vjezdu vozidel přepravujících nebezpečný náklad a informuje o kategorii tunelu.', img: 'E15_Kategorie_tunelu.svg' },
+    { id: 'E16', name: 'Vzdálenost k příští čerpací stanici', type: 'Dodatková tabulka', desc: 'Informuje o vzdálenosti k čerpací stanici, která následuje za čerpací stanicí na vyznačované odpočívce.', img: 'CZ-E16_Vzdálenost_k_příští_čerpací_stanici_(2016).jpg' },
+    { id: 'E17', name: 'Nedostatečný průjezdní profil vozovky', type: 'Dodatková tabulka', desc: 'V kombinaci se značkou Jiné nebezpečí upozorňuje na omezení průjezdního profilu vozovky.', img: 'E_17_Nedostatečný_průjezdní_profil_vozovky.svg' },
+    // ===== CHYBĚJÍCÍ INFORMATIVNÍ A VAROVNÉ ZNAČKY =====
+    { id: 'IP10c', name: 'Návěst před slepou pozemní komunikací', type: 'Informativní provozní značka', desc: 'Upozorňuje před křižovatkou na slepou pozemní komunikaci, po které nelze dále pokračovat v jízdě.', img: 'CZ_road_sign_IP-10c.svg' },
+    { id: 'IP23c', name: 'Sjíždění vozidel veřejné hromadné dopravy osob z tramvajového pásu', type: 'Informativní provozní značka', desc: 'Vyznačuje místo sjezdu zejména autobusů veřejné hromadné dopravy osob z tramvajového pásu.', img: 'CZ-IP23c_Sjíždění_vozidel_veřejné_hromadné_dopravy_osob_z_tramvajového_pásu_(2016_-_2015-07-31).jpg' },
+    { id: 'STOP-P', name: 'Stop – protisměr', type: 'Informativní provozní značka', desc: 'Varovná dopravní značka (zavedená MD ČR mimo standardní vyhlášku). Upozorňuje řidiče, že se v nájezdu na dálnici dostal do protisměru.', img: 'Stop_Protisměr.svg' },
+
+    // ===== URČENÉ SYMBOLY: KULTURNÍ A TURISTICKÉ PIKTOGRAMY (100) =====
+    { id: 'S101', name: 'Zámek', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro zámek.', img: '101_Zámek.png' },
+    { id: 'S102', name: 'Hrad', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro hrad.', img: '102_Hrad.svg' },
+    { id: 'S103', name: 'Zřícenina', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro zříceninu.', img: '103_Zřícenina.png' },
+    { id: 'S104', name: 'Tvrz', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro tvrz.', img: '104_Tvrz.svg' },
+    { id: 'S105', name: 'Klášter', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro klášter.', img: '105_Klášter.png' },
+    { id: 'S106', name: 'Kostel', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro kostel.', img: '106_Kostel.svg' },
+    { id: 'S107', name: 'Kaple', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro kapli.', img: '107_Kaple.svg' },
+    { id: 'S108', name: 'Technická památka (továrna)', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro technickou památku typu továrna.', img: '108_Technická_památka_(továrna).svg' },
+    { id: 'S109', name: 'Technická památka (most)', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro technickou památku typu most.', img: '109_Technická_památka_(most).png' },
+    { id: 'S110', name: 'Archeologická lokalita', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro archeologickou lokalitu.', img: '110_Archeologická_lokalita.png' },
+    { id: 'S111', name: 'Městská památková rezervace', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro městskou památkovou rezervaci.', img: '111_Městská_památková_rezervace.png' },
+    { id: 'S112', name: 'Městská památková zóna', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro městskou památkovou zónu.', img: '112_Městská_památková_zóna.png' },
+    { id: 'S113', name: 'Vesnická památková rezervace', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro vesnickou památkovou rezervaci.', img: '113_Vesnická_památková_rezervace.png' },
+    { id: 'S114', name: 'Vesnická památková zóna', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro vesnickou památkovou zónu.', img: '114_Vesnická_památková_zóna.png' },
+    { id: 'S115', name: 'Muzeum', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro muzeum.', img: '115_Muzeum.svg' },
+    { id: 'S116', name: 'Skanzen', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro skanzen.', img: '116_Skanzen.png' },
+    { id: 'S117', name: 'Památka moderní architektury', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro památku moderní architektury.', img: '117_Památka_moderní_architektury.png' },
+    { id: 'S118', name: 'Zoologická zahrada', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro ZOO. Může být doplněn symbolem zvířete.', img: '118_Zoologická_zahrada.png' },
+    { id: 'S119', name: 'Židovská památka', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro židovskou památku.', img: '119_Židovská_památka.png' },
+    { id: 'S120', name: 'Vojenská památka', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro vojenskou památku.', img: '120_Vojenská_památka.png' },
+    { id: 'S121', name: 'Lázně', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro lázně.', img: '121_Lázně.png' },
+    { id: 'S122', name: 'Přírodní, krajinářská zajímavost (památka)', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro přírodní zajímavost.', img: '122_Přírodní,_krajinářská_zajímavost_(památka).png' },
+    { id: 'S123', name: 'Rozhledna', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro rozhlednu.', img: '123_Rozhledna.png' },
+    { id: 'S124', name: 'Jeskyně', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro jeskyni.', img: '124_Jeskyně.png' },
+    { id: 'S125', name: 'Významné místo', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro významné místo.', img: '125_Významné_místo.png' },
+    { id: 'S126', name: 'Památka UNESCO', type: 'Určený symbol', desc: 'Kulturní a turistický piktogram pro památku světového dědictví UNESCO.', img: '126_Památka_UNESCO.png' },
+
+    // ===== URČENÉ SYMBOLY: DRUHY VOZIDEL A SKUPINY CHODCŮ (200) =====
+    { id: 'S201', name: 'Moped', type: 'Určený symbol', desc: 'Symbol pro moped.', img: 'Sinnbild_Mofa.svg' },
+    { id: 'S202', name: 'Motocykl', type: 'Určený symbol', desc: 'Symbol pro motocykl.', img: '202_Motocykl.png' },
+    { id: 'S203', name: 'Osobní automobil', type: 'Určený symbol', desc: 'Symbol pro osobní automobil.', img: '203_Osobní_automobil.png' },
+    { id: 'S204', name: 'Autobus', type: 'Určený symbol', desc: 'Symbol pro autobus.', img: '204_Autobus.png' },
+    { id: 'S205', name: 'Tramvaj', type: 'Určený symbol', desc: 'Symbol pro tramvaj.', img: '205_Tramvaj.png' },
+    { id: 'S206', name: 'Trolejbus', type: 'Určený symbol', desc: 'Symbol pro trolejbus.', img: '206_Trolejbus.png' },
+    { id: 'S207', name: 'Nákladní automobil', type: 'Určený symbol', desc: 'Symbol pro nákladní automobil.', img: '207_Nákladní_automobil.png' },
+    { id: 'S208', name: 'Traktor', type: 'Určený symbol', desc: 'Symbol pro traktor.', img: '208_Traktor.png' },
+    { id: 'S209', name: 'Obytný automobil', type: 'Určený symbol', desc: 'Symbol pro obytný automobil.', img: 'Wohnmobil,_Sinnbild_nach_§_39_StVO,_StVO_2020.svg' },
+    { id: 'S210', name: 'Osobní automobil s přívěsem', type: 'Určený symbol', desc: 'Symbol pro osobní automobil s přívěsem.', img: '210_Osobní_automobil_s_přívěsem.png' },
+    { id: 'S211', name: 'Elektromobil', type: 'Určený symbol', desc: 'Symbol pro elektromobil.', img: 'Určený_symbol_211_-_elektromobil_(2024).jpg' },
+    { id: 'S212', name: 'Vozidlo přepravující nebezpečný náklad', type: 'Určený symbol', desc: 'Symbol pro vozidlo s nebezpečným nákladem.', img: '212_Vozidlo_přepravující_nebezpečný_náklad.png' },
+    { id: 'S213', name: 'Vozidlo přepravující náklad, který může způsobit znečištění vody', type: 'Určený symbol', desc: 'Symbol pro vozidlo s nákladem ohrožujícím vodní zdroje.', img: '213_Vozidlo_přepravující_náklad,_který_může_způsobit_znečištění_vody.png' },
+    { id: 'S214', name: 'Přípojné vozidlo', type: 'Určený symbol', desc: 'Symbol pro přípojné vozidlo.', img: '214_Přípojné_vozidlo.png' },
+    { id: 'S215', name: 'Obytný přívěs', type: 'Určený symbol', desc: 'Symbol pro obytný přívěs (karavan).', img: '215_Obytný_přívěs.png' },
+    { id: 'S216', name: 'Potahové vozidlo', type: 'Určený symbol', desc: 'Symbol pro potahové vozidlo.', img: '216_Potahové_vozidlo.png' },
+    { id: 'S217', name: 'Jízdní kolo', type: 'Určený symbol', desc: 'Symbol pro jízdní kolo.', img: '217_Jízdní_kolo.png' },
+    { id: 'S218', name: 'Osoba na osobním přepravníku', type: 'Určený symbol', desc: 'Symbol pro osobu na osobním přepravníku (např. Segway).', img: '218_Osoba_na_osobním_přepravníku.png' },
+    { id: 'S219', name: 'Chodec s ručním vozíkem', type: 'Určený symbol', desc: 'Symbol pro chodce s ručním vozíkem.', img: '219_Chodec_s_ručním_vozíkem.png' },
+    { id: 'S220', name: 'Chodec', type: 'Určený symbol', desc: 'Symbol pro chodce.', img: '220_Chodec.png' },
+    { id: 'S221', name: 'Bruslař', type: 'Určený symbol', desc: 'Symbol pro bruslaře.', img: 'Sinnbild_Rollschuhfahren.svg' },
+    { id: 'S222', name: 'Lyžař', type: 'Určený symbol', desc: 'Symbol pro lyžaře.', img: '222_Lyžař.png' },
+    { id: 'S223', name: 'Jezdec na zvířeti', type: 'Určený symbol', desc: 'Symbol pro jezdce na zvířeti.', img: 'Sinnbild_Reiter,_StVO_1992.svg' },
+    { id: 'S224', name: 'Děti', type: 'Určený symbol', desc: 'Symbol pro děti.', img: '224_Děti.png' },
+    { id: 'S225', name: 'Osoba na invalidním vozíku', type: 'Určený symbol', desc: 'Symbol pro osobu na invalidním vozíku.', img: 'Wheelchair_symbol.svg' },
+    { id: 'S226', name: 'Osoba doprovázející dítě v kočárku', type: 'Určený symbol', desc: 'Symbol pro osobu s kočárkem.', img: '226_Osoba_doprovázející_dítě_v_kočárku.png' },
+    { id: 'S227', name: 'Obojživelníci', type: 'Určený symbol', desc: 'Symbol upozorňující na obojživelníky.', img: 'CZ-symbol_227_Obojživelníci.jpg' },
+    { id: 'S228', name: 'Koně', type: 'Určený symbol', desc: 'Symbol upozorňující na koně.', img: 'CZ-symbol_228_Koně.jpg' },
+    { id: 'S229', name: 'Elektrokoloběžka', type: 'Určený symbol', desc: 'Symbol pro elektrokoloběžku.', img: 'Elektrokleinstfahrzeuge_im_Sinne_der_Elektrokleinstfahrzeuge-Verordnung_(eKFV),_Sinnbild_nach_§_39_StVO,_StVO_2020.svg' },
+
+    // ===== URČENÉ SYMBOLY: JINÉ CÍLE (300) =====
+    { id: 'S301', name: 'Centrum', type: 'Určený symbol', desc: 'Symbol pro centrum obce/města.', img: '301_Centrum.png' },
+    { id: 'S302', name: 'Průmyslová zóna', type: 'Určený symbol', desc: 'Symbol pro průmyslovou zónu.', img: '302_Průmyslová_zóna.png' },
+    { id: 'S303', name: 'Nákupní zóna', type: 'Určený symbol', desc: 'Symbol pro nákupní zónu.', img: '303_Nákupní_zóna.png' },
+    { id: 'S304', name: 'Sklady, skladová zóna', type: 'Určený symbol', desc: 'Symbol pro skladovou zónu.', img: '304_Sklady,_skladová_zóna.png' },
+    { id: 'S305', name: 'Truckpark', type: 'Určený symbol', desc: 'Symbol pro truckpark.', img: '305_Truckpark.png' },
+    { id: 'S306', name: 'Přístav', type: 'Určený symbol', desc: 'Symbol pro přístav.', img: '306_Přístav.png' },
+    { id: 'S307', name: 'Letiště', type: 'Určený symbol', desc: 'Symbol pro letiště.', img: '307_Letiště.png' },
+    { id: 'S308', name: 'Vlakové nádraží', type: 'Určený symbol', desc: 'Symbol pro železniční stanici.', img: '308_Vlakové_nádraží.png' },
+    { id: 'S309', name: 'Heliport', type: 'Určený symbol', desc: 'Symbol pro heliport.', img: '309_Heliport.png' },
+    { id: 'S310', name: 'Aréna, stadion', type: 'Určený symbol', desc: 'Symbol pro sportovní arénu či stadion.', img: '310_Aréna,_stadion.png' },
+    { id: 'S311', name: 'Lyžařský vlek', type: 'Určený symbol', desc: 'Symbol pro lyžařský vlek.', img: '311_Lyžařský_vlek.png' },
+    { id: 'S312', name: 'Sedačková lanovka', type: 'Určený symbol', desc: 'Symbol pro sedačkovou lanovou dráhu.', img: '312_Sedačková_lanovka.png' },
+    { id: 'S313', name: 'Kabinová lanovka', type: 'Určený symbol', desc: 'Symbol pro kabinovou lanovou dráhu.', img: '313_Kabinová_lanovka.png' },
+
+    // ===== URČENÉ SYMBOLY: OSTATNÍ (400) =====
+    { id: 'S401', name: 'Výjezd', type: 'Určený symbol', desc: 'Označuje místo pro výjezd z dálnice.', img: 'Sinnbild_Autobahnausfahrt.svg' },
+    { id: 'S402', name: 'Dálniční uzel', type: 'Určený symbol', desc: 'Označuje dálniční křižovatku.', img: 'AB-Kreuz.svg' },
+    { id: 'S403', name: 'Okruh', type: 'Určený symbol', desc: 'Označuje okruh pro objíždění obce.', img: '403_Okruh.png' },
+    { id: 'S404', name: 'Čerpací stanice CNG', type: 'Určený symbol', desc: 'Symbol pro čerpací stanici CNG.', img: 'Určený_symbol_404_Čerpací_stanice_CNG_(2025).tif' },
+    { id: 'S405', name: 'Čerpací stanice LPG', type: 'Určený symbol', desc: 'Symbol pro čerpací stanici LPG.', img: 'Určený_symbol_405_Čerpací_stanice_LPG_(2025).tif' },
+    { id: 'S406', name: 'Dobíjecí stanice elektromobilů', type: 'Určený symbol', desc: 'Symbol pro dobíjecí stanici.', img: 'Určený_symbol_406_Dobíjecí_stanice_elektromobilů_(2025).tif' },
+    { id: 'S407', name: 'Sanitace hygienických zařízení obytných vozidel', type: 'Určený symbol', desc: 'Symbol pro servisní místo sanitace karavanů.', img: 'Určený_symbol_407_-_Sanitace_hygienických_zařízení_obytných_automobilů_a_obytných_přívěsů_(2024).jpg' },
+    { id: 'S408', name: 'Dobíjecí stanice pro nákladní automobily nebo autobusy', type: 'Určený symbol', desc: 'Symbol pro dobíjecí stanici nákladních vozidel a autobusů.', img: 'Určený_symbol_408_Dobíjecí_stanice_pro_nákladní_automobily_nad_3500_kg_nebo_autobusy_(2025).tif' },
+    { id: 'S409', name: 'Čerpací stanice vodíku', type: 'Určený symbol', desc: 'Symbol pro čerpací stanici vodíku.', img: 'Určený_symbol_409_Čerpací_stanice_vodíku_(2025).tif' },
+    { id: 'S410', name: 'Čerpací stanice LNG', type: 'Určený symbol', desc: 'Symbol pro čerpací stanici LNG.', img: 'Určený_symbol_410_Čerpací_stanice_LNG_(2025).tif' }
+];
+
+let streak = 0;
+let currentSign = null;
+const wikiBase = "https://commons.wikimedia.org/wiki/Special:FilePath/";
+
+function init() {
+    streak = 0;
+    updateStreakDisplay();
+    nextQuestion();
+}
+
+function nextQuestion() {
+    // Reset UI
+    document.getElementById('feedback').classList.remove('show');
+    document.getElementById('next-btn').classList.remove('show');
+    document.getElementById('options').innerHTML = '';
+    
+    // 1. Vybrat náhodnou značku
+    currentSign = signsData[Math.floor(Math.random() * signsData.length)];
+    document.getElementById('sign-img').src = wikiBase + currentSign.img;
+
+    // 2. Vyfiltrovat značky STEJNÉHO TYPU (pro zmatení hráče)
+    let similarSigns = signsData.filter(sign => sign.type === currentSign.type && sign.name !== currentSign.name);
+    
+    // Možnosti začínají správnou odpovědí
+    let options = [currentSign.name];
+    
+    // 3. Vybrat matoucí možnosti (celkem 3 odpovědi)
+    while(options.length < 3) {
+        let randomName;
+        
+        if (similarSigns.length > 0) {
+            let randomIndex = Math.floor(Math.random() * similarSigns.length);
+            randomName = similarSigns[randomIndex].name;
+            similarSigns.splice(randomIndex, 1);
+        } else {
+            randomName = signsData[Math.floor(Math.random() * signsData.length)].name;
+        }
+        
+        if(!options.includes(randomName)) {
+            options.push(randomName);
+        }
+    }
+    
+    // Zamíchat pole odpovědí
+    options.sort(() => Math.random() - 0.5);
+
+    // Vykreslit tlačítka
+    const keyLabels = ['A', 'B', 'C'];
+    options.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'opt-btn'; // Přidáno kvůli CSS
+        btn.dataset.answer = opt;  // Uložení odpovědi pro kontrolu
+        btn.innerHTML = `<span class="key">${keyLabels[index]}</span> ${opt}`;
+        btn.onclick = () => checkAnswer(opt, btn);
+        document.getElementById('options').appendChild(btn);
+    });
+}
+
+function checkAnswer(answer, btn) {
+    const allButtons = document.querySelectorAll('.opt-btn');
+    allButtons.forEach(b => b.disabled = true);
+
+    const resultTitle = document.getElementById('result-title');
+
+    if(answer === currentSign.name) {
+        btn.classList.add('correct');
+        streak++;
+        resultTitle.innerHTML = "Správně! 🎉";
+        resultTitle.className = "result-title ok"; // Pro obarvení nadpisu
+        
+        // Drobná animace skóre
+        const streakEl = document.getElementById('streak');
+        streakEl.classList.add('bump');
+        setTimeout(() => streakEl.classList.remove('bump'), 200);
+
+    } else {
+        btn.classList.add('wrong');
+        streak = 0;
+        resultTitle.innerHTML = `Chyba! Správně bylo: ${currentSign.name}`;
+        resultTitle.className = "result-title fail";
+
+        // Zvýraznit tu správnou
+        allButtons.forEach(b => { 
+            if(b.dataset.answer === currentSign.name) {
+                b.classList.add('correct'); 
+            }
+        });
+    }
+
+    updateStreakDisplay();
+    showFeedback();
+}
+
+function updateStreakDisplay() {
+    document.getElementById('streak').innerText = streak;
+}
+
+function showFeedback() {
+    document.getElementById('info-type').innerText = currentSign.type;
+    document.getElementById('info-desc').innerText = currentSign.desc;
+    document.getElementById('feedback').classList.add('show');
+    document.getElementById('next-btn').classList.add('show'); // Ukážeme tlačítko pro pokračování
+}
+
+// Spuštění kvízu
+init();
+</script>
+</body>
+</html>
