@@ -488,7 +488,7 @@
 
   <div id="lightboxScreen">
     <canvas id="lightboxCanvas"></canvas>
-    <div class="tap-hint" id="tapHint">Klepni pro ovládání<br><small>(Lze přibližovat a posouvat)</small></div>
+    <div class="tap-hint" id="tapHint">Klepni / Klikni pro ovládání<br><small>(Lze přibližovat a posouvat)</small></div>
     <div class="rotate-indicator" id="rotateIndicator"></div>
     <button id="unlockBtn" class="unlock-btn hidden"><i class="bi bi-unlock-fill"></i> Odemknout</button>
 
@@ -758,6 +758,70 @@
         }
       }
     });
+
+    // ── Mouse Handling (Desktop) ──
+    let isMouseDown = false;
+
+    lightboxScreen.addEventListener('mousedown', (e) => {
+      if (lbControls.contains(e.target) || e.target === unlockBtn) return;
+      if (isLocked) return;
+
+      isMouseDown = true;
+      hasMoved = false;
+      lastTouchX = e.clientX;
+      lastTouchY = e.clientY;
+      startPanX = panX;
+      startPanY = panY;
+    });
+
+    lightboxScreen.addEventListener('mousemove', (e) => {
+      if (isLocked || !isMouseDown) return;
+
+      hasMoved = true;
+      const dx = e.clientX - lastTouchX;
+      const dy = e.clientY - lastTouchY;
+      panX = startPanX + dx;
+      panY = startPanY + dy;
+      renderLightbox();
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (!isMouseDown) return;
+      isMouseDown = false;
+
+      if (!hasMoved && e.target !== unlockBtn && !lbControls.contains(e.target)) {
+        controlsVisible = !controlsVisible;
+        lbControls.classList.toggle('hidden', !controlsVisible);
+        if (controlsVisible) {
+          clearTimeout(hideTimeout);
+          hideTimeout = setTimeout(() => {
+            controlsVisible = false;
+            lbControls.classList.add('hidden');
+          }, 5000);
+        }
+      }
+    });
+
+    lightboxScreen.addEventListener('wheel', (e) => {
+      if (lbControls.contains(e.target) || e.target === unlockBtn) return;
+      if (isLocked) { e.preventDefault(); return; }
+
+      e.preventDefault();
+      const zoomChange = 1 - Math.sign(e.deltaY) * 0.1;
+      const newZoom = Math.max(0.1, Math.min(15, zoom * zoomChange));
+
+      const sw = window.innerWidth;
+      const sh = window.innerHeight;
+      const dx = e.clientX - (sw / 2 + panX);
+      const dy = e.clientY - (sh / 2 + panY);
+      const scaleFactor = newZoom / zoom;
+
+      panX -= dx * (scaleFactor - 1);
+      panY -= dy * (scaleFactor - 1);
+
+      zoom = newZoom;
+      renderLightbox();
+    }, { passive: false });
 
     // Zamykání a odemykání
     document.getElementById('lbLock').addEventListener('click', () => {
