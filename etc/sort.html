@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sort Visualizer Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --card: #121212;
+      --card2: #1a1a1a;
+      --border: rgba(255, 255, 255, .08);
+      --text: #f5f5f5;
+      --sub: rgba(255, 255, 255, .35);
+      --dim: rgba(255, 255, 255, .12);
+
+      /* Neon accents */
+      --c-active: #ff3c5f;
+      --c-compare: #00c2ff;
+      --c-sorted: #00ffa3;
+      --c-default: rgba(255, 255, 255, .15);
+
+      --c-active-glow: rgba(255, 60, 95, .5);
+      --c-compare-glow: rgba(0, 194, 255, .4);
+      --c-sorted-glow: rgba(0, 255, 163, .4);
+
+      --axis-line: rgba(255, 255, 255, .04);
+      --axis-txt: rgba(255, 255, 255, .2);
+      --tick-w: 28px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── HEADER ─── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      height: 42px;
+      padding: 0 16px;
+      background: var(--card);
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: .9rem;
+      letter-spacing: -.02em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .logo-pill {
+      background: var(--c-active);
+      color: #fff;
+      font-size: .5rem;
+      font-family: 'DM Mono', monospace;
+      padding: 2px 6px;
+      border-radius: 100px;
+      letter-spacing: .1em;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .hbadge {
+      font-size: .5rem;
+      color: var(--sub);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 100px;
+    }
+
+    /* ─── LAYOUT (MOBILE FIRST) ─── */
+    .body {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ─── VIZ SECTION (TOP) ─── */
+    .viz-section {
+      display: flex;
+      flex-direction: column;
+      height: 45vh;
+      /* Takes up top portion for clear recording */
+      border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    .viz-top {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .sort-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      color: var(--text);
+    }
+
+    .cx-badges {
+      display: flex;
+      gap: 4px;
+    }
+
+    .cx {
+      font-size: .5rem;
+      padding: 2px 6px;
+      border-radius: 100px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .cx-t {
+      color: var(--c-active);
+      border: 1px solid rgba(255, 60, 95, .3);
+      background: rgba(255, 60, 95, .06);
+    }
+
+    .cx-s {
+      color: var(--c-compare);
+      border: 1px solid rgba(0, 194, 255, .3);
+      background: rgba(0, 194, 255, .05);
+    }
+
+    .sort-sub {
+      font-size: .55rem;
+      color: var(--sub);
+      margin-left: auto;
+    }
+
+    /* ─── CHART ─── */
+    .chart-wrap {
+      flex: 1;
+      display: flex;
+      padding: 12px 12px 0 2px;
+      overflow: hidden;
+      min-height: 0;
+      position: relative;
+    }
+
+    .y-axis {
+      width: var(--tick-w);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding-bottom: 18px;
+    }
+
+    .y-tick {
+      font-size: .45rem;
+      color: var(--axis-txt);
+      text-align: right;
+      padding-right: 4px;
+    }
+
+    .chart-inner {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .chart-main {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .grid-lines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .grid-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--axis-line);
+    }
+
+    .grid-line.zero {
+      background: rgba(255, 255, 255, .1);
+    }
+
+    #bars {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: flex-end;
+      gap: 1px;
+      padding: 0;
+      z-index: 1;
+    }
+
+    .bw {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
+      min-width: 0;
+    }
+
+    .bv {
+      font-size: 1.35rem;
+      color: var(--sub);
+      margin-bottom: 2px;
+      white-space: nowrap;
+      transition: color .08s;
+    }
+
+    .bw.a .bv {
+      color: var(--c-active);
+    }
+
+    .bw.c .bv {
+      color: var(--c-compare);
+    }
+
+    .bw.s .bv {
+      color: var(--c-sorted);
+    }
+
+    .b {
+      width: 100%;
+      background: var(--c-default);
+      border-radius: 2px 2px 0 0;
+      transition: height .09s ease, background .07s ease, box-shadow .07s ease;
+      min-height: 2px;
+      position: relative;
+    }
+
+    .b::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(255, 255, 255, .1);
+      border-radius: 2px 2px 0 0;
+    }
+
+    .bw.a .b {
+      background: var(--c-active);
+      box-shadow: 0 0 10px var(--c-active-glow);
+    }
+
+    .bw.c .b {
+      background: var(--c-compare);
+      box-shadow: 0 0 10px var(--c-compare-glow);
+    }
+
+    .bw.s .b {
+      background: var(--c-sorted);
+      box-shadow: 0 0 8px var(--c-sorted-glow);
+    }
+
+    .x-axis {
+      height: 18px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 1px;
+    }
+
+    .xt {
+      flex: 1;
+      font-size: .4rem;
+      color: var(--axis-txt);
+      text-align: center;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    /* ─── BOTTOM / LEGEND ─── */
+    .bottom {
+      border-top: 1px solid var(--border);
+      padding: 6px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+      background: var(--card);
+    }
+
+    .legend {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .li {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: .5rem;
+      color: var(--sub);
+      text-transform: uppercase;
+    }
+
+    .ld {
+      width: 6px;
+      height: 6px;
+      border-radius: 1px;
+      flex-shrink: 0;
+    }
+
+    .prog-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .prog-track {
+      flex: 1;
+      height: 2px;
+      border-radius: 1px;
+      background: var(--card2);
+      position: relative;
+    }
+
+    .prog-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--c-active), var(--c-compare));
+      transition: width .08s linear;
+      box-shadow: 0 0 6px var(--c-active-glow);
+    }
+
+    .stepc {
+      font-size: .5rem;
+      color: var(--sub);
+      min-width: 50px;
+      text-align: right;
+    }
+
+    /* ─── CODE SECTION (BOTTOM) ─── */
+    .code-section {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+      background: var(--card);
+    }
+
+    .pane-label {
+      padding: 0 16px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid var(--border);
+      font-size: .5rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--sub);
+      flex-shrink: 0;
+    }
+
+    .pulse {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--c-active);
+      box-shadow: 0 0 6px var(--c-active);
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .2
+      }
+    }
+
+    #editor {
+      flex: 1;
+      background: transparent;
+      border: none;
+      resize: none;
+      outline: none;
+      padding: 12px 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: .7rem;
+      line-height: 1.5;
+      color: var(--text);
+      tab-size: 2;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    #editor::placeholder {
+      color: var(--dim);
+    }
+
+    .hint {
+      margin: 0 16px;
+      padding: 6px 10px;
+      background: rgba(0, 194, 255, .05);
+      border: 1px solid rgba(0, 194, 255, .1);
+      border-radius: 4px;
+      font-size: .5rem;
+      color: rgba(0, 194, 255, .7);
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .hint code {
+      color: var(--c-sorted);
+    }
+
+    .presets-row {
+      padding: 8px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      overflow-x: auto;
+      gap: 6px;
+      align-items: center;
+      flex-shrink: 0;
+      scrollbar-width: none;
+    }
+
+    .presets-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .pl {
+      font-size: .5rem;
+      color: var(--sub);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-right: 4px;
+    }
+
+    .chip {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--sub);
+      font-family: 'DM Mono', monospace;
+      font-size: .55rem;
+      padding: 4px 10px;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .chip:active {
+      transform: scale(0.95);
+    }
+
+    .chip.active-preset {
+      border-color: var(--c-active);
+      color: var(--c-active);
+    }
+
+    .controls {
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+      background: var(--bg);
+    }
+
+    .ctrl-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ctrl-row label {
+      font-size: .5rem;
+      color: var(--sub);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    input[type=range] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 2px;
+      background: var(--card2);
+      border-radius: 1px;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--c-active);
+      box-shadow: 0 0 8px var(--c-active-glow);
+    }
+
+    input[type=number] {
+      width: 48px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
+      padding: 4px;
+      border-radius: 4px;
+      outline: none;
+      text-align: center;
+    }
+
+    .btn {
+      flex: 1;
+      background: var(--c-active);
+      color: #fff;
+      border: none;
+      padding: 10px 0;
+      font-family: 'Syne', sans-serif;
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      border-radius: 6px;
+      transition: all .1s;
+      box-shadow: 0 0 12px var(--c-active-glow);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: scale(0.96);
+    }
+
+    .btn:disabled {
+      background: var(--card2);
+      color: var(--sub);
+      box-shadow: none;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--sub);
+      box-shadow: none;
+    }
+
+    .statusbar {
+      border-top: 1px solid var(--border);
+      padding: 4px 16px;
+      font-size: .5rem;
+      color: var(--sub);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 22px;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      background: var(--bg);
+    }
+
+    .statusbar.err {
+      color: var(--c-active);
+    }
+
+    .statusbar.ok {
+      color: var(--c-sorted);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <div class="logo"><span class="logo-pill"> </span>SortViz</div>
+    <div class="hbadge"></div>
+  </div>
+
+  <div class="body">
+
+    <div class="viz-section">
+      <div class="viz-top">
+        <div class="sort-name" id="sname">—</div>
+        <div class="cx-badges" id="cxb"></div>
+        <div class="sort-sub" id="ssub">Code your own.</div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="y-axis" id="yax"></div>
+        <div class="chart-inner">
+          <div class="chart-main">
+            <div class="grid-lines" id="grid"></div>
+            <div id="bars"></div>
+          </div>
+          <div class="x-axis" id="xax"></div>
+        </div>
+      </div>
+
+      <div class="bottom">
+        <div class="legend">
+          <div class="li">
+            <div class="ld" style="background:var(--c-active)"></div>Active
+          </div>
+          <div class="li">
+            <div class="ld" style="background:var(--c-compare)"></div>Compare
+          </div>
+          <div class="li">
+            <div class="ld" style="background:var(--c-sorted)"></div>Sorted
+          </div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-track">
+            <div class="prog-fill" id="pfill"></div>
+          </div>
+          <div class="stepc" id="stepc">0/0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-section">
+      <div class="pane-label"><span class="pulse"></span>Algorithm Code</div>
+      <textarea id="editor" spellcheck="false" placeholder="// Write sort function here
+// Must return steps[] array
+
+function mySort(arr) {
+  const steps = [];
+  // ...
+  steps.push({ arr:[...arr], active:[i], compare:[j] });
+  // ...
+  steps.push({ arr:[...arr], allSorted:true });
+  return steps;
+}"></textarea>
+      <!--
+      <div class="hint">
+        <code>active:[i]</code> move &nbsp;·&nbsp;
+        <code>compare:[i,j]</code> check &nbsp;·&nbsp;
+        <code>sorted:[...set]</code> done
+      </div>
+      
+    <div class="presets-row">
+      <span class="pl">Presets</span>
+      <button class="chip" data-p="bubble">Bubble</button>
+      <button class="chip" data-p="selection">Selection</button>
+      <button class="chip" data-p="insertion">Insertion</button>
+      <button class="chip" data-p="merge">Merge</button>
+      <button class="chip" data-p="quick">Quick</button>
+      <button class="chip" data-p="shell">Shell</button>
+      <button class="chip" data-p="cocktail">Cocktail</button>
+      <button class="chip" data-p="communist">Communist</button>
+      <button class="chip" data-p="bogo">Bogo</button>
+      <button class="chip" data-p="gnome">Gnome</button>
+    </div>-->
+
+      <div class="controls">
+        <div class="ctrl-row">
+          <label>Items</label>
+          <input type="number" id="sz" value="20" min="4" max="10000">
+          <label style="margin-left:auto">Speed</label>
+          <input type="range" id="spd" min="10" max="580" value="400">
+        </div>
+        <div class="ctrl-row">
+          <button class="btn" id="runBtn">▶ Run</button>
+          <button class="btn btn-ghost" id="shufBtn">⟳ Shuffle</button>
+          <button class="btn btn-ghost" id="stopBtn" disabled>■ Stop</button>
+        </div>
+      </div>
+      <div class="statusbar" id="status">Ready.</div>
+    </div>
+
+  </div>
+
+  <script>
+    // ═══════════════ PRESETS ═══════════════
+    const P = {
+      bubble: `function bubbleSort(arr){\n  const n=arr.length, steps=[], done=new Set();\n  for(let i=0; i<n-1; i++){\n    for(let j=0; j<n-i-1; j++){\n      if(arr[j] > arr[j+1]){\n        [arr[j], arr[j+1]] = [arr[j+1], arr[j]];\n        steps.push({arr:[...arr], active:[j,j+1], compare:[]});\n      } else {\n        steps.push({arr:[...arr], active:[], compare:[j,j+1]});\n      }\n    }\n    done.add(n-1-i);\n    steps.push({arr:[...arr], active:[], compare:[], sorted:[...done]});\n  }\n  steps.push({arr:[...arr], active:[], compare:[], allSorted:true});\n  return steps;\n}`,
+      selection: `function selectionSort(arr){\n  const n=arr.length, steps=[], done=new Set();\n  for(let i=0; i<n-1; i++){\n    let mi=i;\n    for(let j=i+1; j<n; j++){\n      steps.push({arr:[...arr], active:[mi], compare:[j]});\n      if(arr[j] < arr[mi]) mi=j;\n    }\n    if(mi!==i) [arr[i], arr[mi]] = [arr[mi], arr[i]];\n    done.add(i);\n    steps.push({arr:[...arr], active:[i], compare:[], sorted:[...done]});\n  }\n  steps.push({arr:[...arr], active:[], compare:[], allSorted:true});\n  return steps;\n}`,
+      insertion: `function insertionSort(arr){\n  const n=arr.length, steps=[];\n  for(let i=1; i<n; i++){\n    let j=i;\n    steps.push({arr:[...arr], active:[j], compare:[]});\n    while(j>0 && arr[j] < arr[j-1]){\n      [arr[j], arr[j-1]] = [arr[j-1], arr[j]];\n      steps.push({arr:[...arr], active:[j-1], compare:[j]});\n      j--;\n    }\n  }\n  steps.push({arr:[...arr], active:[], compare:[], allSorted:true});\n  return steps;\n}`,
+      merge: `function mergeSort(arr){\n  const steps=[];\n  function mg(a,l,m,r){\n    const L=a.slice(l,m+1), R=a.slice(m+1,r+1);\n    let i=0, j=0, k=l;\n    while(i<L.length && j<R.length){\n      steps.push({arr:[...a], active:[k], compare:[l+i,m+1+j]});\n      a[k++]=L[i]<=R[j]?L[i++]:R[j++];\n      steps.push({arr:[...a], active:[k-1], compare:[]});\n    }\n    while(i<L.length){ a[k++]=L[i++]; steps.push({arr:[...a], active:[k-1]}); }\n    while(j<R.length){ a[k++]=R[j++]; steps.push({arr:[...a], active:[k-1]}); }\n  }\n  function ms(a,l,r){ if(l>=r)return; const m=(l+r>>1); ms(a,l,m); ms(a,m+1,r); mg(a,l,m,r); }\n  ms(arr,0,arr.length-1);\n  steps.push({arr:[...arr], active:[], compare:[], allSorted:true});\n  return steps;\n}`,
+      quick: `function quickSort(arr){\n  const steps=[];\n  function part(a,lo,hi){\n    const pv=a[hi]; let i=lo-1;\n    for(let j=lo; j<hi; j++){\n      steps.push({arr:[...a], active:[hi], compare:[j]});\n      if(a[j]<=pv){ i++; [a[i], a[j]]=[a[j], a[i]]; steps.push({arr:[...a], active:[i,j]}); }\n    }\n    [a[i+1], a[hi]] = [a[hi], a[i+1]];\n    steps.push({arr:[...a], active:[i+1], compare:[]});\n    return i+1;\n  }\n  function qs(a,lo,hi){ if(lo>=hi)return; const p=part(a,lo,hi); qs(a,lo,p-1); qs(a,p+1,hi); }\n  qs(arr,0,arr.length-1);\n  steps.push({arr:[...arr], active:[], compare:[], allSorted:true});\n  return steps;\n}`,
+      shell: `function shellSort(arr){\n  const n=arr.length, steps=[];\n  let g=n>>1;\n  while(g>0){\n    for(let i=g; i<n; i++){\n      let j=i;\n      while(j>=g && arr[j-g]>arr[j]){\n        steps.push({arr:[...arr], active:[j], compare:[j-g]});\n        [arr[j], arr[j-g]] = [arr[j-g], arr[j]];\n        steps.push({arr:[...arr], active:[j-g,j], compare:[]});\n        j-=g;\n      }\n    }\n    g>>=1;\n  }\n  steps.push({arr:[...arr], active:[], compare:[], allSorted:true});\n  return steps;\n}`,
+      cocktail: `function cocktailSort(arr){\n  const n=arr.length, steps=[], done=new Set();\n  let s=0, e=n-1;\n  while(s<e){\n    let sw=false;\n    for(let i=s; i<e; i++){\n      steps.push({arr:[...arr], active:[], compare:[i,i+1]});\n      if(arr[i]>arr[i+1]){ [arr[i],arr[i+1]]=[arr[i+1],arr[i]]; steps.push({arr:[...arr], active:[i,i+1]}); sw=true; }\n    }\n    done.add(e); e--;\n    steps.push({arr:[...arr], active:[], compare:[], sorted:[...done]});\n    if(!sw) break; sw=false;\n    for(let i=e; i>s; i--){\n      steps.push({arr:[...arr], active:[], compare:[i-1,i]});\n      if(arr[i]<arr[i-1]){ [arr[i],arr[i-1]]=[arr[i-1],arr[i]]; steps.push({arr:[...arr], active:[i-1,i]}); sw=true; }\n    }\n    done.add(s); s++;\n    steps.push({arr:[...arr], active:[], compare:[], sorted:[...done]});\n    if(!sw) break;\n  }\n  steps.push({arr:[...arr], active:[], compare:[], allSorted:true});\n  return steps;\n}`,
+      communist: `function communistSort(arr){\n  const n=arr.length, steps=[], done=[];\n  let sum=0;\n  for(let i=0; i<n; i++){ sum+=arr[i]; steps.push({arr:[...arr], active:[i], compare:[]}); }\n  const avg=Math.round(sum/n);\n  for(let i=0; i<n; i++){ arr[i]=avg; done.push(i); steps.push({arr:[...arr], active:[i], sorted:[...done]}); }\n  steps.push({arr:[...arr], active:[], compare:[], allSorted:true});\n  return steps;\n}`,
+      bogo: `function bogoSort(arr){\n  const steps=[];\n  const ok=a=>{ for(let i=0; i<a.length-1; i++) if(a[i]>a[i+1]) return false; return true; };\n  const sh=a=>{ for(let i=a.length-1; i>0; i--){ const j=0|Math.random()*(i+1); [a[i],a[j]]=[a[j],a[i]]; } };\n  let t=0;\n  while(!ok(arr) && t<600){ sh(arr); t++; steps.push({arr:[...arr], active:[0|Math.random()*arr.length], compare:[]}); }\n  steps.push({arr:[...arr], active:[], compare:[], allSorted:true});\n  return steps;\n}`,
+      gnome: `function gnomeSort(arr){\n  const n=arr.length, steps=[];\n  let i=0;\n  while(i<n){\n    if(i===0 || arr[i]>=arr[i-1]){ steps.push({arr:[...arr], active:[i], compare:i>0?[i-1]:[]}); i++; }\n    else { [arr[i],arr[i-1]]=[arr[i-1],arr[i]]; steps.push({arr:[...arr], active:[i-1,i], compare:[]}); i--; }\n  }\n  steps.push({arr:[...arr], active:[], compare:[], allSorted:true});\n  return steps;\n}`
+    };
+
+    // ═══════════════ STATE ═══════════════
+    let arr = [], steps = [], cur = 0, going = false, timer = null, doneSet = new Set();
+    let fixedMax = 100;
+
+    const $ = id => document.getElementById(id);
+    const barsEl = $('bars'), gridEl = $('grid'), xaxEl = $('xax'), yaxEl = $('yax');
+    const statusEl = $('status'), snameEl = $('sname'), ssubEl = $('ssub'), cxbEl = $('cxb');
+    const pfill = $('pfill'), stepc = $('stepc');
+    const runBtn = $('runBtn'), stopBtn = $('stopBtn'), shufBtn = $('shufBtn');
+    const spdEl = $('spd'), szEl = $('sz'), editor = $('editor');
+
+    // ═══════════════ HELPERS ═══════════════
+    const setS = (m, t = '') => { statusEl.className = 'statusbar' + (t ? ' ' + t : ''); statusEl.textContent = m; };
+    const genArr = n => { arr = Array.from({ length: n }, () => 10 + (0 | Math.random() * 91)); };
+    const delay = () => Math.max(8, 600 - parseInt(spdEl.value));
+    const prog = (s, t) => { pfill.style.width = (t > 0 ? s / t * 100 : 0) + '%'; stepc.textContent = `${s}/${t}`; };
+
+    function niceNum(x) {
+      if (x <= 0) return 1;
+      const e = Math.pow(10, Math.floor(Math.log10(x)));
+      const f = x / e;
+      return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * e;
+    }
+
+    // ═══════════════ RENDER ═══════════════
+    function buildYAxis(max) {
+      yaxEl.innerHTML = ''; gridEl.innerHTML = '';
+      const step = niceNum(max / 20);
+      const top = Math.ceil(max / step) * step;
+      fixedMax = top;
+      const ticks = [];
+      for (let v = top; v >= 0; v -= step) ticks.push(v);
+      ticks.forEach(v => {
+        const el = document.createElement('div'); el.className = 'y-tick'; el.textContent = v;
+        yaxEl.appendChild(el);
+        const pct = 100 - (v / top * 100);
+        const ln = document.createElement('div'); ln.className = 'grid-line' + (v === 0 ? ' zero' : ''); ln.style.top = pct + '%';
+        gridEl.appendChild(ln);
+      });
+    }
+
+    function renderBars(barArr, active = [], compare = [], sorted = []) {
+      const n = barArr.length;
+      const showVals = n <= 30; // Fewer values shown on mobile
+      const xStep = n <= 25 ? 1 : n <= 50 ? 2 : 5;
+
+      barsEl.innerHTML = '';
+      if (!xaxEl.children.length) {
+        xaxEl.innerHTML = '';
+        for (let i = 0; i < n; i++) {
+          const x = document.createElement('div'); x.className = 'xt';
+          x.textContent = (i % xStep === 0) ? i : '';
+          xaxEl.appendChild(x);
+        }
+      }
+
+      barArr.forEach((val, i) => {
+        const w = document.createElement('div'); w.className = 'bw';
+        if (sorted.includes(i)) w.classList.add('s');
+        else if (active.includes(i)) w.classList.add('a');
+        else if (compare.includes(i)) w.classList.add('c');
+
+        if (showVals) {
+          const vl = document.createElement('div'); vl.className = 'bv'; vl.textContent = val;
+          w.appendChild(vl);
+        }
+        const b = document.createElement('div'); b.className = 'b';
+        b.style.height = `${Math.min(100, val / fixedMax * 100)}%`;
+        w.appendChild(b);
+        barsEl.appendChild(w);
+      });
+    }
+
+    // ═══════════════ ANIMATION ═══════════════
+    function stopAnim() {
+      going = false; clearTimeout(timer);
+      runBtn.disabled = false; stopBtn.disabled = true; shufBtn.disabled = false;
+    }
+
+    function play() {
+      if (!going || cur >= steps.length) {
+        stopAnim();
+        if (cur >= steps.length && steps.length > 0) {
+          setS(`✓ Finished — ${steps.length} steps`, 'ok');
+          const l = steps[steps.length - 1];
+          renderBars(l.arr, [], [], l.arr.map((_, i) => i));
+          prog(steps.length, steps.length);
+        }
+        return;
+      }
+      const s = steps[cur];
+      if (s.sorted) s.sorted.forEach(i => doneSet.add(i));
+      if (s.allSorted) s.arr.forEach((_, i) => doneSet.add(i));
+      renderBars(s.arr, s.active || [], s.compare || [], ...[doneSet].map(d => [...d]));
+      prog(cur + 1, steps.length);
+      cur++;
+      timer = setTimeout(play, delay());
+    }
+
+    // ═══════════════ RUN ═══════════════
+    function run() {
+      const code = editor.value.trim();
+      if (!code) { setS('Write sort code first.', 'err'); return; }
+      const n = Math.min(10000, Math.max(4, parseInt(szEl.value) || 20));
+      genArr(n);
+
+      buildYAxis(Math.max(...arr));
+      xaxEl.innerHTML = ''; renderBars(arr);
+
+      const nm = code.match(/function\s+(\w+)\s*\(/);
+      if (!nm) { setS('Function not found — eg: function mySort(arr){...}', 'err'); return; }
+
+      let fn;
+      try { fn = new Function(code + '\nreturn ' + nm[1] + ';')(); }
+      catch (e) { setS('Syntax Error: ' + e.message, 'err'); return; }
+
+      let result;
+      try { result = fn([...arr]); }
+      catch (e) { setS('Runtime Error: ' + e.message, 'err'); return; }
+
+      if (!Array.isArray(result) || !result.length) {
+        setS('Must return steps[] array', 'err'); return;
+      }
+
+      const label = nm[1].replace(/Sort$/i, '').replace(/([A-Z])/g, ' $1').trim() || 'Custom';
+      snameEl.textContent = label;
+      ssubEl.textContent = `${result.length} steps · ${n} items`;
+      cxbEl.innerHTML = '';
+
+      steps = result; cur = 0; doneSet = new Set(); going = true;
+      runBtn.disabled = true; stopBtn.disabled = false; shufBtn.disabled = true;
+      setS(`Animating — ${result.length} steps`);
+      play();
+    }
+
+    // ═══════════════ EVENTS ═══════════════
+    runBtn.addEventListener('click', run);
+    stopBtn.addEventListener('click', () => { stopAnim(); setS('Stopped.'); });
+    shufBtn.addEventListener('click', () => {
+      stopAnim();
+      const n = Math.min(10000, Math.max(4, parseInt(szEl.value) || 20));
+      genArr(n);
+      doneSet = new Set(); steps = [];
+      snameEl.textContent = '—'; ssubEl.textContent = 'Select a preset or code your own.';
+      cxbEl.innerHTML = ''; prog(0, 0);
+      buildYAxis(Math.max(...arr));
+      xaxEl.innerHTML = ''; renderBars(arr);
+      setS('Ready.');
+    });
+    szEl.addEventListener('change', () => {
+      szEl.value = Math.min(10000, Math.max(4, parseInt(szEl.value) || 20));
+      shufBtn.click();
+    });
+    document.querySelectorAll('.chip').forEach(b => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(x => x.classList.remove('active-preset'));
+        b.classList.add('active-preset');
+        if (P[b.dataset.p]) {
+          editor.value = P[b.dataset.p];
+          // Auto-scroll presets container nicely to center the clicked button
+          b.parentNode.scrollTo({ left: b.offsetLeft - b.parentNode.offsetWidth / 2 + b.offsetWidth / 2, behavior: 'smooth' });
+        }
+      });
+    });
+
+    // INIT
+    genArr(20);
+    buildYAxis(Math.max(...arr));
+    renderBars(arr);
+  </script>
+</body>
+
+</html>
