@@ -523,6 +523,22 @@
       pointer-events: none;
     }
     .toast.show { transform: translateX(-50%) translateY(0); }
+    .subject-banner-switch {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      padding: 0 4px;
+      display: flex;
+      align-items: center;
+      transition: color 0.12s;
+    }
+    
+    .subject-banner-switch:hover {
+      color: var(--text);
+    }
   </style>
 </head>
 <body>
@@ -924,9 +940,21 @@
     list.innerHTML = '';
 
     subjects.forEach((subj, idx) => {
-      const avg = subj.grades.length
-        ? (subj.grades.reduce((s, g) => s + parseFloat(g.value), 0) / subj.grades.length).toFixed(2)
-        : null;
+      let totalW = 0;
+      let weightedSum = 0;
+      
+      subj.grades.forEach(g => {
+        const val = parseFloat(g.value);
+        const wStr = (g.weight || '').trim().replace(',', '.');
+        const w = wStr === '' ? 1 : parseFloat(wStr);
+        
+        if (!isNaN(val) && !isNaN(w) && w > 0) {
+          weightedSum += val * w;
+          totalW += w;
+        }
+      });
+      
+      const avg = totalW > 0 ? (weightedSum / totalW).toFixed(2) : null;
 
       const item = document.createElement('div');
       item.className = 'subject-item';
