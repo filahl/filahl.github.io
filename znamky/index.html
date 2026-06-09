@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#111111">
+  
+  <title>Průměr známek</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Jacquard+24&family=DM+Sans:wght@300;400;500&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --accent: #f5c842;
+      --accent-dim: #1e1c14;
+      --bg: #111;
+      --bg2: #1a1a1a;
+      --bg3: #222;
+      --border: #2a2a2a;
+      --text: #fff;
+      --muted: #666;
+      --muted2: #888;
+      --danger: #e05555;
+      --success: #42c47a;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100dvh;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      padding: 36px 20px 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* Rozvržení pro PC (Dva sloupce) */
+    @media (min-width: 768px) {
+      .app {
+        max-width: 900px;
+        flex-direction: row;
+        gap: 48px;
+        align-items: flex-start;
+        padding-top: 60px;
+      }
+      .dashboard {
+        flex: 1;
+        position: sticky;
+        top: 60px;
+      }
+      .editor {
+        flex: 1.5;
+      }
+    }
+
+    /* Header */
+    .logo {
+      font-family: 'Jacquard 24', system-ui;
+      font-size: 36px;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      margin-bottom: 4px;
+    }
+    .logo span { color: var(--accent); }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 36px;
+      line-height: 1.4;
+    }
+
+    /* Result cards */
+    .results {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    @media (min-width: 768px) {
+      .results { grid-template-columns: 1fr; }
+    }
+
+    .res-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .res-card.primary {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .res-card-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+
+    .res-card-val {
+      font-size: 42px;
+      font-weight: 500;
+      line-height: 1;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .res-card.primary .res-card-val { color: var(--accent); }
+
+    .res-card-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .grade-badge {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 4px 12px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .stat-pill {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 6px 12px;
+      font-size: 12px;
+      color: var(--muted2);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .stat-pill i { font-size: 13px; }
+    .stat-pill b { color: var(--text); font-weight: 500; }
+
+    /* Actions */
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      height: 46px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg2);
+      color: #ccc;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: all 0.15s;
+    }
+
+    .btn:active { transform: scale(0.97); background: var(--bg3); }
+    @media (hover: hover) { .btn:hover { background: var(--bg3); } }
+    
+    .btn.accent {
+      background: var(--accent);
+      color: #111;
+      border-color: var(--accent);
+      font-weight: 500;
+    }
+    .btn.accent:active { background: #e0b530; }
+    @media (hover: hover) { .btn.accent:hover { background: #e0b530; } }
+
+    /* Table header */
+    .table-header {
+      display: grid;
+      grid-template-columns: 28px 1fr 1fr 28px;
+      gap: 8px;
+      padding: 0 2px 8px;
+    }
+
+    .table-header span {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      text-align: center;
+    }
+
+    /* Rows */
+    .rows-area {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .row-item {
+      display: grid;
+      grid-template-columns: 28px 1fr 1fr 28px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .row-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--muted);
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type=text] {
+      width: 100%;
+      height: 48px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 18px;
+      font-weight: 500;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input[type=text]::placeholder { color: var(--muted); font-weight: 400; font-size: 15px; }
+    input[type=text]:focus { border-color: var(--accent); background: var(--accent-dim); }
+    input[type=text].error { border-color: var(--danger) !important; background: rgba(224,85,85,0.1); }
+
+    .del-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .del-btn:active { background: rgba(224,85,85,0.15); border-color: var(--danger); color: var(--danger); }
+    @media (hover: hover) { .del-btn:hover { background: rgba(224,85,85,0.15); border-color: var(--danger); color: var(--danger); } }
+    .del-spacer { width: 28px; }
+
+    /* Add button */
+    .add-btn {
+      width: 100%;
+      height: 48px;
+      background: transparent;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 8px 0 28px;
+      transition: all 0.15s;
+    }
+    .add-btn:active, .add-btn:hover { border-color: #444; color: #aaa; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #222;
+      border: 1px solid #333;
+      border-radius: 99px;
+      padding: 12px 24px;
+      font-size: 14px;
+      color: #ccc;
+      white-space: nowrap;
+      transition: transform 0.3s ease;
+      z-index: 999;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div class="dashboard">
+    <div class="logo">Průměr <span>známek</span></div>
+    <div class="subtitle">Zadej známky a volitelně váhy — výsledek se počítá živě. Ideální pro rychlý přehled.</div>
+
+    <div class="results">
+      <div class="res-card primary">
+        <div class="res-card-label">Vážený průměr</div>
+        <div class="res-card-val" id="wVal">—</div>
+        <div class="res-card-sub" id="wSub">Zadej alespoň 1 známku</div>
+        <div id="gradeBadge"></div>
+      </div>
+      <div class="res-card">
+        <div class="res-card-label">Aritmetický průměr</div>
+        <div class="res-card-val" id="aVal">—</div>
+        <div class="res-card-sub" id="aSub">Průměr bez vah</div>
+      </div>
+    </div>
+
+    <div class="stats-row" id="statsRow">
+      <div class="stat-pill"><i class="bi bi-list-ol"></i><span><b id="stCount">0</b> známek</span></div>
+      <div class="stat-pill"><i class="bi bi-activity"></i><span>Součet vah: <b id="stWeights">—</b></span></div>
+      <div class="stat-pill"><i class="bi bi-arrow-down-up"></i><span>Min/Max: <b id="stMinMax">—</b></span></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" onclick="resetAll()"><i class="bi bi-trash3"></i> Vymazat</button>
+      <button class="btn accent" onclick="copyResult()"><i class="bi bi-clipboard"></i> Kopírovat</button>
+    </div>
+    
+    <div style="height: 32px; display: block;" class="mobile-spacer"></div>
+  </div>
+
+  <div class="editor">
+    <div class="table-header">
+      <span></span>
+      <span>Známka</span>
+      <span>Váha</span>
+      <span></span>
+    </div>
+
+    <div class="rows-area" id="rowsArea"></div>
+
+    <button class="add-btn" id="addBtn" onclick="addRow()">
+      <i class="bi bi-plus-lg"></i> Přidat řádek
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let rows = [];
+  let nextId = 0;
+
+  function addRow(gradeVal = '', weightVal = '') {
+    const id = nextId++;
+    rows.push({ id, grade: gradeVal, weight: weightVal });
+    renderRows();
+    if (!gradeVal) {
+      const inputs = document.querySelectorAll('.grade-input');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    }
+  }
+
+  function removeRow(id) {
+    rows = rows.filter(r => r.id !== id);
+    if (rows.length === 0) { addRow(); addRow(); }
+    else { renderRows(); recalc(); }
+  }
+
+  function renderRows() {
+    const area = document.getElementById('rowsArea');
+    area.innerHTML = '';
+    rows.forEach((row, idx) => {
+      const div = document.createElement('div');
+      div.className = 'row-item';
+      const showDel = rows.length > 1;
+      div.innerHTML = `
+        <div class="row-num">${idx + 1}</div>
+        <input class="grade-input" type="text" inputmode="decimal"
+          value="${row.grade}" placeholder="1–5"
+          aria-label="Řádek ${idx+1} Známka"
+          data-id="${row.id}" data-field="grade" autocomplete="off" />
+        <input class="weight-input" type="text" inputmode="decimal"
+          value="${row.weight}" placeholder="(váha)"
+          aria-label="Řádek ${idx+1} Váha"
+          data-id="${row.id}" data-field="weight" autocomplete="off" />
+        ${showDel
+          ? `<button class="del-btn" aria-label="Odstranit řádek ${idx+1}" onclick="removeRow(${row.id})"><i class="bi bi-x"></i></button>`
+          : '<div class="del-spacer"></div>'}
+      `;
+      area.appendChild(div);
+    });
+
+    area.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', function () {
+        const id = +this.dataset.id;
+        const field = this.dataset.field;
+        const r = rows.find(r => r.id === id);
+        if (r) {
+          r[field] = this.value;
+          this.classList.remove('error');
+          recalc();
+          if (field === 'grade') {
+            const gradeInputs = document.querySelectorAll('.grade-input');
+            const lastGradeInput = gradeInputs[gradeInputs.length - 1];
+            if (this === lastGradeInput && this.value.trim() !== '') {
+              addRow();
+            }
+          }
+        }
+      });
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          const gradeInputs = document.querySelectorAll('.grade-input');
+          if (this.classList.contains('grade-input')) {
+            const wInputs = document.querySelectorAll('.weight-input');
+            const idx = Array.from(gradeInputs).indexOf(this);
+            if (wInputs[idx]) wInputs[idx].focus();
+          } else if (this === document.querySelectorAll('.weight-input')[document.querySelectorAll('.weight-input').length - 1]) {
+            addRow();
+          } else {
+            const wInputs = document.querySelectorAll('.weight-input');
+            const idx = Array.from(wInputs).indexOf(this);
+            if (gradeInputs[idx + 1]) gradeInputs[idx + 1].focus();
+          }
+        }
+      });
+    });
+
+    recalc();
+  }
+
+  function parseGrade(s) {
+    if (!s || !s.trim()) return null;
+    s = s.trim().replace(',', '.');
+    const letterMap = { 'a': 1, 'b': 1.5, 'c': 2, 'd': 2.5, 'e': 3, 'f': 4 };
+    if (letterMap[s.toLowerCase()]) return letterMap[s.toLowerCase()];
+    const m = s.match(/^([1-5])([+-]?)$/);
+    if (m) {
+      let v = parseInt(m[1]);
+      if (m[2] === '+') v = Math.max(1, v - 0.5);
+      else if (m[2] === '-') v = Math.min(5, v + 0.5);
+      return v;
+    }
+    const n = parseFloat(s);
+    if (!isNaN(n) && n >= 1 && n <= 5) return n;
+    return null;
+  }
+
+  function gradeLabel(avg) {
+    if (avg <= 1.5) return { text: 'Výborný', bg: 'rgba(66,196,122,0.15)', color: '#42c47a', border: 'rgba(66,196,122,0.3)' };
+    if (avg <= 2.5) return { text: 'Chvalitebný', bg: 'rgba(74,144,226,0.15)', color: '#4a90e2', border: 'rgba(74,144,226,0.3)' };
+    if (avg <= 3.5) return { text: 'Dobrý', bg: 'rgba(245,200,66,0.15)', color: '#f5c842', border: 'rgba(245,200,66,0.3)' };
+    if (avg <= 4.5) return { text: 'Dostatečný', bg: 'rgba(240,140,40,0.15)', color: '#f08c28', border: 'rgba(240,140,40,0.3)' };
+    return { text: 'Nedostatečný', bg: 'rgba(224,85,85,0.15)', color: '#e05555', border: 'rgba(224,85,85,0.3)' };
+  }
+
+  function recalc() {
+    const valid = [];
+    rows.forEach(row => {
+      const g = parseGrade(row.grade);
+      const wRaw = (row.weight || '').trim().replace(',', '.');
+      const w = wRaw === '' ? 1 : parseFloat(wRaw);
+      if (g !== null && !isNaN(w) && w > 0) valid.push({ g, w, raw: row.grade });
+    });
+
+    const wValEl = document.getElementById('wVal');
+    const wSubEl = document.getElementById('wSub');
+    const aValEl = document.getElementById('aVal');
+    const aSubEl = document.getElementById('aSub');
+    const badgeEl = document.getElementById('gradeBadge');
+    const stCount = document.getElementById('stCount');
+    const stWeights = document.getElementById('stWeights');
+    const stMinMax = document.getElementById('stMinMax');
+
+    stCount.textContent = valid.length;
+
+    if (valid.length === 0) {
+      wValEl.textContent = '—'; wSubEl.textContent = 'Zadej alespoň 1 známku';
+      aValEl.textContent = '—'; aSubEl.textContent = 'Průměr bez vah';
+      badgeEl.innerHTML = '';
+      stWeights.textContent = '—'; stMinMax.textContent = '—';
+      return;
+    }
+
+    const totalW = valid.reduce((s, x) => s + x.w, 0);
+    const weighted = valid.reduce((s, x) => s + x.g * x.w, 0) / totalW;
+    const arith = valid.reduce((s, x) => s + x.g, 0) / valid.length;
+    const minG = Math.min(...valid.map(x => x.g));
+    const maxG = Math.max(...valid.map(x => x.g));
+
+    wValEl.textContent = weighted.toFixed(2);
+    aValEl.textContent = arith.toFixed(2);
+
+    const hasCustomWeights = rows.some(r => r.weight.trim() !== '' && r.weight.trim() !== '1');
+    wSubEl.textContent = hasCustomWeights
+      ? `Vážený ze ${valid.length} ${valid.length === 1 ? 'hodnoty' : valid.length < 5 ? 'hodnot' : 'hodnot'}`
+      : 'Všechny váhy = 1';
+    aSubEl.textContent = `${valid.length} ${valid.length === 1 ? 'hodnota' : valid.length < 5 ? 'hodnoty' : 'hodnot'}`;
+
+    const gl = gradeLabel(weighted);
+    badgeEl.innerHTML = `<div class="grade-badge" style="background:${gl.bg};color:${gl.color};border:1px solid ${gl.border}">${gl.text}</div>`;
+
+    const wDisplay = totalW % 1 === 0 ? totalW : totalW.toFixed(1);
+    stWeights.textContent = wDisplay;
+    stMinMax.textContent = `${minG % 1 === 0 ? minG : minG.toFixed(1)} / ${maxG % 1 === 0 ? maxG : maxG.toFixed(1)}`;
+  }
+
+  function resetAll() {
+    rows = [];
+    nextId = 0;
+    addRow(); addRow(); addRow();
+  }
+
+  function copyResult() {
+    const wEl = document.getElementById('wVal');
+    const aEl = document.getElementById('aVal');
+    if (wEl.textContent === '—') { showToast('Nejprve zadej známky'); return; }
+    const text = `Vážený průměr: ${wEl.textContent}, Aritmetický průměr: ${aEl.textContent}`;
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Průměr zkopírován!');
+    }).catch(() => {
+      showToast('Kopírování selhalo');
+    });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  // Registrace Service Workeru pro instalaci (PWA)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(err => {
+        console.log('ServiceWorker selhal: ', err);
+      });
+    });
+  }
+
+  // Init
+  resetAll();
+</script>
+</body>
+</html>
