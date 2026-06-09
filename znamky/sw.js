@@ -1,4 +1,4 @@
-const CACHE_NAME = 'znamky-v1';
+const CACHE_NAME = 'znamky-v2';
 const urlsToCache = [
   './',
   './index.html',
