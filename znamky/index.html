@@ -48,7 +48,6 @@
       gap: 0;
     }
 
-    /* Rozvržení pro PC (Dva sloupce) */
     @media (min-width: 768px) {
       .app {
         max-width: 900px;
@@ -67,7 +66,6 @@
       }
     }
 
-    /* Header */
     .logo {
       font-family: 'Jacquard 24', system-ui;
       font-size: 36px;
@@ -143,7 +141,6 @@
       font-weight: 500;
     }
 
-    /* Stats row */
     .stats-row {
       display: flex;
       gap: 8px;
@@ -166,7 +163,6 @@
     .stat-pill i { font-size: 13px; }
     .stat-pill b { color: var(--text); font-weight: 500; }
 
-    /* Actions */
     .actions {
       display: flex;
       gap: 8px;
@@ -201,7 +197,180 @@
     .btn.accent:active { background: #e0b530; }
     @media (hover: hover) { .btn.accent:hover { background: #e0b530; } }
 
-    /* Table header */
+    /* ── Import XML ────────────────────────────── */
+
+    .import-bar {
+      margin-top: 20px;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+
+    .import-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .import-drop {
+      width: 100%;
+      height: 52px;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .import-drop:hover, .import-drop.drag-over {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .import-drop input[type=file] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Subject picker modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      max-width: 440px;
+      max-height: 85dvh;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(16px);
+      transition: transform 0.2s;
+    }
+
+    .modal-overlay.open .modal {
+      transform: translateY(0);
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .modal-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .subject-list {
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      padding-right: 2px;
+    }
+
+    .subject-list::-webkit-scrollbar { width: 4px; }
+    .subject-list::-webkit-scrollbar-track { background: transparent; }
+    .subject-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    .subject-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: var(--bg3);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.12s;
+      gap: 12px;
+    }
+
+    .subject-item:hover, .subject-item:focus {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      outline: none;
+    }
+
+    .subject-item-name {
+      font-size: 14px;
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .subject-item-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .subject-item-count {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .subject-item-avg {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid rgba(245,200,66,0.2);
+      padding: 2px 8px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+
+    .modal-footer {
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .modal-footer .btn { flex: 1; }
+
+    /* Table */
     .table-header {
       display: grid;
       grid-template-columns: 28px 1fr 1fr 28px;
@@ -217,7 +386,6 @@
       text-align: center;
     }
 
-    /* Rows */
     .rows-area {
       display: flex;
       flex-direction: column;
@@ -288,7 +456,6 @@
     @media (hover: hover) { .del-btn:hover { background: rgba(224,85,85,0.15); border-color: var(--danger); color: var(--danger); } }
     .del-spacer { width: 28px; }
 
-    /* Add button */
     .add-btn {
       width: 100%;
       height: 48px;
@@ -308,6 +475,36 @@
     }
     .add-btn:active, .add-btn:hover { border-color: #444; color: #aaa; }
 
+    /* Imported subject banner */
+    .subject-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(245,200,66,0.25);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--accent);
+    }
+    .subject-banner.visible { display: flex; }
+    .subject-banner i { font-size: 14px; flex-shrink: 0; }
+    .subject-banner-name { font-weight: 500; flex: 1; }
+    .subject-banner-clear {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      transition: color 0.12s;
+    }
+    .subject-banner-clear:hover { color: var(--danger); }
+
     /* Toast */
     .toast {
       position: fixed;
@@ -326,7 +523,6 @@
       pointer-events: none;
     }
     .toast.show { transform: translateX(-50%) translateY(0); }
-
   </style>
 </head>
 <body>
@@ -360,11 +556,30 @@
       <button class="btn" onclick="resetAll()"><i class="bi bi-trash3"></i> Vymazat</button>
       <button class="btn accent" onclick="copyResult()"><i class="bi bi-clipboard"></i> Kopírovat</button>
     </div>
-    
+
+    <!-- Import sekce -->
+    <div class="import-bar">
+      <div class="import-label"><i class="bi bi-file-earmark-spreadsheet"></i> Import z i4 XML</div>
+      <label class="import-drop" id="importDrop">
+        <i class="bi bi-upload"></i>
+        <span id="importDropText">Nahrát export XML…</span>
+        <input type="file" accept=".xml" id="xmlFileInput">
+      </label>
+    </div>
+
     <div style="height: 32px; display: block;" class="mobile-spacer"></div>
   </div>
 
   <div class="editor">
+    <!-- Banner importovaného předmětu -->
+    <div class="subject-banner" id="subjectBanner">
+      <i class="bi bi-mortarboard"></i>
+      <span class="subject-banner-name" id="subjectBannerName"></span>
+      <button class="subject-banner-clear" onclick="clearSubject()" title="Zrušit import">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+
     <div class="table-header">
       <span></span>
       <span>Známka</span>
@@ -380,11 +595,25 @@
   </div>
 </div>
 
+<!-- Modal výběr předmětu -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">Vybrat předmět</div>
+    <div class="modal-sub" id="modalSub">Načteno předmětů z XML</div>
+    <div class="subject-list" id="subjectList"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()"><i class="bi bi-x"></i> Zavřít</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
+  // ─── Rows state ───────────────────────────────────────────
   let rows = [];
   let nextId = 0;
+  let importedSubjects = []; // parsed from XML
 
   function addRow(gradeVal = '', weightVal = '') {
     const id = nextId++;
@@ -465,6 +694,7 @@
     recalc();
   }
 
+  // ─── Grade parsing ────────────────────────────────────────
   function parseGrade(s) {
     if (!s || !s.trim()) return null;
     s = s.trim().replace(',', '.');
@@ -490,6 +720,7 @@
     return { text: 'Nedostatečný', bg: 'rgba(224,85,85,0.15)', color: '#e05555', border: 'rgba(224,85,85,0.3)' };
   }
 
+  // ─── Recalc ───────────────────────────────────────────────
   function recalc() {
     const valid = [];
     rows.forEach(row => {
@@ -529,7 +760,7 @@
 
     const hasCustomWeights = rows.some(r => r.weight.trim() !== '' && r.weight.trim() !== '1');
     wSubEl.textContent = hasCustomWeights
-      ? `Vážený ze ${valid.length} ${valid.length === 1 ? 'hodnoty' : valid.length < 5 ? 'hodnot' : 'hodnot'}`
+      ? `Vážený ze ${valid.length} ${valid.length === 1 ? 'hodnoty' : 'hodnot'}`
       : 'Všechny váhy = 1';
     aSubEl.textContent = `${valid.length} ${valid.length === 1 ? 'hodnota' : valid.length < 5 ? 'hodnoty' : 'hodnot'}`;
 
@@ -541,9 +772,11 @@
     stMinMax.textContent = `${minG % 1 === 0 ? minG : minG.toFixed(1)} / ${maxG % 1 === 0 ? maxG : maxG.toFixed(1)}`;
   }
 
+  // ─── Reset ────────────────────────────────────────────────
   function resetAll() {
     rows = [];
     nextId = 0;
+    clearSubject();
     addRow(); addRow(); addRow();
   }
 
@@ -567,16 +800,214 @@
     t._timer = setTimeout(() => t.classList.remove('show'), 2000);
   }
 
-  // Registrace Service Workeru pro instalaci (PWA)
+  // ─── XML Import ───────────────────────────────────────────
+
+  /**
+   * Parsuje i4 XML export.
+   * Vrací pole: [{ name, grades: [{value, weight, label}] }, ...]
+   * 
+   * Struktura: každý <Row> po prvním = předmět.
+   * První <Cell> = název předmětu.
+   * Ostatní <Cell ss:StyleID="jX"> s číselnou hodnotou = známky.
+   * Váha je v <Comment><Data> ve tvaru "...váha N,..."
+   */
+  function parseXML(xmlText) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xmlText, 'application/xml');
+
+    // namespace resolver — XML má urn:schemas-microsoft-com:office:spreadsheet
+    const ns = 'urn:schemas-microsoft-com:office:spreadsheet';
+
+    // Zkusíme najít všechny Row elementy
+    const rows = Array.from(doc.getElementsByTagNameNS(ns, 'Row'));
+    // fallback bez namespace
+    const rowsNoNS = rows.length > 0 ? rows : Array.from(doc.getElementsByTagName('Row'));
+
+    const subjects = [];
+
+    rowsNoNS.forEach((row, rowIdx) => {
+      if (rowIdx === 0) return; // header řádek
+
+      const cells = Array.from(row.childNodes).filter(n => n.nodeType === 1 &&
+        (n.localName === 'Cell' || n.tagName === 'Cell'));
+
+      if (!cells.length) return;
+
+      // První buňka = název předmětu
+      const firstDataEl = cells[0].querySelector
+        ? cells[0].querySelector('Data') || cells[0].getElementsByTagName('Data')[0]
+        : null;
+      const subjectName = firstDataEl ? firstDataEl.textContent.trim() : '';
+
+      // Přeskočit řádek souhrnu (⌀) a prázdné
+      if (!subjectName || subjectName === '⌀') return;
+
+      const grades = [];
+
+      // Buňky 2..N-4 (poslední 4 jsou absence, průměr, přepsání, výsledná)
+      // Bezpečnější: projít buňky se StyleID "jX" nebo s číselnou hodnotou
+      for (let ci = 1; ci < cells.length - 4; ci++) {
+        const cell = cells[ci];
+        const dataEl = cell.querySelector
+          ? cell.querySelector('Data') || cell.getElementsByTagName('Data')[0]
+          : null;
+        if (!dataEl) continue;
+
+        const typeAttr = dataEl.getAttributeNS
+          ? (dataEl.getAttributeNS(ns, 'Type') || dataEl.getAttribute('ss:Type') || dataEl.getAttribute('Type'))
+          : dataEl.getAttribute('ss:Type');
+
+        if (typeAttr === 'Number') {
+          const val = parseFloat(dataEl.textContent);
+          if (!isNaN(val) && val >= 1 && val <= 5 && Number.isInteger(val)) {
+            // Vytáhni váhu z Comment
+            const commentData = cell.querySelector
+              ? (cell.querySelector('Comment Data') || (() => {
+                  const c = cell.getElementsByTagName('Comment')[0];
+                  return c ? c.getElementsByTagName('Data')[0] : null;
+                })())
+              : null;
+            let weight = '';
+            if (commentData) {
+              const commentText = commentData.textContent || '';
+              const wMatch = commentText.match(/váha\s+(\d+)/);
+              if (wMatch) weight = wMatch[1];
+            }
+            grades.push({ value: String(val), weight });
+          }
+        }
+      }
+
+      if (grades.length > 0) {
+        subjects.push({ name: subjectName, grades });
+      }
+    });
+
+    return subjects;
+  }
+
+  function handleXMLFile(file) {
+    if (!file || !file.name.endsWith('.xml')) {
+      showToast('Nahraj prosím .xml soubor');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const subjects = parseXML(e.target.result);
+        if (!subjects.length) {
+          showToast('Žádné předměty nebyly nalezeny');
+          return;
+        }
+        importedSubjects = subjects;
+        document.getElementById('importDropText').textContent = file.name;
+        openModal(subjects);
+      } catch (err) {
+        console.error(err);
+        showToast('Chyba při čtení XML');
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  // ─── Modal ────────────────────────────────────────────────
+  function openModal(subjects) {
+    const overlay = document.getElementById('modalOverlay');
+    const list = document.getElementById('subjectList');
+    const sub = document.getElementById('modalSub');
+
+    sub.textContent = `${subjects.length} předmětů nalezeno`;
+    list.innerHTML = '';
+
+    subjects.forEach((subj, idx) => {
+      const avg = subj.grades.length
+        ? (subj.grades.reduce((s, g) => s + parseFloat(g.value), 0) / subj.grades.length).toFixed(2)
+        : null;
+
+      const item = document.createElement('div');
+      item.className = 'subject-item';
+      item.setAttribute('tabindex', '0');
+      item.innerHTML = `
+        <span class="subject-item-name">${subj.name}</span>
+        <span class="subject-item-meta">
+          <span class="subject-item-count">${subj.grades.length} zn.</span>
+          ${avg ? `<span class="subject-item-avg">ø ${avg}</span>` : ''}
+        </span>
+      `;
+      item.addEventListener('click', () => loadSubject(idx));
+      item.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') loadSubject(idx); });
+      list.appendChild(item);
+    });
+
+    overlay.classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+
+  function loadSubject(idx) {
+    closeModal();
+    const subj = importedSubjects[idx];
+    if (!subj) return;
+
+    // Naplnit rows ze znamek předmětu
+    rows = [];
+    nextId = 0;
+    subj.grades.forEach(g => {
+      const id = nextId++;
+      rows.push({ id, grade: g.value, weight: g.weight });
+    });
+    // Přidat prázdný řádek na konec
+    rows.push({ id: nextId++, grade: '', weight: '' });
+
+    renderRows();
+
+    // Zobrazit banner
+    const banner = document.getElementById('subjectBanner');
+    const bannerName = document.getElementById('subjectBannerName');
+    bannerName.textContent = subj.name;
+    banner.classList.add('visible');
+
+    showToast(`Načteno: ${subj.name}`);
+  }
+
+  function clearSubject() {
+    document.getElementById('subjectBanner').classList.remove('visible');
+  }
+
+  // ─── File input + drag&drop ───────────────────────────────
+  const xmlInput = document.getElementById('xmlFileInput');
+  const drop = document.getElementById('importDrop');
+
+  xmlInput.addEventListener('change', (e) => {
+    if (e.target.files[0]) handleXMLFile(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('drag-over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
+  drop.addEventListener('drop', (e) => {
+    e.preventDefault();
+    drop.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) handleXMLFile(file);
+  });
+
+  // Zavřít modal kliknutím mimo
+  document.getElementById('modalOverlay').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  });
+
+  // ─── Service Worker ───────────────────────────────────────
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(err => {
-        console.log('ServiceWorker selhal: ', err);
-      });
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
     });
   }
 
-  // Init
+  // ─── Init ─────────────────────────────────────────────────
   resetAll();
 </script>
 </body>
