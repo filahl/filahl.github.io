@@ -239,7 +239,15 @@
                     ring.style.backgroundColor = 'transparent';
                 }
             });
-        });
+        
+        // --- PWA SERVICE WORKER REGISTRACE ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => {
+                    console.log('ServiceWorker selhal: ', err);
+                });
+            });
+        }
     </script>
 </body>
 </html>
