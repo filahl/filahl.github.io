@@ -4,25 +4,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Filip — Portfolio</title>
+  <title>Filip - Portfolio</title>
   <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/6821/6821173.png">
   <link
-    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" crossorigin="anonymous">
   <style>
     :root {
-      --bg: #262624;
-      --bg-raised: #2e2e2b;
-      --bg-card: #323230;
-      --border: rgba(255, 255, 255, 0.06);
-      --border-md: rgba(255, 255, 255, 0.11);
-      --accent: #f97316;
-      --accent-lo: rgba(249, 115, 22, 0.10);
-      --accent-md: rgba(249, 115, 22, 0.28);
-      --text: #ede9e2;
-      --muted: #888880;
-      --faint: rgba(237, 233, 226, 0.045);
+      --bg: #1f1f1e;
+      --bg-raised: #262625;
+      --bg-card: #2b2b29;
+      --border: rgba(240, 236, 230, 0.07);
+      --border-md: rgba(240, 236, 230, 0.14);
+      --accent: #d97a52;
+      --accent-lo: rgba(217, 122, 82, 0.10);
+      --accent-md: rgba(217, 122, 82, 0.32);
+      --accent-ink: #1f1f1e;
+      --blue: #8d97a8;
+      --blue-lo: rgba(141, 151, 168, 0.10);
+      --blue-md: rgba(141, 151, 168, 0.30);
+      --text: #f1ece4;
+      --muted: #8c887f;
+      --faint: rgba(240, 236, 230, 0.04);
+      --mono: 'JetBrains Mono', monospace;
+      --display: 'Space Grotesk', sans-serif;
+      --serif: 'Instrument Serif', Georgia, serif;
     }
 
     *,
@@ -39,12 +46,35 @@
 
     body {
       background: var(--bg);
+      background-image:
+        radial-gradient(ellipse 900px 500px at 15% -10%, rgba(217, 122, 82, 0.06), transparent),
+        radial-gradient(ellipse 700px 500px at 100% 20%, rgba(141, 151, 168, 0.04), transparent);
       color: var(--text);
-      font-family: 'Geist', system-ui, sans-serif;
-      font-weight: 300;
+      font-family: var(--display);
+      font-weight: 400;
       line-height: 1.6;
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection {
+      background: var(--accent-md);
+      color: var(--accent-ink);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    /* SCANLINE TEXTURE */
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.025;
+      background-image: repeating-linear-gradient(0deg, #fff 0px, transparent 1px, transparent 2px);
+      mix-blend-mode: overlay;
     }
 
     /* NAV */
@@ -54,22 +84,23 @@
       left: 0;
       right: 0;
       z-index: 200;
-      height: 58px;
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 3rem;
-      background: rgba(38, 38, 36, 0.85);
+      background: var(--bg-raised);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
     }
 
     .nav-brand {
-      font-family: 'Instrument Serif', Georgia, serif;
-      font-style: italic;
-      font-size: 1.4rem;
+      font-family: var(--mono);
+      font-weight: 500;
+      font-size: 0.95rem;
       color: var(--text);
       text-decoration: none;
+      letter-spacing: -0.02em;
     }
 
     .nav-brand span {
@@ -78,6 +109,7 @@
 
     .nav-links {
       display: flex;
+      align-items: center;
       gap: 2rem;
       list-style: none;
     }
@@ -85,20 +117,36 @@
     .nav-links a {
       color: var(--muted);
       text-decoration: none;
-      font-size: 0.78rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
       font-weight: 400;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      letter-spacing: 0.06em;
       transition: color 0.2s;
     }
 
+    .nav-links a::before {
+      content: "";
+    }
+
     .nav-links a:hover {
-      color: var(--text);
+      color: var(--accent);
+    }
+
+    .nav-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+      padding: 0.3rem 0.7rem;
+      border: 1px solid var(--border-md);
+      border-radius: 4px;
     }
 
     .nav-dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: var(--accent);
       box-shadow: 0 0 8px var(--accent);
@@ -113,7 +161,7 @@
       }
 
       50% {
-        opacity: .25
+        opacity: .3
       }
     }
 
@@ -121,78 +169,86 @@
     .hero {
       min-height: 100svh;
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1.15fr 0.85fr;
       align-items: center;
-      gap: 4rem;
-      max-width: 1160px;
+      gap: 3rem;
+      max-width: 1180px;
       margin: 0 auto;
       padding: 5rem 3rem 3rem;
     }
 
-    .badge {
+    .hero-tag {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      font-size: 0.7rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
+      gap: 0.55rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
       color: var(--accent);
       background: var(--accent-lo);
       border: 1px solid var(--accent-md);
-      padding: 0.28rem 0.85rem;
-      border-radius: 100px;
-      margin-bottom: 1.75rem;
+      padding: 0.32rem 0.85rem 0.32rem 0.65rem;
+      border-radius: 4px;
+      margin-bottom: 2rem;
       animation: rise 0.6s ease both;
     }
 
-    .badge-dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--accent);
+    .hero-tag::before {
+      content: "●";
+      font-size: 0.55rem;
     }
 
     .hero-name {
-      font-family: 'Instrument Serif', Georgia, serif;
-      font-size: clamp(3.8rem, 8vw, 7rem);
-      font-weight: 400;
-      line-height: 1;
-      letter-spacing: -0.025em;
+      font-family: var(--display);
+      font-size: clamp(2.6rem, 5.4vw, 4.6rem);
+      font-weight: 600;
+      line-height: 1.04;
+      letter-spacing: -0.03em;
       color: var(--text);
       animation: rise 0.6s 0.07s ease both;
     }
 
-    .hero-name em {
+    .hero-name .serif-em {
+      font-family: var(--serif);
       font-style: italic;
+      font-weight: 400;
       color: var(--accent);
+      font-size: 1.06em;
     }
 
     .hero-role {
-      margin-top: 1.5rem;
-      font-size: 0.98rem;
+      margin-top: 1.6rem;
+      font-size: 1.02rem;
       color: var(--muted);
-      max-width: 360px;
+      max-width: 430px;
+      line-height: 1.7;
       animation: rise 0.6s 0.14s ease both;
+    }
+
+    .hero-role strong {
+      color: var(--text);
+      font-weight: 500;
     }
 
     .hero-ctas {
       margin-top: 2.25rem;
       display: flex;
-      gap: 0.875rem;
+      gap: 0.75rem;
       animation: rise 0.6s 0.21s ease both;
     }
 
     .btn-fill {
       background: var(--accent);
-      color: #1a1108;
-      padding: 0.62rem 1.4rem;
+      color: var(--accent-ink);
+      padding: 0.68rem 1.3rem;
       border-radius: 6px;
       text-decoration: none;
-      font-size: 0.84rem;
-      font-weight: 500;
+      font-family: var(--display);
+      font-size: 0.85rem;
+      font-weight: 600;
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.45rem;
       transition: opacity .18s, transform .18s;
     }
 
@@ -204,10 +260,12 @@
     .btn-outline {
       border: 1px solid var(--border-md);
       color: var(--muted);
-      padding: 0.62rem 1.4rem;
+      padding: 0.68rem 1.3rem;
       border-radius: 6px;
       text-decoration: none;
-      font-size: 0.84rem;
+      font-family: var(--display);
+      font-size: 0.85rem;
+      font-weight: 500;
       transition: border-color .2s, color .2s;
     }
 
@@ -216,6 +274,7 @@
       color: var(--text);
     }
 
+    /* HERO RIGHT - TERMINAL CARD */
     .hero-right {
       display: flex;
       justify-content: center;
@@ -223,62 +282,105 @@
       animation: rise 0.8s 0.18s ease both;
     }
 
-    .avatar-wrap {
-      position: relative;
-      width: 300px;
-      height: 370px;
-    }
-
-    .avatar-wrap img {
+    .term-card {
       width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 12px;
-      display: block;
-      filter: grayscale(15%) contrast(1.04);
-    }
-
-    .avatar-wrap::before {
-      content: '';
-      position: absolute;
-      inset: -2px;
-      border-radius: 13px;
-      background: linear-gradient(140deg, var(--accent) 0%, transparent 55%);
-      z-index: -1;
-    }
-
-    .avatar-chip {
-      position: absolute;
-      bottom: -18px;
-      left: -18px;
+      max-width: 360px;
       background: var(--bg-card);
       border: 1px solid var(--border-md);
       border-radius: 10px;
-      padding: 0.7rem 1rem;
+      overflow: hidden;
+      box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.5);
+    }
+
+    .term-bar {
       display: flex;
       align-items: center;
-      gap: 0.6rem;
-      font-size: 0.8rem;
+      gap: 0.5rem;
+      padding: 0.65rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-raised);
     }
 
-    .chip-icon {
-      color: var(--accent);
+    .term-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--border-md);
     }
 
-    .chip-label {
+    .term-dot:nth-child(3) {
+      background: var(--accent);
+      opacity: 0.7;
+    }
+
+    .term-title {
+      margin-left: 0.4rem;
+      font-family: var(--mono);
       font-size: 0.68rem;
       color: var(--muted);
     }
 
-    .chip-val {
+    .term-body {
+      padding: 1.1rem 1.2rem 1.3rem;
+      font-family: var(--mono);
       font-size: 0.8rem;
-      font-weight: 500;
+      line-height: 1.85;
+    }
+
+    .term-line {
+      display: flex;
+      gap: 0.6rem;
+    }
+
+    .term-key {
+      color: var(--muted);
+      flex-shrink: 0;
+      width: 92px;
+    }
+
+    .term-val {
       color: var(--text);
+    }
+
+    .term-val.accent {
+      color: var(--accent);
+    }
+
+    .term-val.blue {
+      color: var(--blue);
+    }
+
+    .term-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 0.75rem 0;
+    }
+
+    .term-cursor {
+      display: inline-block;
+      width: 6px;
+      height: 1.1em;
+      background: var(--accent);
+      vertical-align: text-bottom;
+      animation: cursor-blink 1s step-end infinite;
+    }
+
+    @keyframes cursor-blink {
+
+      0%,
+      50% {
+        opacity: 1
+      }
+
+      50.01%,
+      100% {
+        opacity: 0
+      }
     }
 
     /* DIVIDER */
     .divider {
-      max-width: 1160px;
+      max-width: 1180px;
       margin: 0 auto;
       padding: 0 3rem 3rem;
       display: flex;
@@ -293,82 +395,101 @@
     }
 
     .divider-text {
+      font-family: var(--mono);
       font-size: 0.66rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
+      letter-spacing: 0.08em;
       color: var(--muted);
     }
 
     /* ABOUT */
     .about-strip {
       background: var(--bg-raised);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      padding: 4rem 3rem;
+
+      padding: 5rem 3rem;
     }
 
     .about-inner {
-      max-width: 1160px;
+      max-width: 1180px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 1fr 2fr;
-      gap: 5rem;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 4rem;
       align-items: start;
     }
 
     .eyebrow {
+      font-family: var(--mono);
       font-size: 0.68rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
+      letter-spacing: 0.1em;
       color: var(--accent);
-      margin-bottom: 0.6rem;
+      margin-bottom: 0.7rem;
     }
 
     .about-left h2 {
-      font-family: 'Instrument Serif', serif;
-      font-size: 2.2rem;
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 2.5rem;
       font-weight: 400;
-      line-height: 1.2;
+      line-height: 1.18;
       color: var(--text);
     }
 
     .about-right p {
       color: var(--muted);
-      font-size: 0.92rem;
-      line-height: 1.85;
-      margin-bottom: 1.1rem;
+      font-size: 0.96rem;
+      line-height: 1.9;
+      margin-bottom: 1.15rem;
+      max-width: 560px;
     }
 
     .about-right p:last-of-type {
       margin-bottom: 0;
     }
 
-    .skill-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.45rem;
-      margin-top: 1.5rem;
-    }
-
-    .skill-tag {
-      font-size: 0.72rem;
-      letter-spacing: 0.05em;
-      padding: 0.28rem 0.75rem;
-      border-radius: 4px;
-      background: var(--faint);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      transition: border-color .2s, color .2s;
-    }
-
-    .skill-tag:hover {
-      border-color: var(--accent-md);
+    .about-right strong {
       color: var(--text);
+      font-weight: 500;
+    }
+
+    .stack-grid {
+      margin-top: 2rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6rem;
+      max-width: 560px;
+    }
+
+    .stack-item {
+      border: 1px solid var(--border);
+      background: var(--faint);
+      border-radius: 6px;
+      padding: 0.6rem 0.8rem;
+      transition: border-color .2s;
+    }
+
+    .stack-item:hover {
+      border-color: var(--accent-md);
+    }
+
+    .stack-cat {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .stack-val {
+      font-size: 0.78rem;
+      color: var(--text);
+      font-weight: 500;
     }
 
     /* PROJECTS */
     #projects {
-      max-width: 1160px;
+      max-width: 1180px;
       margin: 0 auto;
       padding: 6rem 3rem;
     }
@@ -377,13 +498,13 @@
       display: flex;
       align-items: center;
       gap: 1rem;
-      margin-bottom: 2rem;
+      margin-bottom: 1.75rem;
     }
 
     .sec-label {
+      font-family: var(--mono);
       font-size: 0.68rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
+      letter-spacing: 0.1em;
       color: var(--accent);
     }
 
@@ -394,23 +515,57 @@
     }
 
     .projects-title {
-      font-family: 'Instrument Serif', serif;
-      font-size: clamp(2rem, 4vw, 3rem);
-      font-weight: 400;
+      font-family: var(--display);
+      font-size: clamp(1.9rem, 3.6vw, 2.7rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
       color: var(--text);
       margin-bottom: 0.5rem;
     }
 
     .projects-sub {
       color: var(--muted);
-      font-size: 0.88rem;
-      margin-bottom: 2.75rem;
+      font-size: 0.92rem;
+      margin-bottom: 1rem;
+    }
+
+    /* filter pills */
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .filter-pill {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+      background: var(--faint);
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.85rem;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all .18s;
+      user-select: none;
+    }
+
+    .filter-pill:hover {
+      border-color: var(--border-md);
+      color: var(--text);
+    }
+
+    .filter-pill.active {
+      background: var(--accent-lo);
+      border-color: var(--accent-md);
+      color: var(--accent);
     }
 
     .proj-grid {
       display: grid;
       grid-template-columns: repeat(12, 1fr);
-      gap: 1.125rem;
+      gap: 1.1rem;
     }
 
     .span-7 {
@@ -425,23 +580,36 @@
       grid-column: span 6;
     }
 
+    .span-4 {
+      grid-column: span 4;
+    }
+
+    .span-12 {
+      grid-column: span 12;
+    }
+
     .proj-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 10px;
       overflow: hidden;
       text-decoration: none;
       display: flex;
       flex-direction: column;
       position: relative;
       transition: border-color .25s, transform .25s, box-shadow .25s;
+      align-self: start;
+    }
+
+    .proj-card.fade-out {
+      display: none;
     }
 
     .proj-card::after {
       content: '';
       position: absolute;
       inset: 0;
-      border-radius: 12px;
+      border-radius: 10px;
       background: linear-gradient(135deg, var(--accent-lo) 0%, transparent 50%);
       opacity: 0;
       transition: opacity .3s;
@@ -449,31 +617,39 @@
     }
 
     .proj-card:hover {
-      border-color: rgba(249, 115, 22, .22);
+      border-color: var(--accent-md);
       transform: translateY(-3px);
-      box-shadow: 0 16px 44px rgba(0, 0, 0, .38);
+      box-shadow: 0 16px 44px rgba(0, 0, 0, .4);
     }
 
     .proj-card:hover::after {
       opacity: 1;
     }
 
+    .proj-img-wrapper {
+      width: 100%;
+      aspect-ratio: 16/10;
+      overflow: hidden;
+      background: var(--bg-raised);
+    }
+
     .proj-img {
       width: 100%;
-      aspect-ratio: 16/9;
+      height: 100%;
       object-fit: cover;
-      background: var(--bg-raised);
+      object-position: top;
       display: block;
-      transition: filter .3s;
-      filter: brightness(.88) saturate(.85);
+      filter: brightness(.9) saturate(.85);
+      transition: filter .3s, transform .5s cubic-bezier(.165, .84, .44, 1);
     }
 
     .proj-card:hover .proj-img {
       filter: brightness(1) saturate(1);
+      transform: scale(1.04);
     }
 
     .proj-body {
-      padding: 1.2rem 1.4rem 1.5rem;
+      padding: 1.15rem 1.3rem 1.4rem;
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -481,33 +657,53 @@
       z-index: 1;
     }
 
+    .proj-path {
+      font-family: var(--mono);
+      font-size: 0.66rem;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+      letter-spacing: -0.01em;
+    }
+
+    .proj-path .slash {
+      color: var(--accent);
+    }
+
     .proj-meta {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      margin-bottom: 0.55rem;
+      margin-bottom: 0.5rem;
     }
 
     .proj-tag {
-      font-size: 0.62rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.04em;
       background: var(--accent-lo);
       color: var(--accent);
       border: 1px solid var(--accent-md);
-      padding: 0.18rem 0.52rem;
+      padding: 0.2rem 0.5rem;
       border-radius: 3px;
     }
 
+    .proj-tag.blue {
+      background: var(--blue-lo);
+      color: var(--blue);
+      border-color: var(--blue-md);
+    }
+
     .proj-year {
-      font-size: 0.68rem;
+      font-family: var(--mono);
+      font-size: 0.66rem;
       color: var(--muted);
     }
 
     .proj-title {
-      font-family: 'Instrument Serif', serif;
-      font-size: 1.2rem;
-      font-weight: 400;
+      font-family: var(--display);
+      font-size: 1.18rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
       color: var(--text);
       display: flex;
       align-items: baseline;
@@ -519,6 +715,7 @@
       color: var(--accent);
       transition: transform .2s;
       font-style: normal;
+      font-size: 0.9em;
     }
 
     .proj-card:hover .proj-arrow {
@@ -526,9 +723,11 @@
     }
 
     .proj-desc {
+
       color: var(--muted);
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       margin-top: 0.4rem;
+
       line-height: 1.65;
     }
 
@@ -536,31 +735,45 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 165px;
-      background: var(--faint);
+      min-height: 110px;
+      background: linear-gradient(90deg, var(--bg-card), var(--faint));
+      flex-direction: row;
     }
 
     .more-card-inner {
-      text-align: center;
-      padding: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.3rem;
+      padding: 1rem;
+      text-align: left;
     }
 
     .more-plus {
-      font-size: 1.8rem;
-      color: var(--muted);
-      margin-bottom: 0.6rem;
+      color: var(--accent);
+      width: 38px;
+      height: 38px;
+      line-height: 36px;
+      text-align: center;
+      border: 1px solid var(--accent-md);
+      border-radius: 50%;
+      font-weight: 600;
+      font-family: var(--mono);
+      font-size: 1.1rem;
+      flex-shrink: 0;
     }
 
     .more-title {
-      font-family: 'Instrument Serif', serif;
-      font-size: 1.1rem;
+      font-family: var(--display);
+      font-weight: 600;
+      font-size: 1.05rem;
       color: var(--text);
     }
 
     .more-sub {
-      font-size: 0.74rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
       color: var(--muted);
-      margin-top: 0.25rem;
+      margin-top: 0.2rem;
     }
 
     /* CONTACT */
@@ -571,36 +784,37 @@
     }
 
     .contact-wrap {
-      max-width: 1160px;
+      max-width: 1180px;
       margin: 0 auto;
     }
 
     .contact-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 5rem;
+      gap: 4.5rem;
       align-items: start;
       margin-top: 2.5rem;
     }
 
     .contact-heading {
-      font-family: 'Instrument Serif', serif;
-      font-size: clamp(2rem, 4vw, 3rem);
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: clamp(2rem, 4vw, 2.9rem);
       font-weight: 400;
-      line-height: 1.1;
+      line-height: 1.15;
       color: var(--text);
       margin-bottom: 1rem;
     }
 
-    .contact-heading em {
-      font-style: italic;
+    .contact-heading .accent-word {
       color: var(--accent);
     }
 
     .contact-body {
       color: var(--muted);
-      font-size: 0.9rem;
-      line-height: 1.8;
+      font-size: 0.92rem;
+      line-height: 1.85;
+      max-width: 420px;
     }
 
     .contact-list {
@@ -613,14 +827,15 @@
       display: flex;
       align-items: center;
       gap: 1rem;
-      padding: 0.88rem 1.2rem;
+      padding: 0.9rem 1.2rem;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 8px;
       text-decoration: none;
       color: var(--text);
-      font-size: 0.86rem;
-      font-weight: 400;
+      font-family: var(--display);
+      font-size: 0.88rem;
+      font-weight: 500;
       transition: border-color .2s, background .2s;
     }
 
@@ -638,20 +853,22 @@
 
     .c-sub {
       margin-left: auto;
+      font-family: var(--mono);
       font-size: 0.7rem;
       color: var(--muted);
     }
 
     /* FOOTER */
     footer {
-      max-width: 1160px;
+      max-width: 1180px;
       margin: 0 auto;
       padding: 2rem 3rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-top: 1px solid var(--border);
-      font-size: 0.75rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
       color: var(--muted);
     }
 
@@ -662,6 +879,13 @@
 
     footer a:hover {
       text-decoration: underline;
+    }
+
+    /* SVG Wave styling */
+    svg#svg {
+      display: block;
+      min-height: 100px;
+      height: auto;
     }
 
     @keyframes rise {
@@ -676,24 +900,64 @@
       }
     }
 
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+
+    a:focus-visible,
+    button:focus-visible,
+    .filter-pill:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    @media (max-width: 1024px) {
+
+      .span-7,
+      .span-5,
+      .span-4 {
+        grid-column: span 6;
+      }
+    }
+
     @media (max-width: 860px) {
       nav {
         padding: 0 1.5rem;
       }
 
-      .hero {
-        grid-template-columns: 1fr;
-        padding: 5rem 1.5rem 2rem;
-        gap: 2rem;
+      .nav-links {
+        gap: 1.1rem;
       }
 
-      .hero-right {
+      .nav-status {
         display: none;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        padding: 5.5rem 1.5rem 2rem;
+        gap: 2.5rem;
+      }
+
+      .term-card {
+        max-width: 100%;
       }
 
       .about-inner {
         grid-template-columns: 1fr;
         gap: 2rem;
+      }
+
+      .stack-grid {
+        grid-template-columns: repeat(2, 1fr);
       }
 
       .proj-grid {
@@ -702,8 +966,13 @@
 
       .span-7,
       .span-5,
-      .span-6 {
+      .span-6,
+      .span-4 {
         grid-column: span 1;
+      }
+
+      .more-card-inner {
+        padding: 0.5rem;
       }
 
       .contact-grid {
@@ -724,187 +993,283 @@
         padding: 1.5rem;
       }
     }
-    /* Oprava gridu a nové efekty */
-.proj-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 1.5rem; /* Větší mezera pro čistší vzhled */
-}
 
-.span-12 {
-  grid-column: span 12;
-}
+    /* Speciální rozložení pro širokou kartu (span-12) */
+    @media (min-width: 861px) {
+      .proj-card-wide {
+        display: grid;
+        grid-template-columns: 1fr 1.8fr;
+      }
 
-/* Obal obrázku pro zoom efekt */
-.proj-img-wrapper {
-  width: 100%;
-  height: 280px; /* Fixní výška pro konzistenci */
-  overflow: hidden;
-  background: var(--bg-raised);
-}
+      .proj-card-wide .proj-img-wrapper {
+        height: 100%;
+        aspect-ratio: unset;
+      }
 
-.proj-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top;
-  transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
-}
-
-.proj-card:hover .proj-img {
-  transform: scale(1.05); /* Jemný zoom */
-}
-
-/* Vylepšení GitHub karty */
-.more-card {
-  min-height: 120px !important;
-  flex-direction: row !important;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(90deg, var(--bg-card), var(--faint));
-}
-
-.more-card-inner {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 1rem;
-}
-
-.more-plus {
-  margin-bottom: 0 !important;
-  color: var(--accent);
-  width: 40px;
-  height: 40px;
-  line-height: 38px;
-  border-radius: 50%;
-  font-weight: 600;
-}
-
-/* Responzivita pro tablety */
-@media (max-width: 1024px) {
-  .span-7, .span-5 {
-    grid-column: span 6;
-  }
-}
+      .proj-card-wide .proj-body {
+        justify-content: center;
+      }
+    }
   </style>
 </head>
 
 <body>
 
-  <nav>
-    <a href="#welcome-section" class="nav-brand">Filip<span>.</span></a>
-    <ul class="nav-links">
-      <li><a href="#welcome-section">About</a></li>
-      <li><a href="#projects">Work</a></li>
-      <li><a href="#contact">Contact</a></li>
-    </ul>
+  <div class="grain"></div>
 
+  <nav>
+    <a href="#welcome-section" class="nav-brand">filip<span></span></a>
+    <ul class="nav-links">
+      <li><a href="#welcome-section">about</a></li>
+      <li><a href="#projects">work</a></li>
+      <li><a href="#contact">contact</a></li>
+    </ul>
+    <div class="nav-status"><span class="nav-dot"></span> available for work</div>
   </nav>
 
   <section id="welcome-section" class="hero">
     <div class="hero-left">
-
-      <h1 class="hero-name">Hi,<br>I'm <em>Filip</em>.</h1>
-      <p class="hero-role">IT student &amp; photographer from Czech Republic. I craft things for the web.</p>
+      
+      <h1 class="hero-name">Building things<br>that <span class="serif-em">actually run</span>.</h1>
+      <p class="hero-role">IT student z Chrudimi. Stavím <strong>webové aplikace, CMS řešení a nástroje na
+          zakázku</strong> - od stránek pro místní firmy po experimenty, co nikdo nečekal, že fungují.</p>
       <div class="hero-ctas">
-        <a href="#projects" class="btn-fill">View work <i class="fas fa-arrow-right" style="font-size:.72rem"></i></a>
-        <a href="#contact" class="btn-outline">Get in touch</a>
+        <a href="#projects" class="btn-fill">Prohlédnout práci <i class="fas fa-arrow-right"
+            style="font-size:.72rem"></i></a>
+        <a href="#contact" class="btn-outline">Napsat mi</a>
       </div>
     </div>
     <div class="hero-right">
-      <div class="avatar-wrap">
-        <img src="/portfolio/avatar.jpg" alt="Filip" onerror="this.closest('.avatar-wrap').style.display='none'">
-        <div class="avatar-chip">
-          <span class="chip-icon"><i class="fas fa-map-marker-alt"></i></span>
-          <div>
-            <div class="chip-label">Based in</div>
-            <div class="chip-val">Czech Republic</div>
+      <div class="term-card-wrap">
+        <div class="term-card">
+          <div class="term-bar">
+            <span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span>
+            <span class="term-title">~/filip - whoami</span>
           </div>
+          <div class="term-body" style="white-space: normal; line-height: 1.8;">
+            <p style="margin-bottom: 1rem;">Ahoj, jsem Filip. Mám rád auta. Jsem IT student z Chrudimi, který nestaví jen weby, ale řešení,
+              co dávají smysl a fungují.</p>
+            
+            <p style="margin-bottom: 1rem;">Mám za sebou klientské weby (např. Autoškola Blažek) i více než 15
+              vlastních aplikací a nástrojů.</p>
+
+              <p style="margin-bottom: 1rem;">Pro administraci mých webů mám zkušenosti s <span class="accent"></span><span class="accent">CouchCMS</span>.</p>
+            </div>
+          </div>
+        </div>
+        <div class="avatar-chip">
+          <img src="avatar.jpg" alt="Filip" onerror="this.parentElement.style.display='none'">
         </div>
       </div>
     </div>
   </section>
 
   <div class="divider">
+
     <div class="divider-line"></div>
-    <span class="divider-text">Selected work below</span>
+    <span class="divider-text">// vybraná práce níže</span>
     <div class="divider-line"></div>
+
   </div>
+  <svg width="100%" height="100%" id="svg" viewBox="0 0 1440 390" xmlns="http://www.w3.org/2000/svg"
+    class="transition duration-300 ease-in-out delay-150">
+    <path
+      d="M 0,400 L 0,60 C 69.75884575747165,55.88594984541395 139.5176915149433,51.77189969082789 211,48 C 282.4823084850567,44.22810030917211 355.6880796976984,40.79835108210237 414,43 C 472.3119203023016,45.20164891789763 515.7299896942633,53.03469598076262 584,65 C 652.2700103057367,76.96530401923738 745.3919615252491,93.06286499484715 815,84 C 884.6080384747509,74.93713500515285 930.7021642047407,40.71384403984884 1001,38 C 1071.2978357952593,35.28615596015116 1165.7993816557882,64.08175884575748 1243,73 C 1320.2006183442118,81.91824115424252 1380.1003091721059,70.95912057712127 1440,60 L 1440,400 L 0,400 Z"
+      stroke="none" stroke-width="0" fill="#262625" fill-opacity="0.265"
+      class="transition-all duration-300 ease-in-out delay-150 path-0"></path>
+    <path
+      d="M 0,400 L 0,140 C 66.50085881140502,143.64136035726554 133.00171762281005,147.28272071453108 192,154 C 250.99828237718995,160.71727928546892 302.4939883201649,170.51047749914116 378,165 C 453.5060116798351,159.48952250085884 553.0223290965304,138.67536928890416 639,136 C 724.9776709034696,133.32463071109584 797.4166952937134,148.78804534524218 856,144 C 914.5833047062866,139.21195465475782 959.3108897286158,114.17244933012712 1018,110 C 1076.6891102713842,105.82755066987288 1149.339745791824,122.52215733424939 1222,131 C 1294.660254208176,139.47784266575061 1367.330127104088,139.7389213328753 1440,140 L 1440,400 L 0,400 Z"
+      stroke="none" stroke-width="0" fill="#262625" fill-opacity="0.4"
+      class="transition-all duration-300 ease-in-out delay-150 path-1"></path>
+    <path
+      d="M 0,400 L 0,220 C 77.49708004122294,224.2610786671247 154.9941600824459,228.52215733424939 220,223 C 285.0058399175541,217.47784266575061 337.52043971143934,202.17244933012714 396,203 C 454.47956028856066,203.82755066987286 518.9240810717966,220.78804534524218 603,226 C 687.0759189282034,231.21195465475782 790.7832360013741,224.67536928890416 849,231 C 907.2167639986259,237.32463071109584 919.942974922707,256.5104774991412 990,249 C 1060.057025077293,241.48952250085884 1187.444864307798,207.2827207145311 1272,198 C 1356.555135692202,188.7172792854689 1398.277567846101,204.35863964273443 1440,220 L 1440,400 L 0,400 Z"
+      stroke="none" stroke-width="0" fill="#262625" fill-opacity="0.53"
+      class="transition-all duration-300 ease-in-out delay-150 path-2"></path>
+    <path
+      d="M 0,400 L 0,300 C 89.07866712469942,281.45723119203024 178.15733424939884,262.9144623840604 241,272 C 303.84266575060116,281.0855376159396 340.449330127104,317.7993816557884 389,326 C 437.550669872896,334.2006183442116 498.045345242185,313.888010992786 580,304 C 661.954654757815,294.111989007214 765.3692889041565,294.6485743730677 848,297 C 930.6307110958435,299.3514256269323 992.4774991411884,303.5176915149433 1061,299 C 1129.5225008588116,294.4823084850567 1204.720714531089,281.28065956715903 1269,280 C 1333.279285468911,278.71934043284097 1386.6396427344555,289.35967021642045 1440,300 L 1440,400 L 0,400 Z"
+      stroke="none" stroke-width="0" fill="#262625" fill-opacity="1"
+      class="transition-all duration-300 ease-in-out delay-150 path-3"></path>
+  </svg>
 
   <div class="about-strip">
+
     <div class="about-inner">
       <div class="about-left">
-        <div class="eyebrow">About me</div>
-        <h2>Student.<br>Collector.<br>Photographer.</h2>
+        <div class="eyebrow">o mně</div>
+        <h2>Student.<br>Vývojář.<br>Fotograf.</h2>
       </div>
       <div class="about-right">
-        <p>I study IT and spend my free time building web projects and shooting photos on a shoestring budget. </p>
-        <div class="skill-tags">
-          <span class="skill-tag">HTML / CSS</span>
-          <span class="skill-tag">JavaScript</span>
-          <span class="skill-tag">Photography</span>
-          <span class="skill-tag">UI Design</span>
-          <span class="skill-tag">Git</span>
-          <span class="skill-tag">Czech Republic</span>
+        <p>Studuju IT a ve volném čase stavím weby a nástroje - od klientských zakázek po věci, co prostě chci
+          vidět existovat. Mám rád úlohy, kde je potřeba vymyslet netriviální řešení: ať je to obejití omezení
+          v Minecraft Forge modu, nebo SEO ladění na PHP/CouchCMS stránce, která musí jet na sdíleném hostingu.</p>
+        <p>Mimo kód fotím - <strong>na nízký rozpočet, ale s vysokými nároky</strong> na výsledek.</p>
+        <div class="stack-grid">
+          <div class="stack-item"><span class="stack-cat">Frontend</span><span class="stack-val">JS / HTML /
+              CSS</span></div>
+          <div class="stack-item"><span class="stack-cat">Backend</span><span class="stack-val">PHP, CouchCMS</span>
+          </div>
+          <div class="stack-item"><span class="stack-cat">Jazyky</span><span class="stack-val">Java, Python</span>
+          </div>
+          <div class="stack-item"><span class="stack-cat">Nástroje</span><span class="stack-val">Git, Figma, Photoshop...</span>
+          </div>
+          <div class="stack-item"><span class="stack-cat">Mimo kód</span><span class="stack-val">Fotografie</span>
+          </div>
+          <div class="stack-item"><span class="stack-cat">Lokace</span><span class="stack-val">Česká republika
+              </span></div>
         </div>
       </div>
     </div>
   </div>
+  <svg width="100%" height="100%" id="svg" viewBox="0 0 1440 390" xmlns="http://www.w3.org/2000/svg"
+    class="transition duration-300 ease-in-out delay-150">
+    <path
+      d="M 0,400 L 0,60 C 69.35898316729646,62.85262796289935 138.71796633459292,65.7052559257987 206,71 C 273.2820336654071,76.2947440742013 338.4871178289247,84.03160425970457 406,75 C 473.5128821710753,65.96839574029543 543.3335623497081,40.16832703538303 618,41 C 692.6664376502919,41.83167296461697 772.1786327722432,69.29508759876332 833,80 C 893.8213672277568,90.70491240123668 935.9519065613192,84.65132256956372 1006,72 C 1076.0480934386808,59.34867743043628 1174.0137409824802,40.09962212298179 1251,37 C 1327.9862590175198,33.90037787701821 1383.99312950876,46.9501889385091 1440,60 L 1440,400 L 0,400 Z"
+      stroke="none" stroke-width="0" fill="#262625" fill-opacity="0.265"
+      class="transition-all duration-300 ease-in-out delay-150 path-0" transform="rotate(-180 720 200)"></path>
+    <path
+      d="M 0,400 L 0,140 C 81.17416695293713,134.77567846100996 162.34833390587426,129.55135692201992 221,131 C 279.65166609412574,132.44864307798008 315.7808313294401,140.57025077293025 385,146 C 454.2191686705599,151.42974922706975 556.5283407763656,154.167639986259 635,154 C 713.4716592236344,153.832360013741 768.105805565098,150.75918928203367 828,149 C 887.894194434902,147.24081071796633 953.0484369632429,146.79560288560634 1015,148 C 1076.951563036757,149.20439711439366 1135.7004465819305,152.05839917554107 1206,151 C 1276.2995534180695,149.94160082445893 1358.1497767090348,144.97080041222947 1440,140 L 1440,400 L 0,400 Z"
+      stroke="none" stroke-width="0" fill="#262625" fill-opacity="0.4"
+      class="transition-all duration-300 ease-in-out delay-150 path-1" transform="rotate(-180 720 200)"></path>
+    <path
+      d="M 0,400 L 0,220 C 88.27001030573686,214.68086568189625 176.54002061147372,209.36173136379253 233,215 C 289.4599793885263,220.63826863620747 314.10992785984195,237.23394022672622 375,240 C 435.89007214015805,242.76605977327378 533.0202679491584,231.70250772930265 609,226 C 684.9797320508416,220.29749227069735 739.8090003435245,219.9560288560632 816,224 C 892.1909996564755,228.0439711439368 989.7437306767433,236.47337684644452 1058,241 C 1126.2562693232567,245.52662315355548 1165.216076949502,246.1504637581587 1224,242 C 1282.783923050498,237.8495362418413 1361.391961525249,228.92476812092065 1440,220 L 1440,400 L 0,400 Z"
+      stroke="none" stroke-width="0" fill="#262625" fill-opacity="0.53"
+      class="transition-all duration-300 ease-in-out delay-150 path-2" transform="rotate(-180 720 200)"></path>
+    <path
+      d="M 0,400 L 0,300 C 66.88148402610787,315.4771556166266 133.76296805221574,330.9543112332532 209,322 C 284.23703194778426,313.0456887667468 367.82961181724494,279.6599106836138 432,280 C 496.17038818275506,280.3400893163862 540.9185846788046,314.40604603229133 606,318 C 671.0814153211954,321.59395396770867 756.4960494675369,294.7159051872209 823,296 C 889.5039505324631,297.2840948127791 937.0972174510478,326.73033321882514 1000,329 C 1062.9027825489522,331.26966678117486 1141.1150807282722,306.3627619374785 1217,297 C 1292.8849192717278,287.6372380625215 1366.442459635864,293.8186190312607 1440,300 L 1440,400 L 0,400 Z"
+      stroke="none" stroke-width="0" fill="#262625" fill-opacity="1"
+      class="transition-all duration-300 ease-in-out delay-150 path-3" transform="rotate(-180 720 200)"></path>
+  </svg>
+  <section id="projects">
+    <div class="section-eyebrow">
+      <span class="sec-label">// portfolio</span>
+      <div class="sec-line"></div>
+    </div>
+    <h2 class="projects-title">Vybraná práce</h2>
+    <p class="projects-sub">Klientské zakázky, nástroje a experimenty, co jsem v poslední době stavěl.</p>
 
- <section id="projects">
-  <div class="section-eyebrow">
-    <span class="sec-label">Portfolio</span>
-    <div class="sec-line"></div>
-  </div>
-  <h2 class="projects-title">Selected work</h2>
-  <p class="projects-sub">A few things I've built recently.</p>
 
-  <div class="proj-grid">
-<a href="https://www.autoskola-chrudim.cz" target="_blank" class="proj-card span-7">      <div class="proj-img-wrapper">
-        <img class="proj-img" src="https://s.wordpress.com/mshots/v1/www.autoskola-chrudim.cz?width=500&height=500" alt="Autoskola" loading="lazy">
-      </div>
-      <div class="proj-body">
-        <div class="proj-meta"><span class="proj-tag">Driving school</span><span class="proj-year">2026</span></div>
-        <div class="proj-title">Autoskola Chrudim <em class="proj-arrow">↗</em></div>
-        <p class="proj-desc">Full website for a local driving school including an admin panel.</p>
-      </div>
-    </a>
-    
-    <a href="https://filahl.github.io/calc/index.html" target="_blank" class="proj-card span-5">
-      <div class="proj-img-wrapper">
-        <img class="proj-img" src="https://s.wordpress.com/mshots/v1/filahl.github.io%2Fcalc%2Findex.html?width=800&height=600" alt="Calculator" loading="lazy">
-      </div>
-      <div class="proj-body">
-        <div class="proj-meta"><span class="proj-tag">SaaS Concept</span><span class="proj-year">2026</span></div>
-        <div class="proj-title">Calc with "paywall" <em class="proj-arrow">↗</em></div>
-        <p class="proj-desc">A simple calculator with a subscription model. Billion dollar idea.</p>
-      </div>
-    </a>
 
-    
+    <div class="proj-grid" id="projGrid">
 
-    <a href="https://filahl.github.io/" target="_blank" class="proj-card span-12 more-card">
-      <div class="more-card-inner">
-        <div class="more-plus">+</div>
-        <div class="more-title">More on GitHub</div>
-        <div class="more-sub">Check out my other things at filahl.github.io ↗</div>
+      <a href="https://www.autoskola-chrudim.cz" target="_blank" class="proj-card span-6" data-cat="client">
+        <div class="proj-img-wrapper">
+          <img class="proj-img" src="https://s.wordpress.com/mshots/v1/www.autoskola-chrudim.cz?width=900&height=560"
+            alt="Autoškola Blažek" loading="lazy">
+        </div>
+        <div class="proj-body">
+          <div class="proj-path"><span class="slash">~/</span>autoskola-blazek</div>
+          <div class="proj-meta"><span class="proj-tag">CouchCMS · PHP</span><span class="proj-year">2026</span>
+          </div>
+          <div class="proj-title">Autoškola Blažek <em class="proj-arrow">↗</em></div>
+          <p class="proj-desc">Celý web pro autoškolu v Chrudimi - CMS šablony, ceníky, formuláře a SEO ladění,
+            nasazené na hostingu Forpsi.</p>
+        </div>
+      </a>
+
+      <a href="https://filahl.github.io/znamky/index.html" target="_blank" class="proj-card span-6" data-cat="tool">
+        <div class="proj-img-wrapper">
+          <img class="proj-img"
+            src="https://s.wordpress.com/mshots/v1/filahl.github.io%2Fznamky%2Findex.html?width=800&height=600"
+            alt="Průměr známek" loading="lazy">
+        </div>
+        <div class="proj-body">
+          <div class="proj-path"><span class="slash">~/</span>prumer-znamek</div>
+          <div class="proj-meta"><span class="proj-tag blue">JS · XML</span><span class="proj-year">2026</span>
+          </div>
+          <div class="proj-title">Průměr známek <em class="proj-arrow">↗</em></div>
+          <p class="proj-desc">Kalkulačka průměru s importem žákovských dat přímo z XML exportu systému i4.</p>
+        </div>
+      </a>
+
+      <div class="proj-card span-6" data-cat="tool">
+        <div class="proj-img-wrapper">
+          <img class="proj-img" src="https://s.wordpress.com/mshots/v1/filahl.github.io%2Fpocasi%2Findex.html?width=800&height=600"
+            alt="Weather comparison app" loading="lazy">
+        </div>
+        <div class="proj-body">
+          <div class="proj-path"><span class="slash">~/</span>weather</div>
+          <div class="proj-meta"><span class="proj-tag blue">Open-Meteo API</span><span class="proj-year">2026</span>
+          </div>
+          <div class="proj-title">Srovnání meteo modelů</div>
+          <p class="proj-desc">Aplikace porovnávající předpovědi z více meteorologických modelů Open-Meteo -
+            tmavá meteo estetika a interaktivní SVG graf.</p>
+        </div>
       </div>
-    </a>
-  </div>
-</section>
 
-  <section id="contact">
+      <div class="proj-card span-6" data-cat="experiment">
+        <div class="proj-img-wrapper">
+          <img class="proj-img" src="unbreakable.webp"
+            alt="Minecraft Forge mod" loading="lazy">
+        </div>
+        <div class="proj-body">
+          <div class="proj-path"><span class="slash">~/</span>unbreakable</div>
+          <div class="proj-meta"><span class="proj-tag">Java · Forge</span><span class="proj-year">2026</span>
+          </div>
+          <div class="proj-title">Minecraft Forge mod</div>
+          <p class="proj-desc">Mod pro 1.20.1, který chrání itemy před zničením na vzdáleném serveru -
+            tick-event interception s configurovatelným bufferem.</p>
+        </div>
+      </div>
+
+      <a href="https://filahl.github.io/etc/sort.html" target="_blank" class="proj-card span-12 proj-card-wide"
+        data-cat="experiment">
+        <div class="proj-img-wrapper">
+          <img class="proj-img"
+            src="https://s.wordpress.com/mshots/v1/filahl.github.io%2Fetc%2Fsort.html?width=900&height=560"
+            alt="Sorting visualizer" loading="lazy">
+        </div>
+        <div class="proj-body">
+          <div class="proj-path"><span class="slash">~/</span>sort-visualizer</div>
+          <div class="proj-meta">
+            <span class="proj-tag blue">JavaScript</span><span class="proj-year">2025</span>
+          </div>
+          <div class="proj-title">Sorting visualizer <em class="proj-arrow">↗</em></div>
+          <p class="proj-desc">Vizualizace řadicích algoritmů s neonovou dark estetikou - kód i vzhled stavěné
+            na rychlé pochopení toho, co se právě děje.</p>
+        </div>
+      </a>
+
+      <a href="https://filahl.github.io/" target="_blank" class="proj-card span-12 more-card">
+        <div class="more-card-inner">
+          <div class="more-plus">+</div>
+          <div>
+            <div class="more-title">Víc na GitHubu</div>
+            <div class="more-sub">filahl.github.io ↗</div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </section>
+  <svg width="100%" height="100%" id="svg" viewBox="0 0 1440 390" xmlns="http://www.w3.org/2000/svg"
+    class="transition duration-300 ease-in-out delay-150">
+    <path
+      d="M 0,400 L 0,60 C 34.072399065255155,51.675103989114405 68.14479813051031,43.3502079782288 99,45 C 129.8552018694897,46.6497920217712 157.4932065432139,58.274272076199196 184,58 C 210.5067934567861,57.725727923800804 235.88237569663426,45.552703716974406 266,36 C 296.11762430336574,26.447296283025597 330.97729067024926,19.514913055903186 352,31 C 373.02270932975074,42.485086944096814 380.2084616223687,72.38764405941285 407,71 C 433.7915383776313,69.61235594058715 480.18886284027576,36.93451070644539 515,33 C 549.8111371597242,29.065489293554613 573.0360870165282,53.87431311480557 601,57 C 628.9639129834718,60.12568688519443 661.6667890936112,41.56823683433234 692,45 C 722.3332109063888,48.43176316566766 750.2967566090268,73.85273954786503 777,78 C 803.7032433909732,82.14726045213497 829.1461844702815,65.0208049742076 853,56 C 876.8538155297185,46.9791950257924 899.1185055098473,46.06404055530456 931,48 C 962.8814944901527,49.93595944469544 1004.3797934903298,54.72303280457419 1030,65 C 1055.6202065096702,75.27696719542581 1065.3623205288343,91.04382822639863 1091,82 C 1116.6376794711657,72.95617177360137 1158.170924394333,39.1016542898313 1189,32 C 1219.829075605667,24.898345710168694 1239.9539818938333,44.549554614276175 1269,58 C 1298.0460181061667,71.45044538572382 1336.0131480303332,78.70012725306394 1366,78 C 1395.9868519696668,77.29987274693606 1417.9934259848333,68.64993637346802 1440,60 L 1440,400 L 0,400 Z"
+      stroke="none" stroke-width="0" fill="#262625" fill-opacity="0.265"
+      class="transition-all duration-300 ease-in-out delay-150 path-0"></path>
+    <path
+      d="M 0,400 L 0,140 C 28.28790368753495,124.80753365281099 56.5758073750699,109.61506730562198 83,114 C 109.4241926249301,118.38493269437802 133.98467418725537,142.3472644303231 164,154 C 194.01532581274463,165.6527355696769 229.48549587590867,164.99587497308565 256,158 C 282.51450412409133,151.00412502691435 300.07334230911016,137.66923567733448 331,128 C 361.92665769088984,118.33076432266553 406.22113488765086,112.32718231757656 434,112 C 461.77886511234914,111.67281768242344 473.0421181402868,117.02203505235927 499,115 C 524.9578818597132,112.97796494764073 565.6103925512019,103.58467747298633 596,117 C 626.3896074487981,130.41532252701367 646.5163116549057,166.63925505569546 671,168 C 695.4836883450943,169.36074494430454 724.324360829175,135.85830230423176 759,122 C 793.675639170825,108.14169769576826 834.1862450283944,113.92753572737755 858,118 C 881.8137549716056,122.07246427262245 888.930659057247,124.43155478625803 916,136 C 943.069340942753,147.56844521374197 990.0911187426177,168.34624512759035 1027,163 C 1063.9088812573823,157.65375487240965 1090.7048659722818,126.18346470338048 1113,129 C 1135.2951340277182,131.81653529661952 1153.0894173682543,168.9198960588877 1181,167 C 1208.9105826317457,165.0801039411123 1246.9374645547007,124.1369510610687 1278,113 C 1309.0625354452993,101.8630489389313 1333.1607244129427,120.53229969683753 1359,130 C 1384.8392755870573,139.46770030316247 1412.4196377935286,139.73385015158124 1440,140 L 1440,400 L 0,400 Z"
+      stroke="none" stroke-width="0" fill="#262625" fill-opacity="0.4"
+      class="transition-all duration-300 ease-in-out delay-150 path-1"></path>
+    <path
+      d="M 0,400 L 0,220 C 24.88720079211911,233.77781575202047 49.77440158423822,247.55563150404095 80,244 C 110.22559841576178,240.44436849595905 145.78959445516628,219.55528973585675 174,219 C 202.21040554483372,218.44471026414325 223.06722059509673,238.22320955253213 253,238 C 282.9327794049033,237.77679044746787 321.9415231644467,217.55187205401486 351,211 C 380.0584768355533,204.44812794598514 399.16668674711656,211.56930223140841 422,212 C 444.83331325288344,212.43069776859159 471.39172984708716,206.17091902035156 501,205 C 530.6082701529128,203.82908097964844 563.2663938645348,207.74702168718537 590,204 C 616.7336061354652,200.25297831281463 637.5426946947738,188.840994230907 665,195 C 692.4573053052262,201.159005769093 726.5628273563701,224.88900138918666 761,225 C 795.4371726436299,225.11099861081334 830.205995879746,201.6030002123463 858,204 C 885.794004120254,206.3969997876537 906.6131891246458,234.69899776142807 929,247 C 951.3868108753542,259.3010022385719 975.3412476216713,255.60100874194157 1000,247 C 1024.6587523783287,238.39899125805843 1050.0218203886684,224.89696727080573 1086,221 C 1121.9781796113316,217.10303272919427 1168.5714708236558,222.81112217483556 1199,218 C 1229.4285291763442,213.18887782516444 1243.692296316708,197.85854402985197 1264,203 C 1284.307703683292,208.14145597014803 1310.659343909512,233.75470170575656 1341,240 C 1371.340656090488,246.24529829424344 1405.6703280452439,233.1226491471217 1440,220 L 1440,400 L 0,400 Z"
+      stroke="none" stroke-width="0" fill="#262625" fill-opacity="0.53"
+      class="transition-all duration-300 ease-in-out delay-150 path-2"></path>
+    <path
+      d="M 0,400 L 0,300 C 34.63677484919823,294.6975363320619 69.27354969839647,289.3950726641238 100,299 C 130.72645030160353,308.6049273358762 157.54257605561241,333.1172456755668 181,328 C 204.45742394438759,322.8827543244332 224.55614607915396,288.1359446336092 252,279 C 279.44385392084604,269.8640553663908 314.23283962777157,286.3389757899964 341,295 C 367.76716037222843,303.6610242100036 386.5124954097597,304.50815220640516 415,306 C 443.4875045902403,307.49184779359484 481.7171787331897,309.62841538438283 516,307 C 550.2828212668103,304.37158461561717 580.618789657481,296.9781862560634 603,301 C 625.381210342519,305.0218137439366 639.8076626368868,320.4588395913635 664,315 C 688.1923373631132,309.5411604086365 722.150559794972,283.1864553784825 757,276 C 791.849440205028,268.8135446215175 827.5900981832253,280.79533889470645 855,285 C 882.4099018167747,289.20466110529355 901.4890474721266,285.6321890426917 931,290 C 960.5109525278734,294.3678109573083 1000.4537119282681,306.6759049345267 1031,302 C 1061.5462880717319,297.3240950654733 1082.6961048148012,275.6641912192014 1107,274 C 1131.3038951851988,272.3358087807986 1158.7618688125272,290.6673301886676 1184,302 C 1209.2381311874728,313.3326698113324 1232.256419935089,317.666488026128 1261,310 C 1289.743580064911,302.333511973872 1324.2124514471172,282.6667177068206 1355,279 C 1385.7875485528828,275.3332822931794 1412.8937742764415,287.6666411465897 1440,300 L 1440,400 L 0,400 Z"
+      stroke="none" stroke-width="0" fill="#262625" fill-opacity="1"
+      class="transition-all duration-300 ease-in-out delay-150 path-3"></path>
+  </svg>
+  <section id="contact" style="border-top: 0;">
     <div class="contact-wrap">
       <div class="section-eyebrow">
-        <span class="sec-label">Contact</span>
+        <span class="sec-label">// kontakt</span>
         <div class="sec-line"></div>
       </div>
       <div class="contact-grid">
         <div>
-          <h2 class="contact-heading">Let's build something <em>together.</em></h2>
-          <p class="contact-body">Whether it's a project, a collaboration, or just a friendly hello — feel free to reach
-            out. I'm always open to interesting conversations.</p>
+          <h2 class="contact-heading">Postavíme něco <span class="accent-word">spolu</span>?</h2>
+          <p class="contact-body">Ať jde o projekt, spolupráci, nebo jen pozdrav - klidně se ozvi. Vždycky mě
+            zajímá zajímavá konverzace nebo problém, co stojí za vyřešení.</p>
         </div>
         <div class="contact-list">
           <a href="https://instagram.com/001kmh" target="_blank" class="c-link">
@@ -913,20 +1278,35 @@
           <a href="https://filahl.github.io/" target="_blank" class="c-link">
             <i class="fab fa-github"></i> GitHub <span class="c-sub">filahl</span>
           </a>
-
           <a href="mailto:7fil1p@seznam.cz" class="c-link">
-            <i class="fas fa-at"></i> Send a mail <span class="c-sub">7fil1p@seznam.cz</span>
+            <i class="fas fa-at"></i> Napsat e-mail <span class="c-sub">7fil1p@seznam.cz</span>
           </a>
-
         </div>
       </div>
     </div>
   </section>
 
   <footer>
-    <span>© 2025 \ 001kmh. \ All rights reserved.</span>
+    <span>© 2026 \ 001kmh. \ Všechna práva vyhrazena.</span>
     <a href="https://instagram.com/001kmh" target="_blank">@001kmh <i class="fab fa-instagram"></i></a>
   </footer>
+
+  <script>
+    const pills = document.querySelectorAll('.filter-pill');
+    const cards = document.querySelectorAll('#projGrid .proj-card[data-cat]');
+
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        pills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const filter = pill.dataset.filter;
+        cards.forEach(card => {
+          const show = filter === 'all' || card.dataset.cat === filter;
+          card.classList.toggle('fade-out', !show);
+        });
+      });
+    });
+  </script>
 
 </body>
 
