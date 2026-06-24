@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shoda předpovědi — porovnání meteorologických modelů</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jacquard+24&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --accent:     #f5c842;
+    --accent-dim: #1e1c14;
+    --bg:         #111;
+    --bg2:        #1a1a1a;
+    --bg3:        #222;
+    --border:     #2a2a2a;
+    --text:       #fff;
+    --muted:      #666;
+    --muted2:     #888;
+    --danger:     #e05555;
+    --success:    #42c47a;
+    --warm:       #f08c28;
+    --cool:       #4a90e2;
+    --radius:     16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    line-height: 1.4;
+    overflow-x: hidden;
+  }
+
+  /* ── layout ── */
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 36px 20px 80px;
+  }
+
+  /* ── header ── */
+  header.top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
+  }
+
+  .brand { display: flex; flex-direction: column; gap: 2px; }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .brand h1 {
+    margin: 0;
+    font-family: 'Jacquard 24', system-ui;
+    font-size: 38px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 1.05;
+  }
+  .brand h1 span { color: var(--accent); }
+
+  .brand .sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* ── search ── */
+  .search-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .search-row input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0 16px;
+    height: 48px;
+    border-radius: 12px;
+    font-size: 16px; /* 16px+ prevents iOS auto-zoom */
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .search-row input[type="text"]::placeholder { color: var(--muted); font-weight: 400; }
+  .search-row input[type="text"]:focus {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .search-row button {
+    background: var(--accent);
+    color: #111;
+    border: none;
+    padding: 0 20px;
+    height: 48px;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .search-row button i { font-size: 16px; }
+  .search-row button:hover  { background: #e0b530; }
+  .search-row button:active { transform: scale(0.97); background: #e0b530; }
+
+  /* ── autocomplete ── */
+  #suggestions {
+    list-style: none;
+    margin: 0 0 14px 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    max-width: 520px;
+  }
+  #suggestions:empty { display: none; margin: 0; }
+  #suggestions li {
+    padding: 10px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--muted2);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  #suggestions li:last-child { border-bottom: none; }
+  #suggestions li:hover { background: var(--bg3); color: var(--text); }
+  #suggestions li b { color: var(--text); font-weight: 500; }
+
+  /* ── status ── */
+  #status-line {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0 0 20px;
+    min-height: 18px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  #status-line.err { color: var(--danger); }
+
+  /* ── location summary ── */
+  .loc-summary {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .loc-summary h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 500;
+  }
+  .loc-summary .coords {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ── controls panel ── */
+  .controls {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 640px) { .controls { grid-template-columns: 1fr; } }
+
+  /* min-width:0 is critical — without it a grid child ignores overflow-x:auto
+     and expands to fit its content, blowing out the page width on mobile */
+  .control-block {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .control-block label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  /* day pills */
+  .day-pills {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .day-pills::-webkit-scrollbar { display: none; }
+
+  .day-pills button {
+    flex: 0 0 auto;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--muted2);
+    padding: 6px 13px;
+    border-radius: 99px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.12s;
+  }
+  .day-pills button:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .day-pills button.active {
+    background: var(--accent);
+    color: #111;
+    border-color: var(--accent);
+  }
+
+  /* hour slider */
+  .hour-row { display: flex; align-items: center; gap: 14px; }
+  .hour-row input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+    height: 4px;
+  }
+  .hour-readout {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--accent);
+    min-width: 52px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── avg hero card ── */
+  .avg-hero {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    margin-bottom: 26px;
+    flex-wrap: wrap;
+  }
+  .avg-hero .big-temp {
+    font-size: 64px;
+    font-weight: 500;
+    color: var(--accent);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .avg-hero .big-temp sup { font-size: 26px; font-weight: 300; color: var(--muted2); vertical-align: super; }
+  .avg-hero .meta { display: flex; flex-direction: column; gap: 6px; }
+  .avg-hero .meta .label {
+    font-size: 11px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .avg-hero .meta .spread { font-size: 14px; color: var(--muted2); }
+  .avg-hero .meta .spread b { color: var(--text); font-weight: 500; }
+
+  /* ── section title ── */
+  .section-title {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── source cards ── */
+  .source-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .source-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 18px 16px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .source-card:hover { border-color: #3c3c3c; }
+
+  .source-card .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+
+  .source-card .name   { font-weight: 500; font-size: 14px; margin-bottom: 2px; }
+  .source-card .origin { font-size: 11px; color: var(--muted); margin-bottom: 14px; }
+
+  .source-card .temp {
+    font-size: 30px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .source-card .delta        { font-size: 12px; margin-top: 4px; }
+  .source-card .delta.up     { color: var(--warm); }
+  .source-card .delta.down   { color: var(--cool); }
+  .source-card .delta.flat   { color: var(--muted); }
+
+  .source-card.skeleton .temp { color: var(--muted); }
+  .source-card.is-error       { opacity: 0.55; }
+  .source-card.is-error .temp { font-size: 14px; color: var(--danger); }
+
+  /* ── chart ── */
+  .chart-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 18px 12px;
+    margin-bottom: 30px;
+  }
+  .chart-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 0 4px;
+  }
+  .chart-head h3 { margin: 0; font-size: 13px; font-weight: 500; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+  .legend .swatch { width: 12px; height: 3px; border-radius: 2px; display: inline-block; }
+  .legend .legend-item.muted { opacity: 0.35; }
+  .legend .swatch.avg { height: 4px; }
+
+  #chart-svg { width: 100%; height: 280px; display: block; touch-action: pan-y; }
+
+  .chart-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text);
+    box-shadow: 0 6px 20px rgba(0,0,0,.6);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.1s;
+    z-index: 5;
+  }
+  .chart-wrap { position: relative; }
+
+  /* ── footer ── */
+  footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* ── loader spinner ── */
+  .loader {
+    display: inline-block;
+    width: 13px; height: 13px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    vertical-align: -2px;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  /* ── empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 70px 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .empty-state .emoji { font-size: 32px; display: block; margin-bottom: 12px; }
+
+  /* ── mobile ── */
+  @media (max-width: 520px) {
+    .wrap { padding: 20px 14px 60px; }
+    header.top { margin-bottom: 18px; padding-bottom: 14px; }
+    .brand h1 { font-size: 30px; }
+    .brand .sub { font-size: 12px; }
+    .search-row { flex-wrap: nowrap; gap: 8px; }
+    .search-row button .btn-label { display: none; }
+    .search-row button { padding: 0 14px; gap: 0; }
+    #suggestions { max-width: 100%; }
+    .loc-summary h2 { font-size: 18px; }
+    .controls { padding: 14px 14px; gap: 12px; }
+    .controls .control-block { overflow: hidden; min-width: 0; }
+    .day-pills { gap: 5px; }
+    .day-pills button { font-size: 11px; padding: 5px 10px; }
+    .avg-hero { padding: 16px 18px; gap: 14px; }
+    .avg-hero .big-temp { font-size: 50px; }
+    .avg-hero .meta .spread { font-size: 13px; }
+    .source-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .source-card { padding: 12px 12px 10px; }
+    .source-card .name { font-size: 12px; }
+    .source-card .origin { font-size: 10px; margin-bottom: 10px; }
+    .source-card .temp { font-size: 24px; }
+    .source-card .delta { font-size: 11px; }
+    .chart-panel { padding: 14px 10px 10px; }
+    #chart-svg { height: 200px; }
+    .chart-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .legend { gap: 7px 10px; font-size: 10.5px; }
+    .chart-tooltip { font-size: 11px; padding: 6px 10px; }
+    footer { font-size: 11px; }
+  }
+  @media (max-width: 360px) {
+    .brand h1 { font-size: 26px; }
+    .source-grid { grid-template-columns: 1fr; }
+    .avg-hero .big-temp { font-size: 44px; }
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <span class="eyebrow">Vícezdrojová předpověď</span>
+      <h1>Shoda <span>předpovědi</span></h1>
+      <span class="sub">Porovnání meteorologických modelů pro jedno místo, jednu hodinu</span>
+    </div>
+  </header>
+
+  <div class="search-row">
+    <input type="text" id="city-input" placeholder="Zadej město… (např. Chrudim, Praha, Brno)" autocomplete="off">
+    <button id="search-btn"><i class="bi bi-search"></i> <span class="btn-label">Najít</span></button>
+  </div>
+  <ul id="suggestions"></ul>
+  <div id="status-line"></div>
+
+  <div id="content" class="hidden">
+
+    <div class="loc-summary">
+      <h2 id="loc-name">—</h2>
+      <span class="coords" id="loc-coords"></span>
+    </div>
+
+    <div class="controls">
+      <div class="control-block">
+        <label>Den</label>
+        <div class="day-pills" id="day-pills"></div>
+      </div>
+      <div class="control-block">
+        <label>Hodina</label>
+        <div class="hour-row">
+          <input type="range" id="hour-slider" min="0" max="23" step="1" value="12">
+          <span class="hour-readout" id="hour-readout">12:00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="avg-hero">
+      <div class="big-temp" id="avg-temp">—<sup>°C</sup></div>
+      <div class="meta">
+        <span class="label">Průměr ze všech zdrojů</span>
+        <span class="spread" id="avg-spread">čekám na data…</span>
+      </div>
+    </div>
+
+    <p class="section-title">Jednotlivé zdroje</p>
+    <div class="source-grid" id="source-grid"></div>
+
+    <div class="chart-panel">
+      <div class="chart-head">
+        <h3 id="chart-title">Průběh teploty během dne</h3>
+        <div class="legend" id="chart-legend"></div>
+      </div>
+      <div class="chart-wrap">
+        <svg id="chart-svg" viewBox="0 0 1000 320" preserveAspectRatio="none"></svg>
+        <div class="chart-tooltip" id="chart-tooltip"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="empty-state" class="empty-state">
+    <span class="emoji">🌍</span>
+    Zadej název města a porovnej, co o jeho počasí tvrdí různé meteorologické modely.
+  </div>
+
+  <footer>
+    <span>Zdroje: Open-Meteo (ECMWF, GFS, ICON, GEM, Météo-France, JMA, UKMO) · wttr.in</span>
+    <span id="updated-at"></span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+
+  const OM_MODELS = [
+    { key:'ecmwf_ifs025',         label:'ECMWF IFS',        origin:'Evropské centrum (ECMWF)', color:'#5FA8D3' },
+    { key:'gfs_seamless',         label:'NOAA GFS',         origin:'USA — NOAA',               color:'#E8A33D' },
+    { key:'icon_seamless',        label:'DWD ICON',         origin:'Německo — DWD',            color:'#7FBF7F' },
+    { key:'gem_seamless',         label:'GEM',              origin:'Kanada — ECCC',            color:'#C792EA' },
+    { key:'meteofrance_seamless', label:'Météo-France',     origin:'Francie — ARPEGE/AROME',   color:'#D9714E' },
+    { key:'jma_seamless',         label:'JMA',              origin:'Japonsko — JMA',           color:'#56C2C0' },
+    { key:'ukmo_seamless',        label:'UK Met Office',    origin:'Velká Británie — UKMO',    color:'#E2B53C' },
+  ];
+
+  const state = {
+    lat:null, lon:null, place:null,
+    days:[],
+    selectedDay:0,
+    selectedHour:12,
+    hourly:{},
+    timeAxis:[],
+    wttr:null,
+    chartHidden:new Set(),
+  };
+
+  const el = id => document.getElementById(id);
+  const cityInput  = el('city-input');
+  const searchBtn  = el('search-btn');
+  const suggestionsEl = el('suggestions');
+  const statusLine = el('status-line');
+  const content    = el('content');
+  const emptyState = el('empty-state');
+
+  function setStatus(msg, isErr){
+    statusLine.textContent = msg || '';
+    statusLine.classList.toggle('err', !!isErr);
+  }
+
+  /* ── geocoding ── */
+  let geocodeAbort = null;
+  cityInput.addEventListener('input', debounce(onCityType, 350));
+  cityInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); doSearch(cityInput.value.trim()); }
+  });
+  searchBtn.addEventListener('click', () => doSearch(cityInput.value.trim()));
+
+  function debounce(fn, ms){
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  }
+
+  async function onCityType(){
+    const q = cityInput.value.trim();
+    if(q.length < 2){ suggestionsEl.innerHTML=''; return; }
+    try{
+      if(geocodeAbort) geocodeAbort.abort();
+      geocodeAbort = new AbortController();
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=cs&format=json`, { signal: geocodeAbort.signal });
+      const data = await res.json();
+      renderSuggestions(data.results || []);
+    }catch(err){
+      if(err.name !== 'AbortError') console.error(err);
+    }
+  }
+
+  function renderSuggestions(results){
+    if(!results.length){ suggestionsEl.innerHTML=''; return; }
+    suggestionsEl.innerHTML = results.map((r,i) => {
+      const region = [r.admin1, r.country].filter(Boolean).join(', ');
+      return `<li data-idx="${i}"><b>${escapeHtml(r.name)}</b> — ${escapeHtml(region)}</li>`;
+    }).join('');
+    Array.from(suggestionsEl.children).forEach((li, i) => {
+      li.addEventListener('click', () => selectPlace(results[i]));
+    });
+  }
+
+  async function doSearch(q){
+    if(!q) return;
+    setStatus('Vyhledávám město…');
+    suggestionsEl.innerHTML = '';
+    try{
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=cs&format=json`);
+      const data = await res.json();
+      if(!data.results || !data.results.length){
+        setStatus(`Město „${q}" se nepodařilo najít. Zkus jiný název.`, true);
+        return;
+      }
+      selectPlace(data.results[0]);
+    }catch(err){
+      console.error(err);
+      setStatus('Vyhledávání se nezdařilo — zkontroluj připojení.', true);
+    }
+  }
+
+  function selectPlace(place){
+    suggestionsEl.innerHTML = '';
+    cityInput.value = place.name;
+    state.lat   = place.latitude;
+    state.lon   = place.longitude;
+    state.place = place;
+    loadAll();
+  }
+
+  /* ── data loading ── */
+  async function loadAll(){
+    setStatus('');
+    content.classList.add('hidden');
+    emptyState.classList.add('hidden');
+    renderLocationHeader();
+    buildDayPills();
+    renderSkeletonCards();
+    content.classList.remove('hidden');
+
+    setStatus('Stahuji předpověď z meteorologických modelů…');
+
+    const tz = encodeURIComponent(state.place.timezone || 'auto');
+    const modelsParam = OM_MODELS.map(m => m.key).join(',');
+    const omUrl   = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&hourly=temperature_2m&models=${modelsParam}&forecast_days=7&timezone=${tz}`;
+    const wttrUrl = `https://wttr.in/${encodeURIComponent(state.place.name)}?format=j1`;
+
+    const [omResult, wttrResult] = await Promise.allSettled([
+      fetch(omUrl).then(r => { if(!r.ok) throw new Error('OM ' + r.status); return r.json(); }),
+      fetch(wttrUrl).then(r => { if(!r.ok) throw new Error('wttr ' + r.status); return r.json(); }),
+    ]);
+
+    if(omResult.status === 'fulfilled'){
+      processOpenMeteo(omResult.value);
+    } else {
+      console.error('Open-Meteo failed', omResult.reason);
+      state.timeAxis = [];
+      state.hourly   = {};
+    }
+
+    if(wttrResult.status === 'fulfilled'){
+      processWttr(wttrResult.value);
+    } else {
+      console.warn('wttr.in failed', wttrResult.reason);
+      state.wttr = null;
+    }
+
+    if(omResult.status === 'rejected' && wttrResult.status === 'rejected'){
+      setStatus('Žádný ze zdrojů počasí teď neodpovídá. Zkus to prosím za chvíli znovu.', true);
+    } else {
+      setStatus('');
+    }
+
+    state.selectedDay  = 0;
+    state.selectedHour = defaultHourForNow();
+    markActiveDayPill();
+    el('hour-slider').value = state.selectedHour;
+    updateHourReadout();
+    renderAll();
+    el('updated-at').textContent = 'Aktualizováno ' + new Date().toLocaleTimeString('cs-CZ');
+  }
+
+  function defaultHourForNow(){
+    try{ return new Date().getHours(); }catch(e){ return 12; }
+  }
+
+  function processOpenMeteo(json){
+    const hourlyObj = json.hourly || {};
+    const time      = hourlyObj.time || [];
+    state.timeAxis  = time;
+    state.hourly    = {};
+    OM_MODELS.forEach(model => {
+      let foundKey = Object.keys(hourlyObj).find(k => k.endsWith('_' + model.key));
+      if(!foundKey && Object.keys(hourlyObj).length <= 2) foundKey = 'temperature_2m';
+      state.hourly[model.key] = foundKey ? hourlyObj[foundKey] : null;
+    });
+    const daySet = [];
+    time.forEach(t => {
+      const d = t.slice(0,10);
+      if(daySet.indexOf(d) === -1) daySet.push(d);
+    });
+    state.days = daySet;
+  }
+
+  function processWttr(json){
+    try{
+      const weather = json.weather || [];
+      const byDate  = {};
+      weather.forEach(day => {
+        const date  = day.date;
+        const hours = {};
+        (day.hourly || []).forEach(h => {
+          const hourNum = Math.floor(parseInt(h.time,10) / 100);
+          hours[hourNum] = parseFloat(h.tempC);
+        });
+        byDate[date] = hours;
+      });
+      state.wttr = {
+        current: json.current_condition?.[0] ? parseFloat(json.current_condition[0].temp_C) : null,
+        byDate
+      };
+    }catch(e){
+      console.warn('wttr parse error', e);
+      state.wttr = null;
+    }
+  }
+
+  /* ── header / day pills ── */
+  function renderLocationHeader(){
+    const p      = state.place;
+    const region = [p.admin1, p.country].filter(Boolean).join(', ');
+    el('loc-name').textContent   = p.name + (region ? ` — ${region}` : '');
+    el('loc-coords').textContent = `${p.latitude.toFixed(3)}°, ${p.longitude.toFixed(3)}° · ${p.timezone || ''}`;
+  }
+
+  function buildDayPills(){
+    const container = el('day-pills');
+    const days      = state.days.length ? state.days : placeholderWeek();
+    container.innerHTML = days.map((d,i) => {
+      const label = formatDayLabel(d, i);
+      return `<button data-idx="${i}" class="${i===state.selectedDay?'active':''}">${label}</button>`;
+    }).join('');
+    Array.from(container.children).forEach((btn,i) => {
+      btn.addEventListener('click', () => {
+        state.selectedDay = i;
+        markActiveDayPill();
+        renderAll();
+      });
+    });
+  }
+
+  function placeholderWeek(){
+    const out  = [];
+    const base = new Date();
+    for(let i=0;i<7;i++){
+      const d = new Date(base);
+      d.setDate(base.getDate()+i);
+      out.push(d.toISOString().slice(0,10));
+    }
+    return out;
+  }
+
+  function formatDayLabel(dateStr, idx){
+    const d       = new Date(dateStr + 'T00:00:00');
+    const weekday = d.toLocaleDateString('cs-CZ', { weekday:'short' });
+    const dayNum  = d.getDate();
+    const month   = d.getMonth()+1;
+    let prefix = '';
+    if(idx===0) prefix = 'Dnes · ';
+    if(idx===1) prefix = 'Zítra · ';
+    return `${prefix}${weekday} ${dayNum}.${month}.`;
+  }
+
+  function markActiveDayPill(){
+    Array.from(el('day-pills').children).forEach((btn,i) => {
+      btn.classList.toggle('active', i === state.selectedDay);
+    });
+  }
+
+  el('hour-slider').addEventListener('input', e => {
+    state.selectedHour = parseInt(e.target.value, 10);
+    updateHourReadout();
+    renderAll();
+  });
+
+  function updateHourReadout(){
+    el('hour-readout').textContent = String(state.selectedHour).padStart(2,'0') + ':00';
+  }
+
+  /* ── skeleton / cards ── */
+  function renderSkeletonCards(){
+    const grid = el('source-grid');
+    const all  = [...OM_MODELS, { key:'wttr', label:'wttr.in', origin:'Nezávislý agregátor', color:'#8294A6' }];
+    grid.innerHTML = all.map(m => `
+      <div class="source-card skeleton" data-key="${m.key}">
+        <div class="bar" style="background:${m.color}"></div>
+        <div class="name">${m.label}</div>
+        <div class="origin">${m.origin}</div>
+        <div class="temp"><span class="loader"></span>—°</div>
+      </div>
+    `).join('');
+  }
+
+  function currentTimeIndex(){
+    const dateStr = state.days[state.selectedDay];
+    if(!dateStr) return -1;
+    const iso = `${dateStr}T${String(state.selectedHour).padStart(2,'0')}:00`;
+    return state.timeAxis.indexOf(iso);
+  }
+
+  function getTempAt(modelKey, idx){
+    const arr = state.hourly[modelKey];
+    if(!arr || idx < 0 || idx >= arr.length) return null;
+    const v = arr[idx];
+    return (v === null || v === undefined || Number.isNaN(v)) ? null : v;
+  }
+
+  function getWttrTempAt(){
+    if(!state.wttr) return null;
+    const dateStr = state.days[state.selectedDay];
+    const hours   = state.wttr.byDate[dateStr];
+    if(!hours) return null;
+    const keys    = Object.keys(hours).map(Number).sort((a,b)=>a-b);
+    if(!keys.length) return null;
+    let closest = keys[0];
+    keys.forEach(k => { if(Math.abs(k-state.selectedHour) < Math.abs(closest-state.selectedHour)) closest = k; });
+    return hours[closest];
+  }
+
+  function renderAll(){
+    const idx      = currentTimeIndex();
+    const readings = [];
+
+    OM_MODELS.forEach(m => {
+      const t = getTempAt(m.key, idx);
+      readings.push({ ...m, temp:t });
+    });
+
+    const wttrTemp = getWttrTempAt();
+    readings.push({ key:'wttr', label:'wttr.in', origin:'Nezávislý agregátor', color:'#8294A6', temp:wttrTemp });
+
+    const validTemps = readings.filter(r => typeof r.temp === 'number');
+    const avg  = validTemps.length ? validTemps.reduce((s,r)=>s+r.temp,0) / validTemps.length : null;
+    const min  = validTemps.length ? Math.min(...validTemps.map(r=>r.temp)) : null;
+    const max  = validTemps.length ? Math.max(...validTemps.map(r=>r.temp)) : null;
+
+    renderHero(avg, min, max, validTemps.length, readings.length);
+    renderCards(readings, avg);
+    renderChart();
+  }
+
+  function renderHero(avg, min, max, nValid, nTotal){
+    const avgEl = el('avg-temp');
+    if(avg === null){
+      avgEl.innerHTML = '—<sup>°C</sup>';
+      el('avg-spread').textContent = 'Pro tuto hodinu nejsou dostupná data ze žádného zdroje.';
+      return;
+    }
+    avgEl.innerHTML = `${avg.toFixed(1)}<sup>°C</sup>`;
+    const spread = (max - min).toFixed(1);
+    el('avg-spread').innerHTML = `Z <b>${nValid}/${nTotal}</b> zdrojů · rozptyl <b>${spread}°C</b> (od ${min.toFixed(1)}° do ${max.toFixed(1)}°)`;
+  }
+
+  function renderCards(readings, avg){
+    const grid = el('source-grid');
+    grid.innerHTML = readings.map(r => {
+      if(r.temp === null || r.temp === undefined){
+        return `
+          <div class="source-card is-error" data-key="${r.key}">
+            <div class="bar" style="background:${r.color}"></div>
+            <div class="name">${r.label}</div>
+            <div class="origin">${r.origin}</div>
+            <div class="temp">data nedostupná</div>
+          </div>`;
+      }
+      const delta      = avg !== null ? r.temp - avg : 0;
+      const deltaClass = Math.abs(delta) < 0.05 ? 'flat' : (delta > 0 ? 'up' : 'down');
+      const deltaText  = Math.abs(delta) < 0.05 ? 'shoda s průměrem' : `${delta>0?'+':''}${delta.toFixed(1)}° vůči průměru`;
+      return `
+        <div class="source-card" data-key="${r.key}">
+          <div class="bar" style="background:${r.color}"></div>
+          <div class="name">${r.label}</div>
+          <div class="origin">${r.origin}</div>
+          <div class="temp">${r.temp.toFixed(1)}°</div>
+          <div class="delta ${deltaClass}">${deltaText}</div>
+        </div>`;
+    }).join('');
+  }
+
+  /* ── chart ── */
+  function renderChart(){
+    const svg     = el('chart-svg');
+    const dateStr = state.days[state.selectedDay];
+    el('chart-title').textContent = `Průběh teploty — ${formatDayLabel(dateStr, state.selectedDay).replace(' · ', ', ')}`;
+
+    if(!dateStr || !state.timeAxis.length){
+      svg.innerHTML = `<text x="500" y="160" fill="#666" font-size="13" text-anchor="middle">Žádná data k zobrazení</text>`;
+      el('chart-legend').innerHTML = '';
+      return;
+    }
+
+    const idxList = [];
+    for(let h=0; h<24; h++){
+      const iso = `${dateStr}T${String(h).padStart(2,'0')}:00`;
+      idxList.push(state.timeAxis.indexOf(iso));
+    }
+
+    const series = OM_MODELS.map(m => ({
+      ...m,
+      values: idxList.map(i => getTempAt(m.key, i))
+    })).filter(s => s.values.some(v => v !== null));
+
+    const avgSeries = idxList.map((_, h) => {
+      const vals = series.map(s => s.values[h]).filter(v => v !== null);
+      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    });
+
+    drawChart(series, avgSeries);
+    renderLegend(series);
+  }
+
+  function renderLegend(series){
+    const legend = el('chart-legend');
+    const items  = series.map(s => {
+      const muted = state.chartHidden.has(s.key) ? 'muted' : '';
+      return `<span class="legend-item ${muted}" data-key="${s.key}"><span class="swatch" style="background:${s.color}"></span>${s.label}</span>`;
+    });
+    items.push(`<span class="legend-item" data-key="__avg"><span class="swatch avg" style="background:#f5c842"></span>Průměr</span>`);
+    legend.innerHTML = items.join('');
+    Array.from(legend.children).forEach(node => {
+      const key = node.getAttribute('data-key');
+      if(key === '__avg') return;
+      node.addEventListener('click', () => {
+        if(state.chartHidden.has(key)) state.chartHidden.delete(key);
+        else state.chartHidden.add(key);
+        renderChart();
+      });
+    });
+  }
+
+  function drawChart(series, avgSeries){
+    const W = 1000, H = 320;
+    const padL = 40, padR = 16, padT = 20, padB = 30;
+    const innerW = W - padL - padR;
+    const innerH = H - padT - padB;
+
+    const visibleSeries = series.filter(s => !state.chartHidden.has(s.key));
+    const allVals = []
+      .concat(...visibleSeries.map(s => s.values.filter(v => v !== null)))
+      .concat(avgSeries.filter(v => v !== null));
+
+    if(!allVals.length){
+      el('chart-svg').innerHTML = `<text x="500" y="160" fill="#666" font-size="13" text-anchor="middle">Žádná data k zobrazení</text>`;
+      return;
+    }
+
+    let minV = Math.min(...allVals), maxV = Math.max(...allVals);
+    if(minV === maxV){ minV -= 1; maxV += 1; }
+    const pad = (maxV - minV) * 0.15;
+    minV -= pad; maxV += pad;
+
+    const xFor = h => padL + (h/23) * innerW;
+    const yFor = v => padT + innerH - ((v - minV)/(maxV - minV)) * innerH;
+
+    let svgParts = [];
+
+    // grid lines + y labels
+    for(let g=0; g<=4; g++){
+      const v = minV + (g/4)*(maxV-minV);
+      const y = yFor(v);
+      svgParts.push(`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#2a2a2a" stroke-width="1" />`);
+      svgParts.push(`<text x="${padL-8}" y="${y+4}" fill="#666" font-size="11" text-anchor="end" font-family="DM Sans, sans-serif">${v.toFixed(0)}°</text>`);
+    }
+
+    // x labels
+    for(let h=0; h<=23; h+=3){
+      svgParts.push(`<text x="${xFor(h)}" y="${H-10}" fill="#666" font-size="11" text-anchor="middle" font-family="DM Sans, sans-serif">${String(h).padStart(2,'0')}</text>`);
+    }
+
+    // selected-hour marker
+    const selX = xFor(state.selectedHour);
+    svgParts.push(`<line x1="${selX}" y1="${padT}" x2="${selX}" y2="${padT+innerH}" stroke="#f5c842" stroke-width="1" stroke-dasharray="3,3" opacity="0.5" />`);
+
+    // model lines
+    visibleSeries.forEach(s => {
+      const pts = s.values.map((v,h) => v===null ? null : `${xFor(h)},${yFor(v)}`).filter(Boolean);
+      if(pts.length < 2) return;
+      svgParts.push(`<polyline points="${pts.join(' ')}" fill="none" stroke="${s.color}" stroke-width="1.5" opacity="0.55" />`);
+    });
+
+    // average line (bold accent)
+    const avgPts = avgSeries.map((v,h) => v===null ? null : `${xFor(h)},${yFor(v)}`).filter(Boolean);
+    if(avgPts.length >= 2){
+      svgParts.push(`<polyline points="${avgPts.join(' ')}" fill="none" stroke="#f5c842" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />`);
+    }
+
+    // hit zones for tooltip
+    for(let h=0; h<=23; h++){
+      svgParts.push(`<rect data-hour="${h}" x="${xFor(h) - (innerW/23)/2}" y="${padT}" width="${innerW/23}" height="${innerH}" fill="transparent" class="hit-zone" />`);
+    }
+
+    const svg = el('chart-svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = svgParts.join('');
+
+    attachChartInteractivity(svg, series, avgSeries, xFor, padL, padR, W);
+  }
+
+  function attachChartInteractivity(svg, series, avgSeries, xFor, padL, padR, W){
+    const tooltip  = el('chart-tooltip');
+    const wrapRect = () => svg.getBoundingClientRect();
+
+    function showTooltip(h, clientX, clientY){
+      const rect  = wrapRect();
+      const parts = [`<b>${String(h).padStart(2,'0')}:00</b>`];
+      series.forEach(s => {
+        if(state.chartHidden.has(s.key)) return;
+        const v = s.values[h];
+        parts.push(`<span style="color:${s.color}">${s.label}</span>: ${v===null?'—':v.toFixed(1)+'°'}`);
+      });
+      const av = avgSeries[h];
+      parts.push(`<span style="color:#f5c842">Průměr</span>: ${av===null?'—':av.toFixed(1)+'°'}`);
+      tooltip.innerHTML = parts.join('<br>');
+      tooltip.style.opacity = '1';
+      let left = clientX - rect.left + 14;
+      if(left + 160 > rect.width) left = clientX - rect.left - 170;
+      tooltip.style.left = left + 'px';
+      tooltip.style.top  = (clientY - rect.top - 10) + 'px';
+    }
+    function hideTooltip(){ tooltip.style.opacity = '0'; }
+
+    Array.from(svg.querySelectorAll('.hit-zone')).forEach(zone => {
+      const h = parseInt(zone.getAttribute('data-hour'),10);
+      zone.addEventListener('mousemove',  e => showTooltip(h, e.clientX, e.clientY));
+      zone.addEventListener('mouseenter', e => showTooltip(h, e.clientX, e.clientY));
+      zone.addEventListener('mouseleave', hideTooltip);
+      zone.addEventListener('click', () => {
+        state.selectedHour = h;
+        el('hour-slider').value = h;
+        updateHourReadout();
+        renderAll();
+      });
+      zone.addEventListener('touchstart', e => {
+        const t = e.touches[0];
+        showTooltip(h, t.clientX, t.clientY);
+      }, { passive:true });
+    });
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  document.addEventListener('click', e => {
+    if(!e.target.closest('.search-row') && !e.target.closest('#suggestions')){
+      suggestionsEl.innerHTML = '';
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
