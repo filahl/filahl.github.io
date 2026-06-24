@@ -282,6 +282,12 @@
       animation: rise 0.8s 0.18s ease both;
     }
 
+    .term-card-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 360px;
+    }
+
     .term-card {
       width: 100%;
       max-width: 360px;
@@ -290,6 +296,26 @@
       border-radius: 10px;
       overflow: hidden;
       box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.5);
+    }
+
+    .avatar-chip {
+      position: absolute;
+      bottom: -16px;
+      right: -16px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid var(--bg);
+      background: var(--bg-card);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, .4);
+    }
+
+    .avatar-chip img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .term-bar {
@@ -991,6 +1017,107 @@
         gap: 0.5rem;
         text-align: center;
         padding: 1.5rem;
+      }
+    }
+
+    /* SMALL PHONES */
+    @media (max-width: 480px) {
+      nav {
+        padding: 0.5rem 1rem;
+        height: auto;
+        min-height: 52px;
+        flex-wrap: wrap;
+        row-gap: 0.4rem;
+      }
+
+      .nav-brand {
+        font-size: 0.85rem;
+      }
+
+      .nav-links {
+        gap: 0.85rem;
+      }
+
+      .nav-links a {
+        font-size: 0.66rem;
+      }
+
+      .hero {
+        padding: 5rem 1.1rem 1.5rem;
+      }
+
+      .hero-name {
+        font-size: clamp(2.1rem, 9vw, 2.6rem);
+      }
+
+      .hero-role {
+        max-width: 100%;
+        font-size: 0.95rem;
+      }
+
+      .hero-ctas {
+        flex-wrap: wrap;
+      }
+
+      .btn-fill,
+      .btn-outline {
+        flex: 1 1 auto;
+        justify-content: center;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .term-body {
+        font-size: 0.74rem;
+        padding: 1rem;
+      }
+
+      .term-line {
+        flex-direction: column;
+        gap: 0.1rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .term-key {
+        width: auto;
+      }
+
+      .about-left h2 {
+        font-size: 2rem;
+      }
+
+      .stack-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .proj-title {
+        font-size: 1.05rem;
+      }
+
+      .more-card-inner {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.6rem;
+      }
+
+      .contact-heading {
+        font-size: 2rem;
+      }
+
+      .c-link {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .c-sub {
+        margin-left: 0;
+        flex-basis: 100%;
+      }
+
+      #projects,
+      #contact,
+      .about-strip {
+        padding: 3rem 1.1rem;
       }
     }
 
