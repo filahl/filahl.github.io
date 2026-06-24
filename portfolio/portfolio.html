@@ -997,8 +997,55 @@
         grid-column: span 1;
       }
 
+      /* Cards become horizontal tiles on mobile: small image left, text right */
+      .proj-card {
+        flex-direction: row;
+        align-items: stretch;
+      }
+
+      .proj-card.more-card {
+        flex-direction: row;
+      }
+
+      .proj-img-wrapper {
+        width: 38%;
+        max-width: 150px;
+        aspect-ratio: unset;
+        flex-shrink: 0;
+      }
+
+      .proj-body {
+        padding: 0.85rem 1rem;
+        min-width: 0;
+      }
+
+      .proj-title {
+        font-size: 1rem;
+      }
+
+      .proj-desc {
+        font-size: 0.78rem;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .proj-card-wide {
+        display: flex;
+      }
+
+      .proj-card-wide .proj-img-wrapper {
+        height: auto;
+      }
+
       .more-card-inner {
         padding: 0.5rem;
+      }
+
+      .more-card {
+        min-height: auto;
       }
 
       .contact-grid {
