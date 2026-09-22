@@ -271,7 +271,7 @@
 
   <div id="canvas-wrap">
     <canvas id="scene"></canvas>
-    <div class="hint" id="hint">Táhni prstem pro otočení, sevři pro přiblížení</div>
+    <div class="hint" id="hint">Táhni prstem pro otočení, sevři pro přiblížení, ťukni na hranu</div>
     <div class="zoom-controls">
       <button class="zoom-btn" id="zoomIn" aria-label="Přiblížit">+</button>
       <button class="zoom-btn" id="zoomOut" aria-label="Oddálit">–</button>
@@ -501,11 +501,11 @@
 
   function refreshStatus() {
     if (selectedPoints.length === 0) {
-      setStatus('Ťukněte na těleso a vyberte <b>bod A</b>');
+      setStatus('Ťukněte na hranu tělesa a vyberte <b>bod A</b>');
     } else if (selectedPoints.length === 1) {
-      setStatus('Bod A zvolen. Nyní vyberte <b>bod B</b>');
+      setStatus('Bod A zvolen. Nyní vyberte <b>bod B</b> na jiné hraně');
     } else if (selectedPoints.length === 2) {
-      setStatus('Bod B zvolen. Nyní vyberte <b>bod C</b>');
+      setStatus('Bod B zvolen. Nyní vyberte <b>bod C</b> na jiné hraně');
     }
   }
 
@@ -643,8 +643,6 @@
   }
 
   // ---------- Pointer interaction: orbit drag, pinch zoom, tap-to-select ----------
-  var raycaster = new THREE.Raycaster();
-  var ndc = new THREE.Vector2();
   var pointers = new Map();
   var dragTotal = 0;
   var singleStart = null;
@@ -708,15 +706,62 @@
   canvas.addEventListener('pointerup', endPointer);
   canvas.addEventListener('pointercancel', endPointer);
 
-  function selectAt(clientX, clientY) {
-    if (selectedPoints.length >= 3 || !currentMesh) return;
+  var EDGE_PICK_PX = 26; // touch-friendly snap radius around each edge, in screen pixels
+
+  function projectToScreen(v3) {
+    var p = new THREE.Vector3(v3.x, v3.y, v3.z).project(camera);
     var rect = canvas.getBoundingClientRect();
-    ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-    ndc.y = -(((clientY - rect.top) / rect.height) * 2 - 1);
-    raycaster.setFromCamera(ndc, camera);
-    var hits = raycaster.intersectObject(currentMesh, false);
-    if (hits.length === 0) return;
-    addPoint(hits[0].point);
+    return {
+      x: (p.x * 0.5 + 0.5) * rect.width,
+      y: (-p.y * 0.5 + 0.5) * rect.height,
+      z: p.z
+    };
+  }
+
+  function closestOnSegment2D(px, py, ax, ay, bx, by) {
+    var dx = bx - ax, dy = by - ay;
+    var lenSq = dx * dx + dy * dy;
+    var t = lenSq > 1e-6 ? ((px - ax) * dx + (py - ay) * dy) / lenSq : 0;
+    return Math.max(0, Math.min(1, t));
+  }
+
+  function pickEdgePoint(clientX, clientY) {
+    if (!currentShapeKey) return null;
+    var rect = canvas.getBoundingClientRect();
+    var px = clientX - rect.left, py = clientY - rect.top;
+    var def = SHAPES[currentShapeKey];
+    var best = null;
+
+    def.edges.forEach(function (e) {
+      var va = def.vertices[e[0]], vb = def.vertices[e[1]];
+      var sa = projectToScreen({ x: va[0], y: va[1], z: va[2] });
+      var sb = projectToScreen({ x: vb[0], y: vb[1], z: vb[2] });
+      var t = closestOnSegment2D(px, py, sa.x, sa.y, sb.x, sb.y);
+      var cx = sa.x + (sb.x - sa.x) * t, cy = sa.y + (sb.y - sa.y) * t;
+      var dist = Math.sqrt((px - cx) * (px - cx) + (py - cy) * (py - cy));
+      if (dist <= EDGE_PICK_PX) {
+        var depth = sa.z + (sb.z - sa.z) * t; // closer to camera = smaller NDC z
+        if (!best || depth < best.depth) {
+          best = {
+            depth: depth,
+            point: {
+              x: va[0] + (vb[0] - va[0]) * t,
+              y: va[1] + (vb[1] - va[1]) * t,
+              z: va[2] + (vb[2] - va[2]) * t
+            }
+          };
+        }
+      }
+    });
+
+    return best ? best.point : null;
+  }
+
+  function selectAt(clientX, clientY) {
+    if (selectedPoints.length >= 3) return;
+    var point = pickEdgePoint(clientX, clientY);
+    if (!point) return;
+    addPoint(point);
   }
 
   // ---------- UI wiring ----------
