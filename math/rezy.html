@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Řez tělesa rovinou</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D1826;
+    --surface: #142236;
+    --surface-2: #1B2C45;
+    --border: #24374F;
+    --text: #EAF1F8;
+    --text-dim: #8CA3BE;
+    --cyan: #4FD8E0;
+    --amber: #F2A93C;
+    --pink: #FF7AA8;
+    --solid-color: #3E5C82;
+    --solid-edge: #C9E4F5;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="light"]) {
+      --bg: #F3F6FA;
+      --surface: #FFFFFF;
+      --surface-2: #E9EFF6;
+      --border: #D3DDE8;
+      --text: #12202E;
+      --text-dim: #5A7086;
+      --cyan: #0E9AA6;
+      --amber: #C9791C;
+      --pink: #C24672;
+      --solid-color: #7C9AC0;
+      --solid-edge: #23445F;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #F3F6FA;
+    --surface: #FFFFFF;
+    --surface-2: #E9EFF6;
+    --border: #D3DDE8;
+    --text: #12202E;
+    --text-dim: #5A7086;
+    --cyan: #0E9AA6;
+    --amber: #C9791C;
+    --pink: #C24672;
+    --solid-color: #7C9AC0;
+    --solid-edge: #23445F;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+
+  #app {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+
+  #canvas-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+
+  canvas#scene {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+  }
+
+  header {
+    position: relative;
+    z-index: 3;
+    padding: env(safe-area-inset-top, 0px) 16px 0 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .title-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 12px 0 10px 0;
+  }
+  .title-row h1 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .title-row .sub {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .shape-select {
+    display: flex;
+    gap: 8px;
+    padding-bottom: 12px;
+  }
+  .shape-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 6px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-dim);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .shape-btn svg { flex: 0 0 auto; opacity: 0.85; }
+  .shape-btn.active {
+    color: var(--text);
+    border-color: var(--cyan);
+    background: color-mix(in srgb, var(--cyan) 14%, var(--surface-2));
+  }
+  .shape-btn.active svg { opacity: 1; }
+
+  .zoom-controls {
+    position: absolute;
+    right: 12px;
+    bottom: 16px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .zoom-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 19px;
+    line-height: 1;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.92;
+  }
+  .zoom-btn:active { opacity: 1; }
+
+  .hint {
+    position: absolute;
+    top: 14px;
+    left: 12px;
+    right: 12px;
+    z-index: 3;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    pointer-events: none;
+    letter-spacing: 0.01em;
+  }
+
+  footer {
+    position: relative;
+    z-index: 3;
+    padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px)) 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .status-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    min-height: 16px;
+    margin-bottom: 10px;
+  }
+  .status-line b { color: var(--text); font-weight: 500; }
+  .status-line.warn { color: var(--pink); }
+
+  .foot-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .points-chips {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+  }
+  .chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1.5px solid var(--border);
+    color: var(--text-dim);
+    background: var(--surface-2);
+    transition: all 0.15s ease;
+  }
+  .chip.filled { color: #0D1826; border-color: transparent; }
+  .chip[data-p="A"].filled { background: var(--cyan); }
+  .chip[data-p="B"].filled { background: var(--amber); }
+  .chip[data-p="C"].filled { background: var(--pink); }
+
+  .reset-btn {
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .reset-btn:active { background: var(--border); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="title-row">
+      <h1>Řez tělesa rovinou</h1>
+      <span class="sub">krychle · kvádr · jehlan</span>
+    </div>
+    <div class="shape-select">
+      <button class="shape-btn" data-shape="jehlan">
+        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 1.5 L14.5 13.5 L1.5 13.5 Z" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8 1.5 L8 13.5 M8 1.5 L4.3 13.5 M8 1.5 L11.7 13.5" stroke="currentColor" stroke-width="0.8" opacity="0.55"/></svg>
+        Jehlan
+      </button>
+      <button class="shape-btn" data-shape="krychle">
+        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 5 L8 2.5 L14 5 L14 11.5 L8 14 L2 11.5 Z M2 5 L8 7.3 L14 5 M8 7.3 L8 14" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>
+        Krychle
+      </button>
+      <button class="shape-btn" data-shape="kvadr">
+        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M1.5 6 L7 3.3 L14.5 5.3 L14.5 10.8 L9 13.5 L1.5 11.3 Z M1.5 6 L9 8 L14.5 5.3 M9 8 L9 13.5" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>
+        Kvádr
+      </button>
+    </div>
+  </header>
+
+  <div id="canvas-wrap">
+    <canvas id="scene"></canvas>
+    <div class="hint" id="hint">Táhni prstem pro otočení, sevři pro přiblížení</div>
+    <div class="zoom-controls">
+      <button class="zoom-btn" id="zoomIn" aria-label="Přiblížit">+</button>
+      <button class="zoom-btn" id="zoomOut" aria-label="Oddálit">–</button>
+    </div>
+  </div>
+
+  <footer>
+    <div class="status-line" id="statusLine"></div>
+    <div class="foot-row">
+      <div class="points-chips">
+        <div class="chip" data-p="A">A</div>
+        <div class="chip" data-p="B">B</div>
+        <div class="chip" data-p="C">C</div>
+      </div>
+      <button class="reset-btn" id="resetBtn">Reset</button>
+    </div>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+
+  // ---------- Solid definitions ----------
+  // vertices: [x, y, z] (y = up). edges: index pairs for the wireframe.
+  // faces: index triples (triangles) for the solid fill.
+  var SHAPES = {
+    krychle: {
+      vertices: [
+        [-1.5, -1.5, -1.5], [1.5, -1.5, -1.5], [1.5, -1.5, 1.5], [-1.5, -1.5, 1.5],
+        [-1.5, 1.5, -1.5], [1.5, 1.5, -1.5], [1.5, 1.5, 1.5], [-1.5, 1.5, 1.5]
+      ],
+      edges: [
+        [0,1],[1,2],[2,3],[3,0],
+        [4,5],[5,6],[6,7],[7,4],
+        [0,4],[1,5],[2,6],[3,7]
+      ],
+      faces: [
+        [0,2,1],[0,3,2],
+        [4,5,6],[4,6,7],
+        [0,1,5],[0,5,4],
+        [2,3,7],[2,7,6],
+        [3,0,4],[3,4,7],
+        [1,2,6],[1,6,5]
+      ]
+    },
+    kvadr: {
+      vertices: [
+        [-1.9, -1.3, -1.1], [1.9, -1.3, -1.1], [1.9, -1.3, 1.1], [-1.9, -1.3, 1.1],
+        [-1.9, 1.3, -1.1], [1.9, 1.3, -1.1], [1.9, 1.3, 1.1], [-1.9, 1.3, 1.1]
+      ],
+      edges: [
+        [0,1],[1,2],[2,3],[3,0],
+        [4,5],[5,6],[6,7],[7,4],
+        [0,4],[1,5],[2,6],[3,7]
+      ],
+      faces: [
+        [0,2,1],[0,3,2],
+        [4,5,6],[4,6,7],
+        [0,1,5],[0,5,4],
+        [2,3,7],[2,7,6],
+        [3,0,4],[3,4,7],
+        [1,2,6],[1,6,5]
+      ]
+    },
+    jehlan: {
+      vertices: [
+        [-1.6, -1.3, -1.6], [1.6, -1.3, -1.6], [1.6, -1.3, 1.6], [-1.6, -1.3, 1.6],
+        [0, 1.7, 0]
+      ],
+      edges: [
+        [0,1],[1,2],[2,3],[3,0],
+        [0,4],[1,4],[2,4],[3,4]
+      ],
+      faces: [
+        [0,2,1],[0,3,2],
+        [0,1,4],
+        [1,2,4],
+        [2,3,4],
+        [3,0,4]
+      ]
+    }
+  };
+
+  // ---------- Scene setup ----------
+  var canvas = document.getElementById('scene');
+  var wrap = document.getElementById('canvas-wrap');
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+  var markerGroup = new THREE.Group();
+  var sectionGroup = new THREE.Group();
+  scene.add(markerGroup, sectionGroup);
+
+  var currentShapeKey = null;
+  var currentMesh = null;
+  var wireMesh = null;
+  var selectedPoints = [];
+  var sectionPolygon = null;
+
+  var camState = { theta: 0.9, phi: 1.1, radius: 7 };
+  var MIN_R = 3.5, MAX_R = 14;
+
+  function updateCamera() {
+    var r = camState.radius;
+    camera.position.x = r * Math.sin(camState.phi) * Math.sin(camState.theta);
+    camera.position.y = r * Math.cos(camState.phi);
+    camera.position.z = r * Math.sin(camState.phi) * Math.cos(camState.theta);
+    camera.lookAt(0, 0, 0);
+  }
+
+  function resize() {
+    var w = wrap.clientWidth, h = wrap.clientHeight;
+    if (w === 0 || h === 0) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', resize);
+  if (window.ResizeObserver) {
+    new ResizeObserver(resize).observe(wrap);
+  }
+
+  // ---------- Theme-aware colors ----------
+  function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+  function currentColors() {
+    return {
+      solid: new THREE.Color(cssVar('--solid-color')),
+      solidEdge: new THREE.Color(cssVar('--solid-edge')),
+      cyan: new THREE.Color(cssVar('--cyan')),
+      amber: new THREE.Color(cssVar('--amber')),
+      pink: new THREE.Color(cssVar('--pink')),
+      sectionOutline: new THREE.Color(cssVar('--pink'))
+    };
+  }
+
+  function disposeGroup(group) {
+    while (group.children.length) {
+      var obj = group.children.pop();
+      group.remove(obj);
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) obj.material.dispose();
+    }
+  }
+
+  function rebuildMarkers() {
+    disposeGroup(markerGroup);
+    var col = currentColors();
+    var colors = [col.cyan, col.amber, col.pink];
+    selectedPoints.forEach(function (p, i) {
+      var geo = new THREE.SphereGeometry(0.08, 16, 16);
+      var mat = new THREE.MeshBasicMaterial({ color: colors[i] });
+      var sphere = new THREE.Mesh(geo, mat);
+      sphere.position.set(p.x, p.y, p.z);
+      markerGroup.add(sphere);
+    });
+  }
+
+  function applyThemeColors() {
+    var col = currentColors();
+    if (currentMesh) currentMesh.material.color.copy(col.solid);
+    if (wireMesh) wireMesh.material.color.copy(col.solidEdge);
+    rebuildMarkers();
+    if (sectionPolygon) renderSectionPolygon(sectionPolygon);
+  }
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyThemeColors);
+  }
+
+  function loadShape(key) {
+    currentShapeKey = key;
+    document.querySelectorAll('.shape-btn').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.shape === key);
+    });
+
+    if (currentMesh) { scene.remove(currentMesh); currentMesh.geometry.dispose(); currentMesh.material.dispose(); currentMesh = null; }
+    if (wireMesh) { scene.remove(wireMesh); wireMesh.geometry.dispose(); wireMesh.material.dispose(); wireMesh = null; }
+
+    var def = SHAPES[key];
+    var col = currentColors();
+
+    var positions = [];
+    def.faces.forEach(function (f) {
+      f.forEach(function (idx) {
+        var v = def.vertices[idx];
+        positions.push(v[0], v[1], v[2]);
+      });
+    });
+    var geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    var mat = new THREE.MeshBasicMaterial({ color: col.solid, transparent: true, opacity: 0.55, side: THREE.DoubleSide });
+    currentMesh = new THREE.Mesh(geo, mat);
+    scene.add(currentMesh);
+
+    var linePositions = [];
+    def.edges.forEach(function (e) {
+      var a = def.vertices[e[0]], b = def.vertices[e[1]];
+      linePositions.push(a[0], a[1], a[2], b[0], b[1], b[2]);
+    });
+    var lineGeo = new THREE.BufferGeometry();
+    lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+    var lineMat = new THREE.LineBasicMaterial({ color: col.solidEdge, linewidth: 1.5 });
+    wireMesh = new THREE.LineSegments(lineGeo, lineMat);
+    scene.add(wireMesh);
+
+    clearPoints();
+  }
+
+  // ---------- Chips ----------
+  function updateChips() {
+    document.querySelectorAll('.chip').forEach(function (chip, i) {
+      chip.classList.toggle('filled', i < selectedPoints.length);
+    });
+  }
+
+  var statusEl = document.getElementById('statusLine');
+  function setStatus(html, warn) {
+    statusEl.innerHTML = html;
+    statusEl.classList.toggle('warn', !!warn);
+  }
+
+  var POLY_NAMES = { 3: 'trojúhelník', 4: 'čtyřúhelník', 5: 'pětiúhelník', 6: 'šestiúhelník', 7: 'sedmiúhelník', 8: 'osmiúhelník' };
+
+  function refreshStatus() {
+    if (selectedPoints.length === 0) {
+      setStatus('Ťukněte na těleso a vyberte <b>bod A</b>');
+    } else if (selectedPoints.length === 1) {
+      setStatus('Bod A zvolen. Nyní vyberte <b>bod B</b>');
+    } else if (selectedPoints.length === 2) {
+      setStatus('Bod B zvolen. Nyní vyberte <b>bod C</b>');
+    }
+  }
+
+  function clearPoints() {
+    selectedPoints = [];
+    sectionPolygon = null;
+    disposeGroup(markerGroup);
+    disposeGroup(sectionGroup);
+    updateChips();
+    refreshStatus();
+    hintEl.style.display = '';
+  }
+
+  // ---------- Cross-section geometry ----------
+  function sub(a, b) { return { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z }; }
+  function add(a, b) { return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z }; }
+  function scaleV(a, s) { return { x: a.x * s, y: a.y * s, z: a.z * s }; }
+  function dot(a, b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+  function cross(a, b) {
+    return { x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x };
+  }
+  function length(a) { return Math.sqrt(dot(a, a)); }
+  function normalize(a) { var l = length(a) || 1; return scaleV(a, 1 / l); }
+  function lerp(a, b, t) { return add(a, scaleV(sub(b, a), t)); }
+
+  function computeCrossSection(shapeDef, p1, p2, p3) {
+    var normal = cross(sub(p2, p1), sub(p3, p1));
+    if (length(normal) < 1e-5) return null; // collinear points -> no unique plane
+    normal = normalize(normal);
+    var d0 = dot(normal, p1);
+    var EPS = 1e-4;
+    var raw = [];
+
+    shapeDef.edges.forEach(function (e) {
+      var vi = shapeDef.vertices[e[0]], vj = shapeDef.vertices[e[1]];
+      var pi = { x: vi[0], y: vi[1], z: vi[2] };
+      var pj = { x: vj[0], y: vj[1], z: vj[2] };
+      var di = dot(normal, pi) - d0;
+      var dj = dot(normal, pj) - d0;
+      if (Math.abs(di) < EPS && Math.abs(dj) < EPS) {
+        raw.push(pi); raw.push(pj);
+      } else if (Math.abs(di) < EPS) {
+        raw.push(pi);
+      } else if (Math.abs(dj) < EPS) {
+        raw.push(pj);
+      } else if ((di > 0) !== (dj > 0)) {
+        var t = di / (di - dj);
+        raw.push(lerp(pi, pj, t));
+      }
+    });
+
+    // Deduplicate near-coincident points
+    var pts = [];
+    raw.forEach(function (p) {
+      var dup = pts.some(function (q) { return length(sub(p, q)) < 1e-3; });
+      if (!dup) pts.push(p);
+    });
+
+    if (pts.length < 3) return null;
+
+    // Order points around the polygon using a 2D basis on the cutting plane
+    var centroid = pts.reduce(function (acc, p) { return add(acc, p); }, { x: 0, y: 0, z: 0 });
+    centroid = scaleV(centroid, 1 / pts.length);
+    var u = normalize(sub(pts[0], centroid));
+    var v = cross(normal, u);
+    pts.sort(function (a, b) {
+      var av = sub(a, centroid), bv = sub(b, centroid);
+      var angA = Math.atan2(dot(av, v), dot(av, u));
+      var angB = Math.atan2(dot(bv, v), dot(bv, u));
+      return angA - angB;
+    });
+    return pts;
+  }
+
+  function renderSectionPolygon(pts) {
+    disposeGroup(sectionGroup);
+    var col = currentColors();
+
+    var positions = [];
+    for (var k = 1; k < pts.length - 1; k++) {
+      [pts[0], pts[k], pts[k + 1]].forEach(function (p) { positions.push(p.x, p.y, p.z); });
+    }
+    var fillGeo = new THREE.BufferGeometry();
+    fillGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    var fillMat = new THREE.MeshBasicMaterial({
+      color: col.amber, transparent: true, opacity: 0.42, side: THREE.DoubleSide, depthWrite: false
+    });
+    var fillMesh = new THREE.Mesh(fillGeo, fillMat);
+    fillMesh.renderOrder = 1;
+
+    var linePos = [];
+    pts.forEach(function (p) { linePos.push(p.x, p.y, p.z); });
+    var first = pts[0];
+    linePos.push(first.x, first.y, first.z);
+    var lineGeo = new THREE.BufferGeometry();
+    lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
+    var lineMat = new THREE.LineBasicMaterial({ color: col.sectionOutline, linewidth: 2 });
+    var line = new THREE.Line(lineGeo, lineMat);
+    line.renderOrder = 2;
+
+    sectionGroup.add(fillMesh, line);
+  }
+
+  function tryBuildSection() {
+    var shapeDef = SHAPES[currentShapeKey];
+    var result = computeCrossSection(
+      shapeDef, selectedPoints[0], selectedPoints[1], selectedPoints[2]
+    );
+    if (!result) {
+      setStatus('Body A, B, C neurčují platný řez (leží na jedné přímce nebo se neprotíná s tělesem). Zkuste to znovu.', true);
+      setTimeout(clearPoints, 1600);
+      return;
+    }
+    sectionPolygon = result;
+    renderSectionPolygon(result);
+    var name = POLY_NAMES[result.length] || (result.length + '-úhelník');
+    setStatus('Rovina <b>ABC</b> protíná těleso v řezu: <b>' + name + '</b> (' + result.length + ' vrcholů)');
+  }
+
+  var hintEl = document.getElementById('hint');
+  function addPoint(point) {
+    if (selectedPoints.length >= 3) return;
+    // ignore near-duplicate picks
+    var dup = selectedPoints.some(function (p) { return length(sub(p, point)) < 0.03; });
+    if (dup) return;
+    selectedPoints.push(point);
+    hintEl.style.display = 'none';
+    rebuildMarkers();
+    updateChips();
+    if (selectedPoints.length === 3) {
+      tryBuildSection();
+    } else {
+      refreshStatus();
+    }
+  }
+
+  // ---------- Pointer interaction: orbit drag, pinch zoom, tap-to-select ----------
+  var raycaster = new THREE.Raycaster();
+  var ndc = new THREE.Vector2();
+  var pointers = new Map();
+  var dragTotal = 0;
+  var singleStart = null;
+  var pinchStartDist = 0, pinchStartRadius = 0;
+
+  function pointerDist(a, b) {
+    var dx = a.x - b.x, dy = a.y - b.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  canvas.addEventListener('pointerdown', function (e) {
+    canvas.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 1) {
+      dragTotal = 0;
+      singleStart = { x: e.clientX, y: e.clientY, t: performance.now() };
+    } else if (pointers.size === 2) {
+      var vals = Array.from(pointers.values());
+      pinchStartDist = pointerDist(vals[0], vals[1]);
+      pinchStartRadius = camState.radius;
+    }
+  });
+
+  canvas.addEventListener('pointermove', function (e) {
+    if (!pointers.has(e.pointerId)) return;
+    var prev = pointers.get(e.pointerId);
+    var curr = { x: e.clientX, y: e.clientY };
+    pointers.set(e.pointerId, curr);
+
+    if (pointers.size === 2) {
+      var vals = Array.from(pointers.values());
+      var dist = pointerDist(vals[0], vals[1]);
+      if (pinchStartDist > 0) {
+        var ratio = pinchStartDist / Math.max(dist, 1);
+        camState.radius = Math.min(MAX_R, Math.max(MIN_R, pinchStartRadius * ratio));
+        updateCamera();
+      }
+      return;
+    }
+
+    if (pointers.size === 1) {
+      var dx = curr.x - prev.x, dy = curr.y - prev.y;
+      dragTotal += Math.abs(dx) + Math.abs(dy);
+      camState.theta -= dx * 0.008;
+      camState.phi -= dy * 0.008;
+      camState.phi = Math.min(Math.PI - 0.12, Math.max(0.12, camState.phi));
+      updateCamera();
+    }
+  });
+
+  function endPointer(e) {
+    var wasSingle = pointers.size === 1 && pointers.has(e.pointerId);
+    var start = singleStart;
+    pointers.delete(e.pointerId);
+    if (wasSingle && start && dragTotal < 8 && (performance.now() - start.t) < 700) {
+      selectAt(start.x, start.y);
+    }
+    if (pointers.size < 2) { pinchStartDist = 0; }
+    if (pointers.size === 0) { singleStart = null; dragTotal = 0; }
+  }
+  canvas.addEventListener('pointerup', endPointer);
+  canvas.addEventListener('pointercancel', endPointer);
+
+  function selectAt(clientX, clientY) {
+    if (selectedPoints.length >= 3 || !currentMesh) return;
+    var rect = canvas.getBoundingClientRect();
+    ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+    ndc.y = -(((clientY - rect.top) / rect.height) * 2 - 1);
+    raycaster.setFromCamera(ndc, camera);
+    var hits = raycaster.intersectObject(currentMesh, false);
+    if (hits.length === 0) return;
+    addPoint(hits[0].point);
+  }
+
+  // ---------- UI wiring ----------
+  document.querySelectorAll('.shape-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (btn.dataset.shape === currentShapeKey) return;
+      loadShape(btn.dataset.shape);
+    });
+  });
+  document.getElementById('resetBtn').addEventListener('click', clearPoints);
+  document.getElementById('zoomIn').addEventListener('click', function () {
+    camState.radius = Math.max(MIN_R, camState.radius - 0.7);
+    updateCamera();
+  });
+  document.getElementById('zoomOut').addEventListener('click', function () {
+    camState.radius = Math.min(MAX_R, camState.radius + 0.7);
+    updateCamera();
+  });
+
+  // ---------- Boot ----------
+  function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+
+  resize();
+  applyThemeColors();
+  updateCamera();
+  loadShape('jehlan');
+  animate();
+})();
+</script>
+</body>
+</html>
