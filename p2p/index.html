@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>PeerDrop</title>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=Jacquard+24&display=swap');
@@ -60,40 +61,29 @@
   .item i{font-size:20px;color:var(--accent)}
   .item small{display:block;color:#666;font-size:11px;margin-top:2px}
   .item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mycode{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-weight:700;font-size:56px;letter-spacing:.14em;text-indent:.14em;color:var(--accent);text-align:center;line-height:1.1;cursor:pointer;padding:10px 0 4px;user-select:all}
+  .hint{font-size:12px;color:#666;text-align:center;margin-bottom:22px}
+  .divider{display:flex;align-items:center;gap:12px;color:#444;font-size:12px;margin:26px 0 18px}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:#2a2a2a}
+  #targetId{width:100%;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;color:#fff;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-weight:700;font-size:32px;letter-spacing:.14em;text-indent:.14em;text-align:center;padding:12px;outline:none;text-transform:uppercase;margin-bottom:12px}
+  #targetId:focus{border-color:var(--accent)}
+  #targetId::placeholder{color:#333}
   [hidden]{display:none!important}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="logo">Peer<span>Drop</span></div>
-  <div class="subtitle">Spoj dvě zařízení → přetáhni soubor → hotovo</div>
+  <div class="subtitle">Zadej kód → přetáhni soubor → hotovo</div>
   <div id="status">Nepřipojeno</div>
 
   <div id="setup">
-    <div class="modes">
-      <button class="mode-btn active" data-tab="A"><i class="bi bi-broadcast"></i>Začínám já</button>
-      <button class="mode-btn" data-tab="B"><i class="bi bi-box-arrow-in-down"></i>Připojuji se</button>
-    </div>
-
-    <div class="panel active" id="panelA">
-      <button class="btn main" id="btnOffer">Vytvořit kód</button>
-      <textarea id="offerOut" readonly placeholder="Sem se vygeneruje kód…"></textarea>
-      <button class="btn" onclick="copy('offerOut')"><i class="bi bi-clipboard"></i> Kopírovat kód</button>
-      <div class="step"><b>2</b><span>Pošli kód druhému zařízení a jeho odpověď vlož sem:</span></div>
-      <textarea id="answerIn" placeholder="Odpověď od druhého zařízení"></textarea>
-      <button class="btn main" id="btnFinish">Spojit</button>
-    </div>
-
-    <div class="panel" id="panelB">
-      <div class="step"><b>1</b><span>Vlož kód z prvního zařízení:</span></div>
-      <textarea id="offerIn" placeholder="Kód od druhého zařízení"></textarea>
-      <button class="btn main" id="btnAnswer">Vytvořit odpověď</button>
-      <textarea id="answerOut" readonly placeholder="Odpověď se vygeneruje sem…"></textarea>
-      <button class="btn" onclick="copy('answerOut')"><i class="bi bi-clipboard"></i> Kopírovat odpověď</button>
-      <div class="step"><b>2</b><span>Odpověď pošli zpět na první zařízení.</span></div>
-    </div>
-
-    <label class="opt"><input type="checkbox" id="stun"><span>Použít STUN (jen když zařízení nejsou ve stejné síti, vyžaduje internet)</span></label>
+    <div class="hint">Tvůj kód, řekni ho druhému zařízení:</div>
+    <div class="mycode" id="myCode" onclick="copyCode()">-----</div>
+    <div class="hint" id="copyHint">klepnutím zkopíruješ</div>
+    <div class="divider">nebo</div>
+    <input id="targetId" maxlength="5" placeholder="KÓD" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <button class="btn main" id="connectBtn">Připojit</button>
   </div>
 
   <div id="transfer" hidden>
@@ -108,99 +98,87 @@
 </div>
 
 <script>
-let pc, dc;
+let peer, conn = null;
 const $ = id => document.getElementById(id);
-const CHUNK = 16 * 1024, HIGH = 4 * 1024 * 1024;
-const enc = d => btoa(unescape(encodeURIComponent(JSON.stringify(d))));
-const dec = s => JSON.parse(decodeURIComponent(escape(atob(s.trim()))));
-const copy = id => { $(id).select(); navigator.clipboard?.writeText($(id).value); };
+const CHUNK = 32 * 1024, HIGH = 2 * 1024 * 1024;
 const fmt = b => b > 1e6 ? (b/1e6).toFixed(1)+' MB' : (b/1e3).toFixed(0)+' kB';
 const setStatus = (t, c='') => { $('status').textContent = t; $('status').className = c; };
+const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const genCode = () => Array.from({length:5}, () => ALPHA[Math.floor(Math.random()*ALPHA.length)]).join('');
+const PREFIX = 'peerdrop-';
+let myCode = '';
 
-document.querySelectorAll('.mode-btn').forEach(b => b.onclick = () => {
-  document.querySelectorAll('.mode-btn').forEach(x => x.classList.toggle('active', x === b));
-  $('panelA').classList.toggle('active', b.dataset.tab === 'A');
-  $('panelB').classList.toggle('active', b.dataset.tab === 'B');
-});
-
-function newPC() {
-  pc = new RTCPeerConnection({ iceServers: $('stun').checked ? [{ urls: 'stun:stun.l.google.com:19302' }] : [] });
-  pc.onconnectionstatechange = () => {
-    const s = pc.connectionState;
-    if (s === 'connected') setStatus('Propojeno', 'ok');
-    else if (s === 'failed') setStatus('Spojení selhalo', 'err');
-    else if (s === 'disconnected') setStatus('Odpojeno', 'err');
-    else setStatus('Připojuji…');
-  };
+function copyCode() {
+  navigator.clipboard?.writeText(myCode);
+  $('copyHint').textContent = 'zkopírováno ✓';
+  setTimeout(() => $('copyHint').textContent = 'klepnutím zkopíruješ', 1500);
 }
-function iceDone() {
-  return new Promise(res => {
-    if (pc.iceGatheringState === 'complete') return res();
-    pc.onicegatheringstatechange = () => pc.iceGatheringState === 'complete' && res();
-    setTimeout(res, 4000);
+
+function start() {
+  myCode = genCode();
+  setStatus('Připojuji k síti…');
+  peer = new Peer(PREFIX + myCode);
+  peer.on('open', () => { $('myCode').textContent = myCode; setStatus('Čekám na spojení'); });
+  peer.on('connection', c => { if (conn) return c.close(); attach(c); });
+  peer.on('disconnected', () => peer.reconnect());
+  peer.on('error', err => {
+    if (err.type === 'unavailable-id') { peer.destroy(); start(); }
+    else if (err.type === 'peer-unavailable') { setStatus('Kód nenalezen', 'err'); $('connectBtn').disabled = false; }
+    else if (['network','server-error','socket-error','socket-closed'].includes(err.type)) setStatus('Bez internetu, nelze navázat spojení', 'err');
+    else setStatus('Chyba: ' + err.type, 'err');
   });
 }
+start();
 
-$('btnOffer').onclick = async () => {
-  newPC(); dc = pc.createDataChannel('files'); setupDC();
-  await pc.setLocalDescription(await pc.createOffer());
-  await iceDone();
-  $('offerOut').value = enc(pc.localDescription);
-};
-$('btnAnswer').onclick = async () => {
-  try {
-    newPC(); pc.ondatachannel = e => { dc = e.channel; setupDC(); };
-    await pc.setRemoteDescription(dec($('offerIn').value));
-    await pc.setLocalDescription(await pc.createAnswer());
-    await iceDone();
-    $('answerOut').value = enc(pc.localDescription);
-  } catch (e) { alert('Neplatný kód: ' + e.message); }
-};
-$('btnFinish').onclick = async () => {
-  try { await pc.setRemoteDescription(dec($('answerIn').value)); }
-  catch (e) { alert('Neplatná odpověď: ' + e.message); }
+$('targetId').addEventListener('input', e => e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''));
+$('targetId').addEventListener('keydown', e => e.key === 'Enter' && $('connectBtn').click());
+$('connectBtn').onclick = () => {
+  const code = $('targetId').value.trim();
+  if (code.length < 5) return setStatus('Zadej celý kód (5 znaků)', 'err');
+  if (code === myCode) return setStatus('To je tvůj vlastní kód', 'err');
+  $('connectBtn').disabled = true;
+  setStatus('Připojuji…');
+  attach(peer.connect(PREFIX + code, { reliable: true }));
 };
 
 let meta = null, chunks = [], got = 0;
-function setupDC() {
-  dc.binaryType = 'arraybuffer';
-  dc.bufferedAmountLowThreshold = 1024 * 1024;
-  dc.onopen = () => { $('setup').hidden = true; $('transfer').hidden = false; setStatus('Propojeno', 'ok'); };
-  dc.onclose = () => setStatus('Kanál zavřen', 'err');
-  dc.onmessage = e => {
-    if (typeof e.data === 'string') {
-      const m = JSON.parse(e.data);
-      if (m.t === 'meta') { meta = m; chunks = []; got = 0; $('recvProg').hidden = false; $('recvProg').value = 0; }
-      else if (m.t === 'end') {
-        const url = URL.createObjectURL(new Blob(chunks, { type: meta.type }));
-        const box = $('received');
-        box.querySelector('.empty')?.remove();
-        const a = document.createElement('a');
-        a.className = 'item'; a.href = url; a.download = meta.name;
-        a.innerHTML = '<i class="bi bi-download"></i><span></span>';
-        a.querySelector('span').innerHTML = '<span></span><small>' + fmt(meta.size) + '</small>';
-        a.querySelector('span span').textContent = meta.name;
-        box.appendChild(a);
-        $('recvProg').hidden = true; chunks = [];
-      }
-    } else {
-      chunks.push(e.data); got += e.data.byteLength;
+function attach(c) {
+  conn = c;
+  c.on('open', () => { $('setup').hidden = true; $('transfer').hidden = false; setStatus('Propojeno', 'ok'); });
+  c.on('close', () => { conn = null; setStatus('Spojení ukončeno', 'err'); });
+  c.on('error', e => setStatus('Chyba spojení', 'err'));
+  c.on('data', data => {
+    if (data && data.t === 'meta') { meta = data; chunks = []; got = 0; $('recvProg').hidden = false; $('recvProg').value = 0; }
+    else if (data && data.t === 'end') {
+      const url = URL.createObjectURL(new Blob(chunks, { type: meta.type }));
+      const box = $('received');
+      box.querySelector('.empty')?.remove();
+      const a = document.createElement('a');
+      a.className = 'item'; a.href = url; a.download = meta.name;
+      a.innerHTML = '<i class="bi bi-download"></i><span><span></span><small></small></span>';
+      a.querySelector('span span').textContent = meta.name;
+      a.querySelector('small').textContent = fmt(meta.size);
+      box.appendChild(a);
+      $('recvProg').hidden = true; chunks = [];
+    } else if (data && data.byteLength !== undefined) {
+      chunks.push(data); got += data.byteLength;
       $('recvProg').value = got / meta.size * 100;
     }
-  };
+  });
 }
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function sendFiles(files) {
   for (const f of files) {
     $('sendLabel').textContent = `Odesílám ${f.name}…`;
     $('sendProg').hidden = false;
-    dc.send(JSON.stringify({ t: 'meta', name: f.name, size: f.size, type: f.type }));
+    conn.send({ t: 'meta', name: f.name, size: f.size, type: f.type });
     for (let o = 0; o < f.size; o += CHUNK) {
-      if (dc.bufferedAmount > HIGH) await new Promise(r => { dc.onbufferedamountlow = () => { dc.onbufferedamountlow = null; r(); }; });
-      dc.send(await f.slice(o, o + CHUNK).arrayBuffer());
+      while (conn.dataChannel && conn.dataChannel.bufferedAmount > HIGH) await sleep(30);
+      conn.send(await f.slice(o, o + CHUNK).arrayBuffer());
       $('sendProg').value = Math.min(o + CHUNK, f.size) / f.size * 100;
     }
-    dc.send(JSON.stringify({ t: 'end' }));
+    conn.send({ t: 'end' });
     $('sendLabel').textContent = `✓ ${f.name} odesláno`;
   }
   $('sendProg').hidden = true;
