@@ -68,13 +68,19 @@
   #targetId{width:100%;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;color:#fff;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-weight:700;font-size:32px;letter-spacing:.14em;text-indent:.14em;text-align:center;padding:12px;outline:none;text-transform:uppercase;margin-bottom:12px}
   #targetId:focus{border-color:var(--accent)}
   #targetId::placeholder{color:#333}
+  #confirm{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50}
+  #confirm .box{background:#1a1a1a;border:1px solid #333;border-radius:20px;padding:26px 22px;width:100%;max-width:340px;text-align:center}
+  #confirm i{font-size:36px;color:var(--accent)}
+  #confirm h3{font-size:16px;margin:10px 0 6px}
+  #confirm p{font-size:13px;color:#888;margin-bottom:18px;line-height:1.5}
+  #confirm b{color:#fff}
   [hidden]{display:none!important}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="logo">Peer<span>Drop</span></div>
-  <div class="subtitle">Zadej kód → přetáhni soubor → hotovo</div>
+  <div class="subtitle">Zadej kód → přetáhni soubor → hotovo<br>🔒 šifrováno end-to-end</div>
   <div id="status">Nepřipojeno</div>
 
   <div id="setup">
@@ -97,6 +103,18 @@
   </div>
 </div>
 
+<div id="confirm" hidden>
+  <div class="box">
+    <i class="bi bi-shield-lock"></i>
+    <h3>Žádost o spojení</h3>
+    <p>Zařízení <b id="confName"></b> se chce připojit. Přijmi jen pokud ho znáš.</p>
+    <div class="row">
+      <button class="btn" onclick="rejectConn()"><i class="bi bi-x-lg"></i> Odmítnout</button>
+      <button class="btn main" onclick="acceptConn()" style="font-size:18px">Přijmout</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const $ = id => document.getElementById(id);
 const CHUNK = 16 * 1024, HIGH = 4 * 1024 * 1024;
@@ -112,12 +130,42 @@ const ICE = [
   { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turns:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' }
 ];
 const BROKER = 'wss://broker.hivemq.com:8884/mqtt';   // signalizace přes WebSocket (port 443-like, prochází většinou sítí)
-const T = c => `peerdrop/v1/${c}`;
-
 const myId = Math.random().toString(36).slice(2, 10);
 const myCode = genCode();
-let mq, pc = null, dc = null, role = '', outTopic = '', remoteId = '', pending = [];
-const pub = (topic, obj) => mq.publish(topic, JSON.stringify(obj), { qos: 1 });
+let mq, pc = null, dc = null, role = '', outTopic = '', outKey = null, remoteId = '', pending = [];
+let me = null, callerKey = null, incoming = null, earlyIce = [], confirmTimer = null;
+
+// ── Šifrování signalizace: klíč i název kanálu se odvozují z kódu (PBKDF2), broker kód nikdy nevidí ──
+const te = new TextEncoder();
+async function derive(code) {
+  const base = await crypto.subtle.importKey('raw', te.encode(code), 'PBKDF2', false, ['deriveBits']);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt: te.encode('peerdrop-v2'), iterations: 150000 }, base, 384));
+  const key = await crypto.subtle.importKey('raw', bits.slice(0, 32), 'AES-GCM', false, ['encrypt', 'decrypt']);
+  const tid = [...bits.slice(32)].map(x => x.toString(16).padStart(2, '0')).join('');
+  return { key, tid };
+}
+async function encrypt(obj, key) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, te.encode(JSON.stringify(obj))));
+  const out = new Uint8Array(12 + ct.length); out.set(iv); out.set(ct, 12);
+  return btoa(String.fromCharCode(...out));
+}
+async function decrypt(str, key) {
+  try {
+    const raw = Uint8Array.from(atob(str), c => c.charCodeAt(0));
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.slice(0, 12) }, key, raw.slice(12));
+    return JSON.parse(new TextDecoder().decode(pt));
+  } catch { return null; }          // cizí / poškozená zpráva se tiše zahodí
+}
+const pub = async (topic, key, obj) => mq.publish(topic, await encrypt(obj, key), { qos: 1 });
+
+const deviceName = () => {
+  const u = navigator.userAgent;
+  const os = /Android/.test(u) ? 'Android' : /iPhone|iPad/.test(u) ? 'iOS' : /Windows/.test(u) ? 'Windows' : /Mac/.test(u) ? 'macOS' : /Linux/.test(u) ? 'Linux' : 'Zařízení';
+  const br = /Edg\//.test(u) ? 'Edge' : /OPR\//.test(u) ? 'Opera' : /Firefox/.test(u) ? 'Firefox' : /Chrome/.test(u) ? 'Chrome' : /Safari/.test(u) ? 'Safari' : '';
+  return os + (br ? ' · ' + br : '');
+};
 
 function copyCode() {
   navigator.clipboard?.writeText(myCode);
@@ -125,27 +173,29 @@ function copyCode() {
   setTimeout(() => $('copyHint').textContent = 'klepnutím zkopíruješ', 1500);
 }
 
-// ── Signalizace ──
-setStatus('Připojuji k síti…');
-mq = mqtt.connect(BROKER, { clientId: 'pd-' + myId, connectTimeout: 8000, reconnectPeriod: 2000 });
-mq.on('connect', () => {
-  mq.subscribe(T(myCode) + '/in', { qos: 1 });
-  $('myCode').textContent = myCode;
-  if (!pc) setStatus('Čekám na spojení');
-});
-mq.on('offline', () => { if (!pc || pc.connectionState !== 'connected') setStatus('Signalizační server nedostupný, zkontroluj internet', 'err'); });
-mq.on('error', () => setStatus('Signalizační server nedostupný', 'err'));
-mq.on('message', (topic, buf) => {
-  let m; try { m = JSON.parse(buf.toString()); } catch { return; }
-  onSignal(topic, m);
-});
+// ── Start ──
+(async () => {
+  if (!window.crypto?.subtle) return setStatus('Chybí šifrování: otevři stránku přes HTTPS nebo jako lokální soubor', 'err');
+  setStatus('Připravuji zabezpečení…');
+  me = await derive(myCode);
+  setStatus('Připojuji k síti…');
+  mq = mqtt.connect(BROKER, { clientId: 'pd-' + myId, connectTimeout: 8000, reconnectPeriod: 2000 });
+  mq.on('connect', () => {
+    mq.subscribe(`peerdrop/v2/${me.tid}/in`, { qos: 1 });
+    $('myCode').textContent = myCode;
+    if (!pc) setStatus('Čekám na spojení');
+  });
+  mq.on('offline', () => { if (!pc || pc.connectionState !== 'connected') setStatus('Signalizační server nedostupný, zkontroluj internet', 'err'); });
+  mq.on('error', () => setStatus('Signalizační server nedostupný', 'err'));
+  mq.on('message', (topic, buf) => onSignal(topic, buf.toString()));
+})();
 
 function makePC(r) {
   if (pc) { try { pc.close(); } catch {} }
   role = r; pending = [];
   pc = new RTCPeerConnection({ iceServers: ICE });
   const mine = pc;
-  pc.onicecandidate = e => { if (e.candidate && mine === pc) pub(outTopic, { t: 'ice', from: myId, c: e.candidate }); };
+  pc.onicecandidate = e => { if (e.candidate && mine === pc) pub(outTopic, outKey, { t: 'ice', from: myId, c: e.candidate }); };
   pc.onconnectionstatechange = () => {
     if (mine !== pc) return;
     const s = pc.connectionState;
@@ -157,23 +207,49 @@ function makePC(r) {
 async function flush() { for (const c of pending) await pc.addIceCandidate(c).catch(() => {}); pending = []; }
 function addCand(c) { if (pc && pc.remoteDescription) pc.addIceCandidate(c).catch(() => {}); else pending.push(c); }
 
-async function onSignal(topic, m) {
+// ── Potvrzení příchozího spojení ──
+function showConfirm(name) {
+  $('confName').textContent = name; $('confirm').hidden = false;
+  clearTimeout(confirmTimer); confirmTimer = setTimeout(rejectConn, 30000);
+}
+function hideConfirm() { $('confirm').hidden = true; clearTimeout(confirmTimer); }
+async function acceptConn() {
+  const inc = incoming; hideConfirm(); if (!inc) return;
+  incoming = null; remoteId = inc.from;
+  outTopic = `peerdrop/v2/${me.tid}/r/${inc.from}`; outKey = me.key;
+  makePC('host'); pending = earlyIce; earlyIce = [];
+  pc.ondatachannel = e => { dc = e.channel; setupDC(); };
+  setStatus('Připojuji…');
+  await pc.setRemoteDescription({ type: 'offer', sdp: inc.sdp }); await flush();
+  const ans = await pc.createAnswer(); await pc.setLocalDescription(ans);
+  pub(outTopic, outKey, { t: 'answer', from: myId, sdp: ans.sdp });
+}
+function rejectConn() {
+  const inc = incoming; incoming = null; earlyIce = []; hideConfirm();
+  if (inc) pub(`peerdrop/v2/${me.tid}/r/${inc.from}`, me.key, { t: 'reject' });
+}
+
+async function onSignal(topic, payload) {
   try {
-    if (topic.endsWith('/in')) {                    // jsem "hostitel"
+    if (topic.endsWith('/in')) {                       // jsem hostitel
+      const m = await decrypt(payload, me.key); if (!m) return;
       if (m.t === 'offer') {
-        if (role === 'caller' && pc) return;         // sám se připojuji jinam
-        if (pc && pc.connectionState === 'connected') return;
-        remoteId = m.from; outTopic = T(myCode) + '/r/' + m.from;
-        makePC('host');
-        pc.ondatachannel = e => { dc = e.channel; setupDC(); };
-        setStatus('Připojuji…');
-        await pc.setRemoteDescription({ type: 'offer', sdp: m.sdp }); await flush();
-        const ans = await pc.createAnswer(); await pc.setLocalDescription(ans);
-        pub(outTopic, { t: 'answer', from: myId, sdp: ans.sdp });
-      } else if (m.t === 'ice' && m.from === remoteId) addCand(m.c);
-    } else if (role === 'caller' && pc) {           // odpověď pro volajícího
+        if ((role === 'caller' && pc) || incoming || (pc && pc.connectionState === 'connected')) return;
+        incoming = { from: m.from, sdp: m.sdp };
+        earlyIce = [];
+        showConfirm(String(m.name || 'Neznámé zařízení').slice(0, 40));
+      } else if (m.t === 'ice') {
+        if (incoming && m.from === incoming.from) earlyIce.push(m.c);
+        else if (m.from === remoteId) addCand(m.c);
+      }
+    } else if (role === 'caller' && pc && callerKey) {  // odpověď pro volajícího
+      const m = await decrypt(payload, callerKey); if (!m) return;
       if (m.t === 'answer') { await pc.setRemoteDescription({ type: 'answer', sdp: m.sdp }); await flush(); }
       else if (m.t === 'ice') addCand(m.c);
+      else if (m.t === 'reject') {
+        setStatus('Druhé zařízení spojení odmítlo', 'err');
+        $('connectBtn').disabled = false; role = ''; try { pc.close(); } catch {} pc = null;
+      }
     }
   } catch (e) { console.error(e); }
 }
@@ -184,23 +260,25 @@ $('connectBtn').onclick = async () => {
   const code = $('targetId').value.trim();
   if (code.length < 5) return setStatus('Zadej celý kód (5 znaků)', 'err');
   if (code === myCode) return setStatus('To je tvůj vlastní kód', 'err');
-  if (!mq.connected) return setStatus('Nejsem připojen k signalizaci, zkus za chvíli', 'err');
-  $('connectBtn').disabled = true; setStatus('Připojuji…');
-  await new Promise(r => mq.subscribe(T(code) + '/r/' + myId, { qos: 1 }, r));
-  outTopic = T(code) + '/in';
+  if (!mq || !mq.connected) return setStatus('Nejsem připojen k signalizaci, zkus za chvíli', 'err');
+  $('connectBtn').disabled = true; setStatus('Zabezpečuji spojení…');
+  const t = await derive(code); callerKey = t.key;
+  await new Promise(r => mq.subscribe(`peerdrop/v2/${t.tid}/r/${myId}`, { qos: 1 }, r));
+  outTopic = `peerdrop/v2/${t.tid}/in`; outKey = t.key;
   makePC('caller');
   const mine = pc;
   dc = pc.createDataChannel('files'); setupDC();
   const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
-  pub(outTopic, { t: 'offer', from: myId, sdp: offer.sdp });
+  setStatus('Čekám na potvrzení druhého zařízení…');
+  pub(outTopic, outKey, { t: 'offer', from: myId, name: deviceName(), sdp: offer.sdp });
   setTimeout(() => {
     if (mine === pc && pc.connectionState !== 'connected') {
       setStatus(pc.signalingState === 'have-local-offer'
-        ? 'Druhé zařízení neodpovídá. Zkontroluj kód a že má otevřenou stránku.'
+        ? 'Druhé zařízení neodpovědělo. Zkontroluj kód a že má stránku otevřenou.'
         : `Nepodařilo se spojit (${pc.iceConnectionState}). Zkus to znovu.`, 'err');
       $('connectBtn').disabled = false; role = ''; try { pc.close(); } catch {} pc = null;
     }
-  }, 25000);
+  }, 45000);
 };
 
 // ── Přenos ──
