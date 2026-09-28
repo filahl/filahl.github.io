@@ -138,12 +138,25 @@ $('connectBtn').onclick = () => {
   if (code === myCode) return setStatus('To je tvůj vlastní kód', 'err');
   $('connectBtn').disabled = true;
   setStatus('Připojuji…');
-  attach(peer.connect(PREFIX + code, { reliable: true }));
+  const c = peer.connect(PREFIX + code, { reliable: true });
+  attach(c);
+  setTimeout(() => {
+    if (!c.open) {
+      const st = c.peerConnection ? c.peerConnection.iceConnectionState : '?';
+      setStatus(`Nepodařilo se spojit (ICE: ${st}). Zkus stejnou Wi-Fi bez VPN, nebo to zkus znovu.`, 'err');
+      c.close(); conn = null; $('connectBtn').disabled = false;
+    }
+  }, 20000);
 };
 
 let meta = null, chunks = [], got = 0;
 function attach(c) {
   conn = c;
+  const pcx = c.peerConnection;
+  if (pcx) pcx.addEventListener('iceconnectionstatechange', () => {
+    if (!c.open && pcx.iceConnectionState === 'failed') setStatus('Spojení selhalo (ICE failed). Sítě se k sobě nedostanou.', 'err');
+    else if (!c.open) setStatus('Připojuji… (' + pcx.iceConnectionState + ')');
+  });
   c.on('open', () => { $('setup').hidden = true; $('transfer').hidden = false; setStatus('Propojeno', 'ok'); });
   c.on('close', () => { conn = null; setStatus('Spojení ukončeno', 'err'); });
   c.on('error', e => setStatus('Chyba spojení', 'err'));
