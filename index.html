@@ -2,255 +2,67 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#080808">
-​<meta property="og:title" content="I say disco, you say party!">
-<meta property="og:description" content="by 001kmh">
-
-
-
+    <meta name="theme-color" content="#0d0d0d">
+    <meta name="description" content="001kmh — projekty">
+    <meta property="og:title" content="001kmh">
     <title>001kmh</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=JetBrains+Mono:wght@400&display=swap');
-
-        :root {
-            --bg: #080808;
-            --accent: #bc13fe; 
-            --font-main: 'Lexend', sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            
-        }
-
-        body {
-            background-color: var(--bg);
-            color: white;
-            font-family: var(--font-main);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow-x: hidden; 
-        }
-
-        .distort-filter {
-            position: absolute;
-            width: 0; height: 0;
-        }
-
-        /* --- HLAVNÍ INDEX --- */
-        #buttony {
-            width: 100%;
-            max-width: 1200px;
-            padding: 20px; /* Menší padding pro mobily */
-            z-index: 10;
-        }
-
-        .test {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .button {
-            position: relative;
-            text-decoration: none;
-            color: white;
-            
-            font-size: clamp(1.5rem, 8vw, 5rem);
-            font-weight: 900;
-            text-transform: uppercase;
-            line-height: 1.1;
-            display: flex;
-            flex-wrap: wrap; 
-            align-items: center;
-            transition: all 0.3s ease;
-            filter: url('#liquid'); 
-        }
-
-        .mod-info {
-            font-family: var(--font-mono);
-            font-size: clamp(0.6rem, 2vw, 10px);
-            color: var(--accent);
-            letter-spacing: 2px;
-            margin-right: 15px;
-            opacity: 0.5;
-            flex-shrink: 0;
-        }
-
-        
-        @media (hover: hover) {
-            .button:hover {
-                color: var(--accent);
-                transform: translateX(40px) scale(1.05);
-                filter: none; 
-            }
-
-            .button:hover .desc {
-                right: 10%;
-                color: var(--accent);
-                opacity: 0.3;
-            }
-        }
-
-        .button .desc {
-            position: absolute;
-            right: 0;
-            font-size: 0.7rem;
-            letter-spacing: 5px;
-            color: rgba(255,255,255,0.1);
-            pointer-events: none;
-            transition: 0.5s;
-            display: none; 
-        }
-
-        @media (min-width: 768px) {
-            .button .desc {
-                display: block;
-                letter-spacing: 10px;
-                font-size: 0.8rem;
-            }
-            #buttony { padding: 40px; }
-            .test { gap: 20px; }
-        }
-
-        /* --- CUSTOM CURSOR --- */
-        #cursor, #ring {
-            position: fixed;
-            pointer-events: none;
-            z-index: 1000;
-            display: none; 
-        }
-
-        
-        @media (hover: hover) and (pointer: fine) {
-            body { cursor: none; }
-            * { cursor: none; }
-            
-            #cursor {
-                display: block;
-                width: 8px; height: 8px;
-                background: var(--accent);
-                border-radius: 50%;
-                box-shadow: 0 0 15px var(--accent);
-            }
-            #ring {
-                display: block;
-                width: 40px; height: 40px;
-                border: 1px solid var(--accent);
-                border-radius: 50%;
-                transition: 0.1s ease-out;
-            }
-        }
-
-        .bg-text {
-            position: fixed;
-            font-family: var(--font-mono);
-            font-size: 15vh;
-            color: rgba(255,255,255,0.02);
-            font-weight: 900;
-            z-index: -1;
-            white-space: nowrap;
-            user-select: none;
-        }
-
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&display=swap">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/curtain.js"></script>
+    <script>
+        (function () {
+            var r = document.documentElement;
+            try {
+                if (!r.classList.contains('kmh-arriving') && !sessionStorage.getItem('kmh-seen') &&
+                    !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    r.classList.add('intro', 'hold');
+                    sessionStorage.setItem('kmh-seen', '1');
+                }
+            } catch (e) {}
+            setTimeout(function () { r.classList.remove('hold'); }, 7000);
+        })();
+    </script>
 </head>
 <body>
-
-    <svg class="distort-filter">
-        <filter id="liquid">
-            <feTurbulence type="fractalNoise" baseFrequency="0.01 0.02" numOctaves="3" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="15" />
-        </filter>
-    </svg>
-
-    <div id="cursor"></div>
-    <div id="ring"></div>
-
-    <div id="buttony">
-        <div class="test">
-            <a class="button" href="/calc/index.html">
-                <span class="mod-info">TX_00</span> CALC <span class="desc">PAYWALLED</span>
-            </a>
-            <a class="button" href="/qr/index.html">
-                <span class="mod-info">TX_01</span> QR <span class="desc">PAYWALLED</span>
-            </a>
-             <a class="button" href="/lightbox/index.html">
-                <span class="mod-info">TX_02</span> LIGHTBOX <span class="desc">TRACE</span>
-            </a>
-            <a class="button" href="/znamky/index.html">
-                <span class="mod-info">TX_02</span> ZNAMKY <span class="desc">---</span>
-            </a>
-          <!--  <a class="button" href="/kara/kara.html">
-                <span class="mod-info">TX_02</span> Jiří Kára <span class="desc">ENTRY_FILE</span>
-            </a>
-            <a class="button" href="/slonik/Slonik.html">
-                <span class="mod-info">TX_03</span> Růžový slon <span class="desc">VOID_ENTITY</span>
-            </a>
-            <a class="button" href="/bota/bota.html">
-                <span class="mod-info">TX_04</span> Bota <span class="desc">OBJECT_REF</span>
-            </a> -->
-            <a class="button" href="/portfolio/portfolio.html">
-                <span class="mod-info">USR_00</span> Portfolio <span class="desc">MAIN_ROOT</span>
-            </a>
-       <!--     <a class="button" href="/cukrarna/index.html">
-                <span class="mod-info">TX_05</span> Cukrárna <span class="desc">DATA_STREAM</span>
-            </a>
-            <a class="button" href="/slide">
-                <span class="mod-info">TX_06</span> RWB <span class="desc">VISUAL_CORE</span>
-            </a> -->
-            <a class="button" href="/soon/soon.html" style="opacity: 0.1">
-                <span class="mod-info">NULL</span> --SOON--
-            </a>
-        </div>
+    <div class="loader" id="loader" aria-hidden="true">
+        <span class="ld-word">001kmh</span>
+        <i class="ld-bar"></i>
     </div>
 
+    <div class="cursor" id="cursor" aria-hidden="true"><i></i></div>
+
+    <header class="top">
+        <a class="brand" href="./" aria-label="001kmh — domů">001kmh</a>
+        <span class="hint" aria-hidden="true"><b>Posouvej</b><u>Přejeď prstem</u> →</span>
+    </header>
+
+    <main>
+        <h1 class="vh">001kmh — projekty</h1>
+        <nav class="rail" id="rail" aria-label="Projekty">
+            <ol class="list" id="list">
+                <li class="pan"><a class="row" href="/portfolio/portfolio.html" data-c="#ff3b1d" data-on="#0d0d0d" data-name="Portfolio"><span class="t">Portfolio</span><span class="go"><i class="ar"><svg viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg></i>Otevřít</span></a></li>
+                <li class="pan"><a class="row" href="/calc/index.html" data-c="#ff3b1d" data-on="#0d0d0d" data-name="Calc"><span class="t">Calc</span><span class="go"><i class="ar"><svg viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg></i>Otevřít</span></a></li>
+                <li class="pan"><a class="row" href="/qr/index.html" data-c="#ff3b1d" data-on="#0d0d0d" data-name="QR"><span class="t">QR</span><span class="go"><i class="ar"><svg viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg></i>Otevřít</span></a></li>
+                <li class="pan"><a class="row" href="/lightbox/index.html" data-c="#ff3b1d" data-on="#0d0d0d" data-name="Lightbox"><span class="t">Lightbox</span><span class="go"><i class="ar"><svg viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg></i>Otevřít</span></a></li>
+                <li class="pan"><a class="row" href="/znamky/index.html" data-c="#ff3b1d" data-on="#0d0d0d" data-name="Známky"><span class="t">Známky</span><span class="go"><i class="ar"><svg viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg></i>Otevřít</span></a></li>
+                <li class="pan"><a class="row row--soon" href="/soon/soon.html" data-c="#ff3b1d" data-on="#0d0d0d" data-name="Soon"><span class="t">Soon</span><span class="go"><i class="ar"><svg viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg></i>Otevřít</span></a></li>
+            </ol>
+        </nav>
+    </main>
+
+    <i class="bar" id="bar" aria-hidden="true"></i>
+
+    <script src="js/main.js"></script>
     <script>
-        const cursor = document.getElementById('cursor');
-        const ring = document.getElementById('ring');
-
-        // Sledování pohybu myši (pouze pokud kurzor existuje/je zobrazen)
-        document.addEventListener('mousemove', (e) => {
-            if (cursor.style.display !== 'none') {
-                cursor.style.left = e.clientX + 'px';
-                cursor.style.top = e.clientY + 'px';
-                ring.style.left = (e.clientX - 20) + 'px';
-                ring.style.top = (e.clientY - 20) + 'px';
-            }
-        });
-
-        // Interakce pro tlačítka
-        document.querySelectorAll('.button').forEach(b => {
-            b.addEventListener('mouseenter', () => {
-                if (ring.style.display !== 'none') {
-                    ring.style.transform = 'scale(2.5)';
-                    ring.style.backgroundColor = 'rgba(188, 19, 254, 0.1)';
-                }
-            });
-            b.addEventListener('mouseleave', () => {
-                if (ring.style.display !== 'none') {
-                    ring.style.transform = 'scale(1)';
-                    ring.style.backgroundColor = 'transparent';
-                }
-            });
-        });
-        
-        // --- PWA SERVICE WORKER REGISTRACE ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => {
-                    console.log('ServiceWorker selhal: ', err);
-                });
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('ServiceWorker selhal: ', err));
             });
         }
     </script>
