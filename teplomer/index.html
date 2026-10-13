@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Teploměr · doma</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jacquard+24&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --accent: #f5c842;
+    --accent-dim: #1e1c14;
+    --bg: #111;
+    --bg2: #1a1a1a;
+    --bg3: #222;
+    --border: #2a2a2a;
+    --text: #fff;
+    --muted: #666;
+    --muted2: #888;
+    --danger: #e05555;
+    --venku: #4a90e2;
+    --doma: #f5c842;
+  }
+
+  html { background: var(--bg); }
+
+  body {
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100dvh;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+    padding: calc(36px + env(safe-area-inset-top)) 20px calc(80px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  @media (min-width: 768px) {
+    .app {
+      max-width: 900px;
+      flex-direction: row;
+      gap: 48px;
+      align-items: flex-start;
+      padding-top: calc(60px + env(safe-area-inset-top));
+    }
+    .dashboard { flex: 1; position: sticky; top: 60px; }
+    .historie { flex: 1.5; margin-top: 0 !important; }
+    .results { grid-template-columns: 1fr !important; }
+  }
+
+  .logo {
+    font-family: 'Jacquard 24', system-ui;
+    font-size: 36px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    margin-bottom: 4px;
+  }
+  .logo span { color: var(--accent); }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 36px;
+    line-height: 1.4;
+  }
+
+  /* --- Zámek (PIN) --- */
+  .zamek {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 20px;
+    z-index: 10;
+  }
+
+  body.zamceno .zamek { display: flex; }
+  body.zamceno main,
+  body.zamceno .restart-kotva { display: none; }
+
+  .zamek-box {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .zamek-box .subtitle { margin-bottom: 12px; }
+  .zamek-box .btn { flex: none; width: 100%; }
+
+  .zamek-input {
+    width: 100%;
+    height: 52px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 0.35em;
+    padding-left: 0.35em;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .zamek-input::placeholder { color: var(--muted); letter-spacing: 0.35em; }
+  .zamek-input:focus { border-color: var(--accent); background: var(--accent-dim); }
+
+  .zamek-pamatuj {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted2);
+    padding: 4px 0;
+  }
+
+  .zamek-pamatuj input { accent-color: var(--accent); }
+
+  .zamek-chyba { min-height: 18px; font-size: 13px; color: var(--danger); margin: 0; }
+
+  /* --- Odečty --- */
+  .results {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .res-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .res-card.primary {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .res-card-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+
+  .res-card-val {
+    font-size: clamp(28px, 9.5vw, 42px);
+    font-weight: 500;
+    line-height: 1;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    transition: opacity .25s ease, transform .25s ease;
+  }
+
+  .res-card-val.venku { color: var(--venku); }
+  .res-card-val.doma { color: var(--accent); }
+  .res-card-val.chyba { color: var(--muted); font-size: 15px; line-height: 1.4; }
+  .res-card-val.updating { opacity: 0; transform: translateY(4px); }
+
+  .stats-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .stat-pill {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--muted2);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .stat-pill i { font-size: 13px; }
+
+  /* --- Tlačítka --- */
+  .actions { display: flex; gap: 8px; }
+
+  .btn {
+    flex: 1;
+    height: 46px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: #ccc;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: all 0.15s;
+  }
+
+  .btn.big { height: 54px; font-size: 15px; }
+  .btn:active { transform: scale(0.97); background: var(--bg3); }
+  @media (hover: hover) { .btn:hover { background: var(--bg3); } }
+
+  .btn.accent {
+    background: var(--accent);
+    color: #111;
+    border-color: var(--accent);
+    font-weight: 500;
+  }
+  .btn.accent:active { background: #e0b530; }
+  @media (hover: hover) { .btn.accent:hover { background: #e0b530; } }
+  .btn[disabled] { cursor: default; }
+
+  .actions.mereni .btn.accent { animation: pulse 1.4s ease-in-out infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
+
+  .stavovy-radek {
+    min-height: 18px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* --- Restart: malá ikona v rohu --- */
+  .restart-kotva {
+    position: fixed;
+    right: max(18px, env(safe-area-inset-right));
+    bottom: max(18px, env(safe-area-inset-bottom));
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .restart-potvrzeni {
+    display: flex;
+    gap: 6px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 6px;
+    opacity: 0;
+    transform: translateX(6px);
+    pointer-events: none;
+    transition: opacity .15s ease, transform .15s ease;
+  }
+
+  .restart-kotva.otevreno .restart-potvrzeni {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  .restart-potvrzeni button {
+    border: none;
+    border-radius: 99px;
+    padding: 7px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .btn-ano { background: var(--danger); color: #111; }
+  .btn-ne { background: transparent; color: var(--muted2); }
+  .btn-ne:hover { color: var(--text); }
+
+  .restart-ikona {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: color .15s ease, border-color .15s ease;
+  }
+
+  .restart-ikona:hover { color: var(--text); border-color: var(--muted); }
+  .restart-ikona:focus-visible { outline: 2px solid var(--danger); outline-offset: 3px; }
+  .restart-ikona svg { width: 17px; height: 17px; }
+
+  /* --- Historie měření --- */
+  .historie { width: 100%; margin-top: 36px; }
+
+  .section-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .graf-obal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 16px 12px;
+    margin-bottom: 12px;
+  }
+
+  .graf-legenda {
+    display: flex;
+    gap: 14px;
+    font-size: 12px;
+    color: var(--muted2);
+    margin-bottom: 10px;
+  }
+
+  .legenda-bod {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+  }
+
+  .legenda-bod.venku { background: var(--venku); }
+  .legenda-bod.doma { background: var(--doma); }
+
+  .graf-svg {
+    width: 100%;
+    height: 150px;
+    display: block;
+    overflow: visible;
+  }
+
+  .graf-mrizka { stroke: var(--border); stroke-width: 1; }
+  .graf-popisek { fill: var(--muted); font-size: 9px; font-family: 'DM Sans', sans-serif; }
+  .graf-nula { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.55; }
+
+  .graf-prazdno {
+    display: none;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 30px 0;
+    margin: 0;
+  }
+
+  .graf-osa-x {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .historie-seznam {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  .historie-seznam::-webkit-scrollbar { width: 4px; }
+  .historie-seznam::-webkit-scrollbar-track { background: transparent; }
+  .historie-seznam::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+  .historie-radek {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .historie-radek + .historie-radek { border-top: 1px solid var(--border); }
+
+  .historie-cas { color: var(--muted2); }
+  .historie-hodnoty { font-weight: 500; }
+  .historie-hodnoty .venku { color: var(--venku); }
+  .historie-hodnoty .doma { color: var(--doma); margin-left: 12px; }
+  .historie-chyba { color: var(--muted); font-weight: 400; }
+
+  .historie-prazdno {
+    padding: 20px 16px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .actions.mereni .btn.accent { animation: none; opacity: 0.6; }
+    .res-card-val { transition: none; }
+  }
+</style>
+</head>
+<body class="zamceno">
+
+<form class="zamek" id="zamek" autocomplete="off">
+  <div class="zamek-box">
+    <div class="logo">Teploměr <span>doma</span></div>
+    <div class="subtitle">Zadej PIN pro odemčení.</div>
+    <input class="zamek-input" id="zamekPin" type="password" inputmode="numeric" autocomplete="off" placeholder="••••" aria-label="PIN">
+    <button class="btn accent big" id="zamekBtn" type="submit"><i class="bi bi-unlock"></i> Odemknout</button>
+    <label class="zamek-pamatuj"><input type="checkbox" id="zamekPamatuj" checked> Pamatovat na tomto zařízení</label>
+    <p class="zamek-chyba" id="zamekChyba"></p>
+  </div>
+</form>
+
+<main class="app">
+  <div class="dashboard">
+    <div class="logo">Teploměr <span>doma</span></div>
+    <div class="subtitle">Teplota venku a doma — změř ji jedním kliknutím.</div>
+
+    <div class="results" id="readout">
+      <div class="res-card">
+        <div class="res-card-label">Venku</div>
+        <div class="res-card-val venku" id="hodnotaVenku">—</div>
+      </div>
+      <div class="res-card primary">
+        <div class="res-card-label">Doma</div>
+        <div class="res-card-val doma" id="hodnotaDoma">—</div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-pill"><i class="bi bi-clock"></i><span id="casAktualizace">zatím žádná data</span></div>
+    </div>
+
+    <div class="actions" id="sondaObal">
+      <button class="btn accent big" id="tlacitko" type="button"><i class="bi bi-thermometer-half"></i> Zjistit teplotu</button>
+    </div>
+
+    <p class="stavovy-radek" id="stavovyRadek"></p>
+  </div>
+
+  <div class="historie">
+    <div class="section-label"><i class="bi bi-clock-history"></i> Historie měření</div>
+
+    <div class="graf-obal" id="grafObal">
+      <div class="graf-legenda">
+        <span><span class="legenda-bod venku"></span>Venku</span>
+        <span><span class="legenda-bod doma"></span>Doma</span>
+      </div>
+      <svg class="graf-svg" id="grafSvg" viewBox="0 0 400 150" preserveAspectRatio="none"></svg>
+      <p class="graf-prazdno" id="grafPrazdno">Zatím málo dat pro graf.</p>
+      <div class="graf-osa-x" id="grafOsaX"></div>
+    </div>
+
+    <div class="historie-seznam" id="historieSeznam">
+      <p class="historie-prazdno">Zatím žádná data.</p>
+    </div>
+  </div>
+</main>
+
+<div class="restart-kotva" id="restartKotva">
+  <div class="restart-potvrzeni" id="restartPotvrzeni">
+    <button class="btn-ano" id="restartAno" type="button">Restartovat</button>
+    <button class="btn-ne" id="restartNe" type="button">Zrušit</button>
+  </div>
+  <button class="restart-ikona" id="restartIkona" type="button" aria-label="Restartovat teploměr" title="Restartovat teploměr">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12a9 9 0 1 1-3-6.7"></path>
+      <path d="M21 3v6h-6"></path>
+    </svg>
+  </button>
+</div>
+
+<script>
+  // ==== Šifrovaná ntfy témata ====
+  // Témata nejsou v kódu v čitelné podobě. Jsou zašifrovaná (AES-GCM) klíčem
+  // odvozeným z PINu (PBKDF2). Nový blob vygeneruješ skriptem zasifruj.mjs.
+  const BLOB = "0htKOpC1ExwOTDqXNPnpar3J30Lx1TbmVrgkpp6R6QPs3SiinAI4/kd/m9J0EI7D/MdEw2mu6gtDbytwTMSPwPn+54Qhf512Hq8SDJExlUxZAm7W5UjcZP+ZIC1f5+QIt66XjRp27gtuaf7bt9opQ20q8aZm";
+  const PBKDF2_ITER = 600000;
+  const LS_PIN = "teplomer_pin";
+
+  let urlPrikazy = "";
+  let urlOdesilaniSse = "";
+  let urlOdesilaniPoll = "";
+  const MAX_HISTORIE = 20;
+
+  // --- Zámek ---
+  const zamekForm = document.getElementById('zamek');
+  const zamekPin = document.getElementById('zamekPin');
+  const zamekBtn = document.getElementById('zamekBtn');
+  const zamekChyba = document.getElementById('zamekChyba');
+  const zamekPamatuj = document.getElementById('zamekPamatuj');
+  let neuspesnePokusy = 0;
+  let spusteno = false;
+
+  function zBase64(s) {
+    return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  }
+
+  async function odsifruj(pin) {
+    const raw = zBase64(BLOB);
+    const salt = raw.slice(0, 16);
+    const iv = raw.slice(16, 28);
+    const data = raw.slice(28);
+    const material = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveKey']
+    );
+    const klic = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: PBKDF2_ITER, hash: 'SHA-256' },
+      material, { name: 'AES-GCM', length: 256 }, false, ['decrypt']
+    );
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, klic, data);
+    return JSON.parse(new TextDecoder().decode(plain)); // { p: prikazy, o: odesilani }
+  }
+
+  async function zkusOdemknout(pin, zapamatovat) {
+    if (!window.crypto || !crypto.subtle) {
+      zamekChyba.textContent = 'Potřebuji HTTPS (zabezpečené připojení).';
+      return false;
+    }
+    try {
+      const t = await odsifruj(pin);
+      if (zapamatovat) {
+        try { localStorage.setItem(LS_PIN, pin); } catch (e) {}
+      }
+      document.body.classList.remove('zamceno');
+      zamekPin.value = '';
+      spust(t);
+      return true;
+    } catch (e) {
+      return false; // špatný PIN (AES-GCM selže na ověření)
+    }
+  }
+
+  zamekForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pin = zamekPin.value.trim();
+    if (!pin) return;
+    zamekBtn.disabled = true;
+    zamekChyba.textContent = '';
+    const ok = await zkusOdemknout(pin, zamekPamatuj.checked);
+    if (!ok) {
+      neuspesnePokusy++;
+      const cekani = Math.min(neuspesnePokusy, 6);
+      zamekChyba.textContent = 'Špatný PIN.';
+      zamekPin.value = '';
+      await new Promise(r => setTimeout(r, cekani * 1000));
+    }
+    zamekBtn.disabled = false;
+    if (document.body.classList.contains('zamceno')) zamekPin.focus();
+  });
+
+  (async function () {
+    let ulozeny = null;
+    try { ulozeny = localStorage.getItem(LS_PIN); } catch (e) {}
+    if (ulozeny) {
+      const ok = await zkusOdemknout(ulozeny, true);
+      if (ok) return;
+      try { localStorage.removeItem(LS_PIN); } catch (e) {}
+    }
+    zamekPin.focus();
+  })();
+
+  // --- Aplikace ---
+  const sondaObal = document.getElementById('sondaObal');
+  const tlacitko = document.getElementById('tlacitko');
+  const stavovyRadek = document.getElementById('stavovyRadek');
+  const hodnotaVenku = document.getElementById('hodnotaVenku');
+  const hodnotaDoma = document.getElementById('hodnotaDoma');
+  const casAktualizace = document.getElementById('casAktualizace');
+  const historieSeznam = document.getElementById('historieSeznam');
+  const grafSvg = document.getElementById('grafSvg');
+  const grafPrazdno = document.getElementById('grafPrazdno');
+  const grafOsaX = document.getElementById('grafOsaX');
+  let historieData = [];
+
+  const restartKotva = document.getElementById('restartKotva');
+  const restartIkona = document.getElementById('restartIkona');
+  const restartAno = document.getElementById('restartAno');
+  const restartNe = document.getElementById('restartNe');
+
+  let mereni = false;
+  let cekaniTimeout = null;
+
+  function ukazStav(text) { stavovyRadek.textContent = text || ''; }
+
+  function nastavMereni(stav) {
+    mereni = stav;
+    sondaObal.classList.toggle('mereni', stav);
+    tlacitko.disabled = stav;
+  }
+
+  function formatCas(timestampSec) {
+    const d = timestampSec ? new Date(timestampSec * 1000) : new Date();
+    return d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Rozpozná zprávu tvaru "[HH:MM] Venku je 12.3 °C a doma je 21.5 °C"
+  function rozeberZpravu(text) {
+    const re = /Venku je (chyba senzoru|-?\d+[.,]?\d*)(?:\s*°C)?.*?doma je (chyba senzoru|-?\d+[.,]?\d*)(?:\s*°C)?/i;
+    const m = text.match(re);
+    if (!m) return null;
+    return { venku: m[1], doma: m[2] };
+  }
+
+  function zapisHodnotu(el, hodnota) {
+    el.classList.add('updating');
+    setTimeout(() => {
+      if (hodnota === 'chyba senzoru') {
+        el.textContent = 'chyba senzoru';
+        el.classList.add('chyba');
+      } else {
+        el.textContent = hodnota.replace('.', ',') + '°';
+        el.classList.remove('chyba');
+      }
+      el.classList.remove('updating');
+    }, 120);
+  }
+
+  function aktualizujHlavniOdecet(rozbor, timestampSec) {
+    zapisHodnotu(hodnotaVenku, rozbor.venku);
+    zapisHodnotu(hodnotaDoma, rozbor.doma);
+    casAktualizace.textContent = 'naposledy ' + formatCas(timestampSec);
+  }
+
+  function pekneKroky(min, max, pocetCilove) {
+    const rozsah = max - min;
+    if (rozsah <= 0) return [Math.round(min)];
+    const hrubyKrok = rozsah / pocetCilove;
+    const mocnina = Math.pow(10, Math.floor(Math.log10(hrubyKrok)));
+    const zbytek = hrubyKrok / mocnina;
+    let krok;
+    if (zbytek >= 5) krok = 5 * mocnina;
+    else if (zbytek >= 2) krok = 2 * mocnina;
+    else krok = mocnina;
+    const zacatek = Math.ceil(min / krok) * krok;
+    const kroky = [];
+    for (let v = zacatek; v <= max + 1e-9; v += krok) kroky.push(Math.round(v * 10) / 10);
+    return kroky.length ? kroky : [Math.round((min + max) / 2)];
+  }
+
+  function vykresliGraf() {
+    const chronologicky = [...historieData].reverse(); // nejstarší -> nejnovější
+
+    const parseNum = (s) => {
+      if (s === 'chyba senzoru') return null;
+      const n = parseFloat(String(s).replace(',', '.'));
+      return Number.isFinite(n) ? n : null;
+    };
+
+    const body = chronologicky.map(z => ({ cas: z.cas, venku: parseNum(z.venku), doma: parseNum(z.doma) }));
+    const vsechnyHodnoty = body.flatMap(b => [b.venku, b.doma]).filter(v => v !== null);
+
+    if (vsechnyHodnoty.length < 2) {
+      grafSvg.style.display = 'none';
+      grafPrazdno.style.display = 'block';
+      grafOsaX.innerHTML = '';
+      return;
+    }
+    grafSvg.style.display = 'block';
+    grafPrazdno.style.display = 'none';
+
+    const W = 400, H = 150, PADL = 34, PADR = 8, PADT = 14, PADB = 10;
+    let surovyMin = Math.min(...vsechnyHodnoty);
+    let surovyMax = Math.max(...vsechnyHodnoty);
+    if (surovyMin === surovyMax) { surovyMin -= 1; surovyMax += 1; }
+
+    const kroky = pekneKroky(surovyMin, surovyMax, 3);
+    const okraj = (surovyMax - surovyMin) * 0.15 || 1;
+    const min = Math.min(surovyMin, kroky[0]) - okraj;
+    const max = Math.max(surovyMax, kroky[kroky.length - 1]) + okraj;
+
+    const n = body.length;
+    const x = (i) => PADL + (i / (n - 1)) * (W - PADL - PADR);
+    const y = (v) => H - PADB - ((v - min) / (max - min)) * (H - PADT - PADB);
+
+    function cesta(klic) {
+      let d = '', kresli = false;
+      body.forEach((b, i) => {
+        const v = b[klic];
+        if (v === null) { kresli = false; return; }
+        d += (kresli ? ' L ' : ' M ') + x(i).toFixed(1) + ' ' + y(v).toFixed(1);
+        kresli = true;
+      });
+      return d.trim();
+    }
+
+    function tecky(klic, barva) {
+      return body.map((b, i) => {
+        const v = b[klic];
+        if (v === null) return '';
+        const r = i === n - 1 ? 3.4 : 2;
+        const popisek = `${b.cas} · ${String(v).replace('.', ',')}°C`;
+        return `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${r}" fill="${barva}"><title>${popisek}</title></circle>`;
+      }).join('');
+    }
+
+    const barvaVenku = getComputedStyle(document.documentElement).getPropertyValue('--venku').trim();
+    const barvaDoma = getComputedStyle(document.documentElement).getPropertyValue('--doma').trim();
+
+    let mrizka = '';
+    kroky.forEach(krok => {
+      const py = y(krok);
+      mrizka += `<line class="graf-mrizka" x1="${PADL}" y1="${py.toFixed(1)}" x2="${W - PADR}" y2="${py.toFixed(1)}"></line>`;
+      mrizka += `<text class="graf-popisek" x="${PADL - 6}" y="${py.toFixed(1)}" text-anchor="end" dominant-baseline="middle">${krok}°</text>`;
+    });
+
+    let nulaLine = '';
+    if (min < 0 && max > 0) {
+      const py = y(0);
+      nulaLine = `<line class="graf-nula" x1="${PADL}" y1="${py.toFixed(1)}" x2="${W - PADR}" y2="${py.toFixed(1)}"></line>`;
+    }
+
+    grafSvg.innerHTML = mrizka + nulaLine +
+      `<path d="${cesta('venku')}" fill="none" stroke="${barvaVenku}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>` +
+      `<path d="${cesta('doma')}" fill="none" stroke="${barvaDoma}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>` +
+      tecky('venku', barvaVenku) + tecky('doma', barvaDoma);
+
+    const pocetPopisku = Math.min(4, n);
+    const indexy = [...new Set(Array.from({ length: pocetPopisku }, (_, k) =>
+      Math.round(k * (n - 1) / (pocetPopisku - 1 || 1))
+    ))];
+    grafOsaX.innerHTML = indexy.map(i => `<span>${body[i].cas}</span>`).join('');
+  }
+
+  function vykresliHistorii() {
+    if (historieData.length === 0) {
+      historieSeznam.innerHTML = '<p class="historie-prazdno">Zatím žádná data.</p>';
+    } else {
+      historieSeznam.innerHTML = historieData.map(z => {
+        const hodnoty = (z.venku === 'chyba senzoru' || z.doma === 'chyba senzoru')
+          ? '<span class="historie-chyba">chyba senzoru</span>'
+          : `<span class="venku">${z.venku.replace('.', ',')}°</span><span class="doma">${z.doma.replace('.', ',')}°</span>`;
+        return `<div class="historie-radek"><span class="historie-cas">${z.cas}</span><span class="historie-hodnoty">${hodnoty}</span></div>`;
+      }).join('');
+    }
+    vykresliGraf();
+  }
+
+  function pridejDoHistorie(rozbor, timestampSec) {
+    historieData.unshift({ cas: formatCas(timestampSec), venku: rozbor.venku, doma: rozbor.doma });
+    if (historieData.length > MAX_HISTORIE) historieData.length = MAX_HISTORIE;
+    vykresliHistorii();
+  }
+
+  function zpracujZpravu(text, timestampSec) {
+    const rozbor = rozeberZpravu(text);
+    if (rozbor) {
+      aktualizujHlavniOdecet(rozbor, timestampSec);
+      pridejDoHistorie(rozbor, timestampSec);
+      if (mereni) {
+        clearTimeout(cekaniTimeout);
+        nastavMereni(false);
+        ukazStav('Hotovo.');
+      }
+    } else if (mereni) {
+      // zpráva přišla, ale nejde o teplotní report (např. restart) - nepřerušuj čekání
+    } else {
+      ukazStav(text);
+    }
+  }
+
+  async function posliPrikaz(prikaz) {
+    if (!urlPrikazy) return false;
+    try {
+      const res = await fetch(urlPrikazy, { method: 'POST', body: prikaz });
+      return res.ok;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  async function zjistiTeplotu() {
+    if (mereni) return;
+    nastavMereni(true);
+    ukazStav('Odesílám příkaz…');
+    const ok = await posliPrikaz('teplota');
+    if (!ok) {
+      nastavMereni(false);
+      ukazStav('Příkaz se nepodařilo odeslat. Zkontroluj připojení.');
+      return;
+    }
+    ukazStav('Čekám na teploměr…');
+    clearTimeout(cekaniTimeout);
+    cekaniTimeout = setTimeout(() => {
+      if (mereni) {
+        nastavMereni(false);
+        ukazStav('Odpověď nepřišla. Zkus to znovu.');
+      }
+    }, 25000);
+  }
+
+  tlacitko.addEventListener('click', zjistiTeplotu);
+
+  // --- Restart s malým inline potvrzením ---
+  function zavriRestartPotvrzeni() { restartKotva.classList.remove('otevreno'); }
+
+  restartIkona.addEventListener('click', () => restartKotva.classList.toggle('otevreno'));
+  restartNe.addEventListener('click', zavriRestartPotvrzeni);
+  restartAno.addEventListener('click', async () => {
+    zavriRestartPotvrzeni();
+    ukazStav('Posílám restart…');
+    const ok = await posliPrikaz('restart');
+    ukazStav(ok ? 'Restart odeslán.' : 'Restart se nepodařilo odeslat.');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!restartKotva.contains(e.target)) zavriRestartPotvrzeni();
+  });
+
+  // --- Spuštění po odemčení: historie + živé naslouchání ---
+  function spust(t) {
+    if (spusteno) return;
+    spusteno = true;
+
+    urlPrikazy = `https://ntfy.sh/${t.p}`;
+    urlOdesilaniSse = `https://ntfy.sh/${t.o}/sse`;
+    urlOdesilaniPoll = `https://ntfy.sh/${t.o}/json?poll=1&since=12h`;
+
+    fetch(urlOdesilaniPoll)
+      .then(r => r.text())
+      .then(text => {
+        const radky = text.trim().split('\n').filter(Boolean);
+        const zpravy = [];
+        for (const radek of radky) {
+          try {
+            const z = JSON.parse(radek);
+            if (z.event === 'message' && z.message) zpravy.push(z);
+          } catch (e) { /* přeskočit nevalidní řádek */ }
+        }
+        // Zprávy jsou od nejstarší po nejnovější - naplní historii (unshift => nejnovější nahoře)
+        for (const z of zpravy) {
+          const rozbor = rozeberZpravu(z.message);
+          if (rozbor) pridejDoHistorie(rozbor, z.time);
+        }
+        if (zpravy.length) {
+          const posledni = zpravy[zpravy.length - 1];
+          const rozborPosledni = rozeberZpravu(posledni.message);
+          if (rozborPosledni) aktualizujHlavniOdecet(rozborPosledni, posledni.time);
+          else ukazStav(posledni.message);
+        }
+      })
+      .catch(() => { /* offline při načtení - tlačítko pořád funguje */ });
+
+    const es = new EventSource(urlOdesilaniSse);
+    es.addEventListener('message', (e) => {
+      try {
+        const zprava = JSON.parse(e.data);
+        if (zprava.event === 'message' && zprava.message) {
+          zpracujZpravu(zprava.message, zprava.time);
+        }
+      } catch (err) { /* ignorovat */ }
+    });
+    es.onerror = () => { /* EventSource se sám pokouší znovu připojit */ };
+  }
+</script>
+</body>
+</html>
