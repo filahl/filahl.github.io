@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <title>Odpočet dnů do prázdnin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jacquard+24&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent
+    }
+
+    :root {
+      --accent: #f5c842;
+      --accent-dim: #1e1c14;
+      --bg: #111;
+      --bg2: #1a1a1a;
+      --bg3: #222;
+      --border: #2a2a2a;
+      --text: #fff;
+      --muted: #666;
+      --muted2: #888;
+      --blue: #4a90e2
+    }
+
+    html {
+      background: var(--bg);
+      color-scheme: dark
+    }
+
+    body {
+      background: var(--bg);
+      font-family: 'DM Sans', system-ui, sans-serif;
+      min-height: 100dvh;
+      color: var(--text);
+      display: flex;
+      justify-content: center
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      padding: calc(36px + env(safe-area-inset-top)) 20px calc(60px + env(safe-area-inset-bottom))
+    }
+
+    .logo {
+      font-family: 'Jacquard 24', system-ui, serif;
+      font-size: 36px;
+      font-weight: 400;
+      margin-bottom: 4px
+    }
+
+    .logo span {
+      color: var(--accent)
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 28px;
+      line-height: 1.4
+    }
+
+    .label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .label svg {
+      width: 13px;
+      height: 13px
+    }
+
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 12px
+    }
+
+    .card.primary {
+      border-color: var(--accent);
+      background: var(--accent-dim)
+    }
+
+    .hn {
+      font-size: 16px;
+      line-height: 1.35;
+      margin-bottom: 12px
+    }
+
+    .big {
+      font-size: clamp(48px, 17vw, 76px);
+      font-weight: 500;
+      line-height: 1;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums
+    }
+
+    .big small {
+      font-size: 15px;
+      color: var(--muted2);
+      font-weight: 400;
+      margin-left: 8px
+    }
+
+    .tick {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--muted2);
+      font-variant-numeric: tabular-nums
+    }
+
+    .pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px
+    }
+
+    .pill {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 6px 12px;
+      font-size: 12px;
+      color: var(--muted2)
+    }
+
+    .pill b {
+      color: var(--text);
+      font-weight: 500
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px
+    }
+
+    .grid .card {
+      margin: 0;
+      padding: 16px
+    }
+
+    .grid .wide {
+      grid-column: 1/-1
+    }
+
+    .val {
+      font-size: clamp(26px, 8vw, 36px);
+      font-weight: 500;
+      line-height: 1;
+      font-variant-numeric: tabular-nums
+    }
+
+    .primary .val {
+      color: var(--accent)
+    }
+
+    .grid .label {
+      margin: 8px 0 0;
+      line-height: 1.3
+    }
+
+    .bar {
+      height: 6px;
+      background: var(--bg3);
+      border-radius: 99px;
+      overflow: hidden;
+      margin: 14px 0 8px
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+      border-radius: 99px
+    }
+
+    .note {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5
+    }
+
+    .sec {
+      margin-top: 36px
+    }
+
+    select {
+      width: 100%;
+      height: 46px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+      padding: 0 12px;
+      margin-bottom: 12px;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none
+    }
+
+    select:focus {
+      border-color: var(--accent);
+      background: var(--accent-dim)
+    }
+
+    .list {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 16px;
+      font-size: 14px
+    }
+
+    .row+.row {
+      border-top: 1px solid var(--border)
+    }
+
+    .row .n {
+      line-height: 1.3
+    }
+
+    .row .d {
+      font-size: 12px;
+      color: var(--muted2);
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums
+    }
+
+    .row .r {
+      text-align: right;
+      white-space: nowrap;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums
+    }
+
+    .row .r small {
+      display: block;
+      font-size: 12px;
+      color: var(--muted2);
+      font-weight: 400;
+      margin-top: 2px
+    }
+
+    .dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-right: 7px;
+      vertical-align: 1px
+    }
+
+    .k-p {
+      background: var(--accent)
+    }
+
+    .k-s {
+      background: var(--blue)
+    }
+
+    .row.past {
+      opacity: .35
+    }
+
+    .row.now {
+      background: var(--accent-dim)
+    }
+
+    .cal {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px 16px
+    }
+
+    .m h4 {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted2);
+      margin-bottom: 6px
+    }
+
+    .mg {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px
+    }
+
+    .c {
+      aspect-ratio: 1;
+      font-size: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      background: var(--bg3);
+      color: #bbb;
+      font-variant-numeric: tabular-nums
+    }
+
+    .c.e {
+      background: none
+    }
+
+    .c.w {
+      background: none;
+      color: var(--muted)
+    }
+
+    .c.b {
+      background: var(--accent);
+      color: #111
+    }
+
+    .c.h {
+      background: var(--blue);
+      color: #fff
+    }
+
+    .c.p {
+      opacity: .3
+    }
+
+    .c.t {
+      outline: 1.5px solid var(--text);
+      outline-offset: 1px;
+      font-weight: 500
+    }
+
+    .leg {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--muted2);
+      margin-top: 16px
+    }
+
+    .wd {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 4px
+    }
+
+    .wd div {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 0 10px;
+      text-align: center
+    }
+
+    .wd b {
+      display: block;
+      font-size: clamp(20px, 6vw, 26px);
+      font-weight: 500;
+      color: var(--accent);
+      line-height: 1;
+      font-variant-numeric: tabular-nums
+    }
+
+    .wd span {
+      display: block;
+      font-size: 12px;
+      color: var(--muted2);
+      margin-top: 6px
+    }
+
+    @media(min-width:768px) {
+      body {
+        display: block
+      }
+
+      .app {
+        max-width: 960px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 1.3fr;
+        gap: 48px;
+        align-items: start;
+        padding-top: calc(60px + env(safe-area-inset-top))
+      }
+
+      .dash {
+        position: sticky;
+        top: 60px
+      }
+
+      .sec:first-child {
+        margin-top: 0
+      }
+
+      .cal {
+        grid-template-columns: repeat(3, 1fr)
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <div class="dash">
+      <div class="logo">Prázdninový <span>odpočet</span></div>
+      <div class="subtitle">Školní rok 2026/27</div>
+
+      <div class="card primary" id="hero"></div>
+      <div class="grid" id="stats"></div>
+
+      <div class="card">
+        <div class="label">Průběh školního roku</div>
+        <div class="bar"><i id="pb"></i></div>
+        <div class="note" id="pt"></div>
+      </div>
+
+      <div class="card">
+        <div class="label">Zbývá do konce roku podle dne</div>
+        <div class="wd" id="wd"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="label">
+        <svg viewBox="0 0 16 16" fill="currentColor">
+          <path
+            d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
+        </svg>
+        Všechna volna
+      </div>
+      <select id="sp" aria-label="Týden jarních prázdnin"></select>
+      <div class="list" id="ev"></div>
+
+      <div class="sec">
+        <div class="label">
+          <svg viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z" />
+            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0" />
+          </svg>
+          Kalendář
+        </div>
+        <div class="card">
+          <div class="cal" id="cal"></div>
+          <div class="leg">
+            <span><span class="dot" style="background:var(--bg3)"></span>školní den</span>
+            <span><span class="dot k-p"></span>prázdniny</span>
+            <span><span class="dot k-s"></span>státní svátek</span>
+          </div>
+        </div>
+        <p class="note">Školní den = pondělí až pátek mimo prázdniny a svátky, od 1. 9. 2026 do 30. 6. 2027. Dnešek se
+          počítá jen před 14:00. Ředitelská volna nejsou zahrnuta.</p>
+      </div>
+    </div>
+  </main>
+  <script>
+    const D = (y, m, d) => new Date(y, m - 1, d), DAY = 864e5;
+    const add = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+    const DN = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
+    const MN = ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec'];
+    const f = d => `${DN[d.getDay()]} ${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()}`;
+    const fs = d => `${d.getDate()}. ${d.getMonth() + 1}.`;
+    const SY_S = D(2026, 9, 1), SY_E = D(2027, 6, 30);
+    const SPR = [
+      [D(2027, 2, 1), D(2027, 2, 7), 'Česká Lípa, Liberec, Jihlava, Kladno…'],
+      [D(2027, 2, 8), D(2027, 2, 14), 'Mladá Boleslav, Příbram, Olomouc, Opava…'],
+      [D(2027, 2, 15), D(2027, 2, 21), 'Pardubice, Chrudim, Svitavy, Trutnov…'],
+      [D(2027, 2, 22), D(2027, 2, 28), 'Praha 1–5, Brno, Břeclav, Karviná…'],
+      [D(2027, 3, 1), D(2027, 3, 7), 'Praha 6–10, Cheb, Karlovy Vary, Děčín…'],
+      [D(2027, 3, 8), D(2027, 3, 14), 'Zlín, Kroměříž, Hradec Králové, Plzeň…']];
+    let sp = 2; try { const v = localStorage.getItem('spring'); if (v !== null && SPR[+v]) sp = +v } catch (e) { }
+    const sel = document.getElementById('sp');
+    SPR.forEach((s, i) => sel.add(new Option(`Jarní: ${s[0].getDate()}.–${s[1].getDate()}. ${s[1].getMonth() + 1}. · ${s[2]}`, i)));
+    sel.value = sp;
+    sel.onchange = () => { sp = +sel.value; try { localStorage.setItem('spring', sp) } catch (e) { } render() };
+
+    let ev, off, nextTarget = null, todayKey = 0;
+    function build() {
+      ev = [
+        { n: 'Den české státnosti', s: D(2026, 9, 28), e: D(2026, 9, 28), t: 's' },
+        { n: 'Den vzniku samostatného československého státu', s: D(2026, 10, 28), e: D(2026, 10, 28), t: 's' },
+        { n: 'Podzimní prázdniny', s: D(2026, 10, 29), e: D(2026, 10, 30), t: 'p' },
+        { n: 'Den boje za svobodu a demokracii', s: D(2026, 11, 17), e: D(2026, 11, 17), t: 's' },
+        { n: 'Vánoční prázdniny', s: D(2026, 12, 23), e: D(2027, 1, 3), t: 'p' },
+        { n: 'Pololetní prázdniny', s: D(2027, 1, 29), e: D(2027, 1, 29), t: 'p' },
+        { n: 'Jarní prázdniny', s: SPR[sp][0], e: SPR[sp][1], t: 'p' },
+        { n: 'Velikonoční prázdniny (s Velkým pátkem a pondělím)', s: D(2027, 3, 25), e: D(2027, 3, 29), t: 'p' },
+        { n: 'Svátek práce', s: D(2027, 5, 1), e: D(2027, 5, 1), t: 's' },
+        { n: 'Den vítězství', s: D(2027, 5, 8), e: D(2027, 5, 8), t: 's' },
+        { n: 'Hlavní prázdniny', s: D(2027, 7, 1), e: D(2027, 8, 31), t: 'p' }
+      ].sort((a, b) => a.s - b.s);
+      off = new Map();
+      ev.forEach(e => { for (let d = e.s; d <= e.e; d = add(d, 1))off.set(+d, e.t) });
+    }
+    const wk = d => d.getDay() == 0 || d.getDay() == 6;
+    const isOff = d => wk(d) || off.has(+d);
+    const isSchool = d => d >= SY_S && d <= SY_E && !isOff(d);
+    function cnt(a, b) { let n = 0; for (let d = a; d < b; d = add(d, 1))if (isSchool(d)) n++; return n }
+    function block(e) { let a = e.s, b = e.e; while (isOff(add(a, -1))) a = add(a, -1); while (isOff(add(b, 1))) b = add(b, 1); return [a, b, Math.round((b - a) / DAY) + 1] }
+    const pl = (n, a, b, c) => n == 1 ? a : (n >= 2 && n <= 4 ? b : c);
+    const dn = n => pl(n, 'den', 'dny', 'dní');
+
+    function render() {
+      build();
+      const now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      todayKey = +today;
+      const st = now.getHours() < 14 ? today : add(today, 1), end = add(SY_E, 1);
+      const cur = ev.find(e => today >= e.s && today <= e.e), nx = ev.find(e => e.s > today);
+      let h = '';
+      if (cur) {
+        const back = add(block(cur)[1], 1), dd = Math.round((back - today) / DAY);
+        h = `<div class="label">Právě teď</div><div class="hn">${cur.n}</div>
+  <div class="big">${dd}<small>${dn(dd)} do školy</small></div>
+  <div class="pills"><span class="pill">první školní den <b>${f(isSchool(back) ? back : add(back, 1))}</b></span></div>`;
+        nextTarget = back;
+      } else if (nx) {
+        const dd = Math.round((nx.s - today) / DAY), sd = cnt(st, nx.s), [ba, bb, bl] = block(nx);
+        h = `<div class="label">Nejbližší volno</div><div class="hn">${nx.n}</div>
+  <div class="big">${dd}<small>${dn(dd)}</small></div>
+  <div class="tick" id="tk"></div>
+  <div class="pills"><span class="pill">školních dnů do <b>${sd}</b></span>
+  <span class="pill">začíná <b>${f(nx.s)}</b></span>
+  <span class="pill">v kuse s víkendy <b>${bl} ${dn(bl)}</b> (${fs(ba)} – ${fs(bb)})</span>
+  <span class="pill">dnes <b>${isSchool(today) ? 'školní den' : 'volno'}</b></span></div>`;
+        nextTarget = nx.s;
+      }
+      document.getElementById('hero').innerHTML = h;
+
+      const remS = cnt(st, end), totS = cnt(SY_S, end), doneS = cnt(SY_S, st);
+      let freeWd = 0; for (let d = st; d <= SY_E; d = add(d, 1))if (!wk(d) && off.has(+d)) freeWd++;
+      const calLeft = Math.max(0, Math.round((end - today) / DAY));
+      let toWe = 0; for (let d = st; !wk(d); d = add(d, 1))if (isSchool(d)) toWe++;
+      const pct = Math.max(0, Math.min(100, doneS / totS * 100));
+      const S = [[calLeft, 'kalendářních dnů do 1. 7.'], [Math.ceil(calLeft / 7), 'týdnů do prázdnin'], [freeWd, 'všedních dnů volna zbývá'], [toWe, 'školních dnů do víkendu'], [`${doneS}/${totS}`, 'školních dnů za námi'], [pct.toFixed(1).replace('.', ',') + ' %', 'roku uplynulo']];
+      document.getElementById('stats').innerHTML =
+        `<div class="card primary wide"><div class="val">${remS}</div><div class="label">školních dnů do konce roku</div></div>` +
+        S.map(s => `<div class="card"><div class="val">${s[0]}</div><div class="label">${s[1]}</div></div>`).join('');
+      document.getElementById('pb').style.width = pct + '%';
+      const wc = [0, 0, 0, 0, 0, 0, 0]; for (let d = st; d < end; d = add(d, 1))if (isSchool(d)) wc[d.getDay()]++;
+      document.getElementById('wd').innerHTML = [[1, 'Po'], [2, 'Út'], [3, 'St'], [4, 'Čt'], [5, 'Pá']].map(x => `<div><b>${wc[x[0]]}</b><span>${x[1]}</span></div>`).join('');
+      document.getElementById('pt').textContent = `Zbývá ${remS} ze ${totS} školních dnů. Konec roku ${f(SY_E)}.`;
+
+      document.getElementById('ev').innerHTML = ev.map(e => {
+        const past = e.e < today, isNow = e === cur, dd = Math.round((e.s - today) / DAY), single = +e.s == +e.e;
+        const bl = block(e)[2], wkOnly = single && wk(e.s);
+        const date = single ? f(e.s) : `${f(e.s)} – ${f(e.e)}`;
+        let r1, r2 = '';
+        if (past) r1 = 'proběhlo';
+        else if (isNow) r1 = 'probíhá';
+        else { r1 = `za ${dd} ${dn(dd)}`; r2 = wkOnly ? 'padá na víkend' : `${cnt(st, e.s)} šk. dnů · volno ${bl} ${dn(bl)}` }
+        return `<div class="row ${past ? 'past' : ''} ${isNow ? 'now' : ''}"><div><div class="n"><span class="dot k-${e.t}"></span>${e.n}</div><div class="d">${date}</div></div><div class="r">${r1}<small>${r2}</small></div></div>`
+      }).join('');
+
+      let c = '';
+      for (let i = 0; i < 10; i++) {
+        const m = new Date(2026, 8 + i, 1), y = m.getFullYear(), mo = m.getMonth(), n = new Date(y, mo + 1, 0).getDate();
+        let cells = '<div class="c e"></div>'.repeat((m.getDay() + 6) % 7);
+        for (let d = 1; d <= n; d++) {
+          const x = new Date(y, mo, d), t = off.get(+x);
+          let k = t == 's' ? 'h' : t == 'p' ? 'b' : wk(x) ? 'w' : '';
+          if (x < today) k += ' p'; if (+x == +today) k += ' t';
+          cells += `<div class="c ${k}">${d}</div>`
+        }
+        c += `<div class="m"><h4>${MN[mo]} ${y}</h4><div class="mg">${cells}</div></div>`
+      }
+      document.getElementById('cal').innerHTML = c;
+      tick();
+    }
+    function tick() {
+      const now = new Date();
+      if (+new Date(now.getFullYear(), now.getMonth(), now.getDate()) != todayKey) return render();
+      const tk = document.getElementById('tk');
+      if (tk && nextTarget) {
+        let s = Math.max(0, Math.floor((nextTarget - now) / 1000));
+        const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); s %= 60;
+        const p = x => String(x).padStart(2, '0');
+        tk.textContent = `${d} d ${p(h)}:${p(m)}:${p(s)} do začátku`;
+      }
+    }
+    render(); setInterval(tick, 1000);
+  </script>
+</body>
+
+</html>
