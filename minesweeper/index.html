@@ -1,0 +1,3715 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="midnight-rose">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#141413" id="meta-theme-color" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Minesweeper" />
+  <meta name="description" content="A tactile, minimalist Minesweeper game with organic geometry, physics-driven motion, and live theme studio." />
+  <title>Midnight Rose — Minesweeper</title>
+
+  <style>
+    :root {
+      /* Core Theme Colors — Reference Screenshot ("Midnight Rose") */
+      --bg-main: #141413;
+      --bg-board: #141413;
+      --cell-unrevealed: #b83365;
+      --cell-unrevealed-hi: rgba(255, 255, 255, 0.14);
+      --cell-unrevealed-lo: rgba(0, 0, 0, 0.28);
+      --cell-revealed: #141413;
+      --grid-line: #5c2849;
+      --accent-primary: #b83365;
+      --accent-secondary: #d9d098;
+      --text-main: #d9d098;
+      --text-muted: #8e8768;
+      --flag-color: #d9d098;
+      --mine-color: #d9d098;
+      --detonated-bg: #e03c52;
+      --panel-bg: #1c1b1a;
+      --panel-elevated: #252322;
+      --panel-border: #382431;
+
+      /* Individual Number Palette (1–8) */
+      --num-1: #d9d098;
+      --num-2: #e2c07d;
+      --num-3: #e89973;
+      --num-4: #d67489;
+      --num-5: #b88ce0;
+      --num-6: #7cc4b8;
+      --num-7: #f0ae65;
+      --num-8: #ff6b8b;
+
+      /* Typography & Geometry Tokens */
+      --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-num: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --ui-scale: 1;
+      --cell-size: 44px;
+      --cell-radius: 9px;
+      --cell-gap: 0px;
+      --grid-thickness: 1.5px;
+      --num-size: 1.25rem;
+      --num-weight: 500;
+      --num-shadow: none;
+
+      /* Motion Design Tokens */
+      --speed-mult: 1;
+      --dur-micro: calc(130ms * var(--speed-mult));
+      --dur-ui: calc(250ms * var(--speed-mult));
+      --dur-panel: calc(400ms * var(--speed-mult));
+      --dur-wave: calc(360ms * var(--speed-mult));
+
+      --ease-spring: cubic-bezier(0.34, 1.52, 0.64, 1);
+      --ease-snappy: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-expo: cubic-bezier(0.7, 0, 0.84, 0);
+
+      /* Safe Area Insets */
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      :root {
+        --speed-mult: 0.01 !important;
+      }
+    }
+
+    body[data-motion="reduced"] {
+      --speed-mult: 0.01 !important;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: #0b0b0a;
+      color: var(--text-main);
+      font-family: var(--font-ui);
+      font-size: calc(16px * var(--ui-scale));
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overscroll-behavior: none;
+    }
+
+    /* Main Application Shell — Scales down with depth when drawers open */
+    .app-shell {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background-color: var(--bg-main);
+      padding-top: max(14px, var(--safe-top));
+      padding-bottom: max(18px, var(--safe-bottom));
+      padding-left: max(16px, var(--safe-left));
+      padding-right: max(16px, var(--safe-right));
+      transition:
+        transform var(--dur-panel) var(--ease-out-expo),
+        border-radius var(--dur-panel) var(--ease-out-expo),
+        filter var(--dur-panel) var(--ease-out-expo),
+        background-color var(--dur-ui) ease;
+      transform-origin: center top;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    body.sheet-active .app-shell {
+      transform: scale(0.955) translateY(8px);
+      border-radius: 26px;
+      filter: brightness(0.72);
+      pointer-events: none;
+    }
+
+    /* Subtle Ambient Studio Spotlight & Tactile Film Grain */
+    .ambient-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 50% 44%, color-mix(in srgb, var(--accent-primary) 10%, transparent) 0%, transparent 66%),
+        radial-gradient(circle at 50% 96%, color-mix(in srgb, var(--accent-secondary) 5%, transparent) 0%, transparent 45%);
+      transition: opacity var(--dur-panel) ease;
+    }
+
+    .ambient-noise {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.028;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* Interactive Particle & Confetti Canvas Overlay */
+    #fx-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 85;
+    }
+
+    /* ==========================================
+       HEADER & MECHANICAL ODOMETER HUD
+       ========================================== */
+    .app-header {
+      display: grid;
+      grid-template-columns: 52px 1fr 52px;
+      align-items: center;
+      width: 100%;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 4px 6px;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      transition:
+        transform var(--dur-micro) var(--ease-spring),
+        background-color var(--dur-micro) ease,
+        border-color var(--dur-micro) ease,
+        color var(--dur-micro) ease;
+    }
+
+    @media (hover: hover) {
+      .icon-btn:hover {
+        background: color-mix(in srgb, var(--text-main) 8%, transparent);
+        border-color: color-mix(in srgb, var(--text-main) 14%, transparent);
+      }
+    }
+
+    .icon-btn:active {
+      transform: scale(0.86);
+      background: color-mix(in srgb, var(--text-main) 14%, transparent);
+    }
+
+    .icon-btn:focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+    }
+
+    .icon-btn svg {
+      width: 24px;
+      height: 24px;
+      transition: transform var(--dur-ui) var(--ease-spring);
+    }
+
+    @media (hover: hover) {
+      #btn-theme:hover svg {
+        transform: rotate(18deg) scale(1.06);
+      }
+      #btn-menu:hover svg {
+        transform: translateX(-2px);
+      }
+    }
+
+    /* Center Status Stack matching Reference Screenshot */
+    .hud-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      padding: 4px 14px;
+      border-radius: 16px;
+      transition: transform var(--dur-micro) var(--ease-spring), background-color var(--dur-micro) ease;
+    }
+
+    .hud-center:active {
+      transform: scale(0.95);
+    }
+
+    .hud-mine-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.22rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: var(--text-main);
+      line-height: 1.15;
+    }
+
+    .hud-mine-row svg.cog-icon {
+      width: 23px;
+      height: 23px;
+      color: var(--text-main);
+      flex-shrink: 0;
+      transition: transform 0.6s var(--ease-spring);
+    }
+
+    .hud-center.pulse-cog svg.cog-icon {
+      transform: rotate(90deg) scale(1.18);
+    }
+
+    .hud-timer-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      line-height: 1.1;
+    }
+
+    /* Mechanical Rolling Odometer Digits */
+    .odometer {
+      display: inline-flex;
+      align-items: center;
+      font-variant-numeric: tabular-nums;
+      overflow: hidden;
+      height: 1.2em;
+      line-height: 1.2em;
+    }
+
+    .odo-col {
+      display: inline-block;
+      height: 1.2em;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .odo-ribbon {
+      display: flex;
+      flex-direction: column;
+      transition: transform calc(260ms * var(--speed-mult)) var(--ease-spring);
+      will-change: transform;
+    }
+
+    .odo-ribbon span {
+      height: 1.2em;
+      line-height: 1.2em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ==========================================
+       BOARD VIEWPORT & ORGANIC BLOB GEOMETRY
+       ========================================== */
+    .board-stage {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      padding: 12px;
+      z-index: 5;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      perspective: 1100px;
+    }
+
+    .board-stage::-webkit-scrollbar {
+      display: none;
+    }
+
+    .board-scale-plane {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: auto;
+      transition: transform var(--dur-ui) var(--ease-snappy);
+      transform-origin: center center;
+      will-change: transform;
+    }
+
+    .board-grid {
+      position: relative;
+      display: grid;
+      gap: var(--cell-gap);
+      background-color: var(--bg-board);
+      padding: 4px;
+      border-radius: calc(var(--cell-radius) + 4px);
+      touch-action: manipulation;
+      transform-style: preserve-3d;
+      transition:
+        background-color var(--dur-ui) ease,
+        filter var(--dur-ui) ease,
+        transform var(--dur-panel) var(--ease-spring);
+    }
+
+    .board-grid.board-spawn {
+      animation: boardEntrance calc(420ms * var(--speed-mult)) var(--ease-out-expo);
+    }
+
+    @keyframes boardEntrance {
+      0% {
+        opacity: 0;
+        transform: scale(0.94) translateY(10px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    /* Individual Cell Architecture */
+    .cell {
+      position: relative;
+      width: var(--cell-size);
+      height: var(--cell-size);
+      border: none;
+      padding: 0;
+      margin: 0;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-family: var(--font-num);
+      font-size: var(--num-size);
+      font-weight: var(--num-weight);
+      color: var(--text-main);
+      outline: none;
+      contain: layout style;
+      transform: translateZ(0);
+    }
+
+    .cell:focus-visible {
+      z-index: 12;
+      box-shadow: 0 0 0 2.5px var(--accent-secondary) inset;
+      border-radius: 6px;
+    }
+
+    /* Unrevealed Connected Magenta Blob Surface */
+    .cell.unrevealed {
+      background-color: var(--cell-unrevealed);
+      z-index: 3;
+      transition:
+        border-radius var(--dur-ui) var(--ease-snappy),
+        transform var(--dur-micro) var(--ease-snappy),
+        filter var(--dur-micro) ease,
+        background-color var(--dur-ui) ease;
+    }
+
+    /* Optional Tactile Raised Surface Bevel */
+    body[data-surface="tactile"] .cell.unrevealed {
+      box-shadow:
+        inset 0 1px 0 var(--cell-unrevealed-hi),
+        inset 0 -1.5px 0 var(--cell-unrevealed-lo);
+    }
+
+    @media (hover: hover) {
+      .cell.unrevealed:hover {
+        filter: brightness(1.08);
+      }
+    }
+
+    /* Active Pointer Scrub / Press Depression */
+    .cell.unrevealed.is-pressed {
+      transform: scale(0.91);
+      filter: brightness(0.92);
+      z-index: 4;
+    }
+
+    .cell.unrevealed.is-neighbor-pressed {
+      transform: scale(0.965);
+      filter: brightness(0.97);
+    }
+
+    /* Revealed Recessed Cell */
+    .cell.revealed {
+      background-color: var(--cell-revealed);
+      cursor: default;
+      z-index: 1;
+    }
+
+    .cell.revealed.has-number {
+      cursor: pointer;
+    }
+
+    /* Concave Inner Fillets on Revealed Cells adjacent to L-shaped Unrevealed Corners */
+    .cell.revealed[data-fillet] {
+      background-repeat: no-repeat;
+    }
+    .cell.revealed[data-fillet*="tl"] {
+      background-image: radial-gradient(circle at 100% 100%, transparent var(--cell-radius), var(--cell-unrevealed) calc(var(--cell-radius) + 0.6px));
+      background-size: var(--cell-radius) var(--cell-radius);
+      background-position: 0 0;
+    }
+
+    /* Inner Crosshair Grid Lines matching Reference Screenshot */
+    .cell.revealed::before,
+    .cell.revealed::after {
+      content: '';
+      position: absolute;
+      background-color: var(--grid-line);
+      pointer-events: none;
+      opacity: var(--grid-opacity, 0.88);
+      transition: background-color var(--dur-ui) ease, opacity var(--dur-ui) ease;
+    }
+
+    /* Right vertical segment with corner gap */
+    .cell.revealed:not(.no-grid-r)::before {
+      right: 0;
+      top: 19%;
+      bottom: 19%;
+      width: var(--grid-thickness);
+      border-radius: 1px;
+    }
+
+    /* Bottom horizontal segment with corner gap */
+    .cell.revealed:not(.no-grid-b)::after {
+      bottom: 0;
+      left: 19%;
+      right: 19%;
+      height: var(--grid-thickness);
+      border-radius: 1px;
+    }
+
+    body[data-grid-style="full"] .cell.revealed:not(.no-grid-r)::before {
+      top: 0;
+      bottom: 0;
+    }
+    body[data-grid-style="full"] .cell.revealed:not(.no-grid-b)::after {
+      left: 0;
+      right: 0;
+    }
+    body[data-grid-style="none"] .cell.revealed::before,
+    body[data-grid-style="none"] .cell.revealed::after {
+      display: none;
+    }
+
+    /* Physical Unrevealed Cap Ghost that Dissolves on Reveal */
+    .reveal-cap-ghost {
+      position: absolute;
+      inset: 0;
+      background-color: var(--cell-unrevealed);
+      pointer-events: none;
+      z-index: 6;
+      will-change: transform, opacity;
+    }
+
+    /* Number & Glyph Inner Wrapper */
+    .cell-glyph {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      text-shadow: var(--num-shadow);
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+
+    /* Number Colors 1-8 */
+    .cell[data-num="1"] .cell-glyph { color: var(--num-1); }
+    .cell[data-num="2"] .cell-glyph { color: var(--num-2); }
+    .cell[data-num="3"] .cell-glyph { color: var(--num-3); }
+    .cell[data-num="4"] .cell-glyph { color: var(--num-4); }
+    .cell[data-num="5"] .cell-glyph { color: var(--num-5); }
+    .cell[data-num="6"] .cell-glyph { color: var(--num-6); }
+    .cell[data-num="7"] .cell-glyph { color: var(--num-7); }
+    .cell[data-num="8"] .cell-glyph { color: var(--num-8); }
+
+    /* Satisfied Number Subtle Dimming (when adjacent flags == number) */
+    .cell.is-satisfied .cell-glyph {
+      opacity: 0.52;
+      transform: scale(0.94);
+      transition: opacity var(--dur-micro) ease, transform var(--dur-micro) var(--ease-spring);
+    }
+
+    /* Detonated & Revealed Mine Styling */
+    .cell.detonated {
+      background-color: var(--detonated-bg) !important;
+      border-radius: calc(var(--cell-radius) * 0.85);
+      z-index: 5;
+      box-shadow: 0 0 22px color-mix(in srgb, var(--detonated-bg) 55%, transparent);
+    }
+
+    .cell.detonated .cell-glyph {
+      color: #ffffff !important;
+    }
+
+    .cell.false-flag {
+      background-color: color-mix(in srgb, var(--detonated-bg) 22%, var(--cell-revealed));
+    }
+
+    .cell.chord-hint {
+      filter: brightness(1.26);
+      transform: scale(0.93);
+    }
+
+    /* ==========================================
+       FLOATING PILL CONTROL DOCK & RESULT BAR
+       ========================================== */
+    .bottom-dock {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      z-index: 15;
+      flex-shrink: 0;
+    }
+
+    /* Non-Blocking Post-Game Result Pill Dock */
+    .result-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 10px 8px 16px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel-elevated) 92%, transparent);
+      border: 1px solid color-mix(in srgb, var(--text-main) 18%, transparent);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transform: translateY(16px) scale(0.92);
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        transform var(--dur-panel) var(--ease-spring),
+        opacity var(--dur-ui) ease;
+    }
+
+    .result-banner.visible {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .result-banner-text {
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .result-badge {
+      padding: 3px 8px;
+      border-radius: 99px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: color-mix(in srgb, var(--accent-primary) 28%, transparent);
+      color: var(--text-main);
+    }
+
+    .result-banner-btn {
+      border: none;
+      background: var(--accent-primary);
+      color: var(--text-main);
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: transform var(--dur-micro) var(--ease-spring), filter var(--dur-micro) ease;
+    }
+
+    .result-banner-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* Reference Screenshot Pill Control Panel */
+    .control-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+.mode-pill {
+      position: relative;
+      display: grid;
+      grid-template-columns: 48px 48px;
+      justify-content: space-between;
+      align-items: center;
+      width: 120px;
+      height: 60px;
+      padding: 5px;
+      border-radius: 999px;
+      background-color: var(--bg-main);
+      border: 1.5px solid var(--grid-line);
+      box-shadow:
+        0 12px 32px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      cursor: pointer;
+    }
+
+    /* Kolečko má teď úplně stejnou velikost (48×48) a výchozí pozici jako levý sloupec gridu */
+    .mode-pill-thumb {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background-color: var(--accent-primary);
+      box-shadow: 0 4px 14px color-mix(in srgb, var(--accent-primary) 48%, transparent);
+      transition: transform calc(340ms * var(--speed-mult)) var(--ease-spring), background-color var(--dur-ui) ease;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Posun přesně na pravý 48px sloupec (120px šířka - 3px border - 10px padding - 48px = 59px) */
+    .mode-pill[data-mode="flag"] .mode-pill-thumb {
+      transform: translateX(59px);
+    }
+
+    .mode-btn {
+      position: relative;
+      z-index: 2;
+      width: 48px;
+      height: 48px;
+      border: none;
+      background: transparent;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      border-radius: 50%;
+      transition: transform var(--dur-micro) var(--ease-spring), color var(--dur-ui) ease;
+    }
+
+    .mode-btn svg {
+      width: 24px;
+      height: 24px;
+      display: block;
+      transition: transform var(--dur-ui) var(--ease-spring);
+    }
+
+    /* Optické vycentrování vlaječky (její žerď je v SVG na X=5.5 a praporek sahá k X=18) */
+    .mode-btn[data-target="flag"] svg {
+      transform: translateX(-1px);
+    }
+    .mode-pill[data-mode="flag"] .mode-btn[data-target="flag"] svg {
+      color: #141413;
+      transform: translateX(-1px) scale(1.08);
+    }
+
+    .mode-pill[data-mode="dig"] .mode-btn[data-target="dig"] svg {
+      color: #141413;
+      transform: rotate(22deg) scale(1.08);
+    }
+
+    .mode-pill[data-mode="flag"] .mode-btn[data-target="flag"] svg {
+      color: #141413;
+      transform: scale(1.08);
+    }
+
+    /* Side Auxiliary Floating Mini-Buttons (Zoom / Quick Restart) */
+    .aux-pill-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 1.5px solid var(--grid-line);
+      background-color: var(--bg-main);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+      transition:
+        transform var(--dur-micro) var(--ease-spring),
+        color var(--dur-micro) ease,
+        border-color var(--dur-micro) ease;
+    }
+
+    @media (hover: hover) {
+      .aux-pill-btn:hover {
+        color: var(--text-main);
+        border-color: var(--accent-primary);
+      }
+    }
+
+    .aux-pill-btn:active {
+      transform: scale(0.86);
+    }
+
+    .aux-pill-btn svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    /* ==========================================
+       PHYSICS-DRIVEN MODALS & BOTTOM SHEETS
+       ========================================== */
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(6, 6, 6, 0.66);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--dur-panel) var(--ease-out-expo);
+    }
+
+    @media (min-width: 680px) {
+      .sheet-backdrop {
+        align-items: center;
+        padding: 24px;
+      }
+    }
+
+    .sheet-backdrop[data-state="open"] {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .sheet-panel {
+      width: 100%;
+      max-width: 540px;
+      max-height: 88dvh;
+      background-color: var(--panel-bg);
+      border-top: 1px solid var(--panel-border);
+      border-radius: 28px 28px 0 0;
+      box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.65);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateY(104%);
+      transition: transform var(--dur-panel) var(--ease-out-expo);
+      will-change: transform;
+      padding-bottom: var(--safe-bottom);
+    }
+
+    @media (min-width: 680px) {
+      .sheet-panel {
+        border: 1px solid var(--panel-border);
+        border-radius: 26px;
+        max-height: 84dvh;
+        transform: translateY(28px) scale(0.95);
+        padding-bottom: 0;
+      }
+    }
+
+    .sheet-backdrop[data-state="open"] .sheet-panel {
+      transform: translateY(0) scale(1);
+    }
+
+    .sheet-drag-handle {
+      width: 100%;
+      padding: 12px 0 4px;
+      display: flex;
+      justify-content: center;
+      cursor: grab;
+      touch-action: none;
+      flex-shrink: 0;
+    }
+
+    .sheet-drag-bar {
+      width: 40px;
+      height: 4px;
+      border-radius: 99px;
+      background: color-mix(in srgb, var(--text-muted) 40%, transparent);
+    }
+
+    .sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 22px 14px;
+      border-bottom: 1px solid color-mix(in srgb, var(--panel-border) 75%, transparent);
+      flex-shrink: 0;
+    }
+
+    .sheet-title {
+      font-size: 1.12rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text-main);
+      margin: 0;
+    }
+
+    .sheet-body {
+      padding: 18px 22px 26px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Animated Sliding Pill Tabs inside Drawers */
+    .segmented-nav {
+      position: relative;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+      background: var(--panel-elevated);
+      padding: 4px;
+      border-radius: 14px;
+      border: 1px solid color-mix(in srgb, var(--panel-border) 80%, transparent);
+      margin: 0 22px 12px;
+      flex-shrink: 0;
+    }
+
+    .segmented-nav-indicator {
+      position: absolute;
+      top: 4px;
+      bottom: 4px;
+      left: 4px;
+      width: calc((100% - 8px) / var(--tab-count, 4));
+      background: var(--accent-primary);
+      border-radius: 10px;
+      transition: transform calc(280ms * var(--speed-mult)) var(--ease-spring);
+      z-index: 1;
+    }
+
+    .segmented-tab {
+      position: relative;
+      z-index: 2;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-ui);
+      font-size: 0.79rem;
+      font-weight: 600;
+      padding: 8px 6px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: color var(--dur-micro) ease;
+      white-space: nowrap;
+    }
+
+    .segmented-tab.active {
+      color: #141413;
+      font-weight: 700;
+    }
+
+    /* Tab View Crossfade Container */
+    .tab-pane {
+      display: none;
+      flex-direction: column;
+      gap: 18px;
+      animation: paneSlideIn calc(240ms * var(--speed-mult)) var(--ease-out-expo);
+    }
+
+    .tab-pane.active {
+      display: flex;
+    }
+
+    @keyframes paneSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Difficulty & Preset Cards */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .preset-card {
+      position: relative;
+      padding: 14px;
+      border-radius: 16px;
+      background: var(--panel-elevated);
+      border: 1.5px solid transparent;
+      color: var(--text-main);
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition:
+        transform var(--dur-micro) var(--ease-spring),
+        border-color var(--dur-micro) ease,
+        background-color var(--dur-micro) ease;
+    }
+
+    .preset-card:active {
+      transform: scale(0.96);
+    }
+
+    .preset-card.active {
+      border-color: var(--accent-primary);
+      background: color-mix(in srgb, var(--accent-primary) 14%, var(--panel-elevated));
+    }
+
+    .preset-card-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .preset-card-meta {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    /* Form Controls, Sliders & Custom Pill Choosers */
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--panel-elevated);
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid color-mix(in srgb, var(--panel-border) 60%, transparent);
+    }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .control-label {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .control-label-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .control-label-sub {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    /* Tactile Spring Switch */
+    .spring-switch {
+      position: relative;
+      width: 48px;
+      height: 28px;
+      border-radius: 99px;
+      background: color-mix(in srgb, var(--text-muted) 28%, transparent);
+      border: none;
+      cursor: pointer;
+      padding: 3px;
+      transition: background-color var(--dur-ui) ease;
+      flex-shrink: 0;
+    }
+
+    .spring-switch[aria-checked="true"] {
+      background: var(--accent-primary);
+    }
+
+    .spring-switch-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--text-main);
+      transition: transform calc(260ms * var(--speed-mult)) var(--ease-spring);
+      pointer-events: none;
+    }
+
+    .spring-switch[aria-checked="true"] .spring-switch-thumb {
+      transform: translateX(20px);
+      background: #141413;
+    }
+
+    /* Custom Range Slider */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 99px;
+      background: color-mix(in srgb, var(--text-muted) 26%, transparent);
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent-primary);
+      border: 2px solid var(--text-main);
+      cursor: pointer;
+      transition: transform var(--dur-micro) var(--ease-spring);
+    }
+
+    input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.22);
+    }
+
+    /* Inline Pill Option Group */
+    .choice-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .choice-pill {
+      border: 1px solid color-mix(in srgb, var(--text-muted) 28%, transparent);
+      background: var(--panel-bg);
+      color: var(--text-muted);
+      font-family: var(--font-ui);
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 6px 11px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition:
+        transform var(--dur-micro) var(--ease-spring),
+        background-color var(--dur-micro) ease,
+        color var(--dur-micro) ease,
+        border-color var(--dur-micro) ease;
+    }
+
+    .choice-pill:active {
+      transform: scale(0.93);
+    }
+
+    .choice-pill.active {
+      background: var(--accent-primary);
+      color: #141413;
+      border-color: var(--accent-primary);
+      font-weight: 700;
+    }
+
+    /* Theme Studio Swatch Grid */
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+      gap: 10px;
+    }
+
+    .swatch-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      border-radius: 13px;
+      background: var(--panel-bg);
+      border: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .swatch-color-dot {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      border: 1.5px solid rgba(255, 255, 255, 0.22);
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .swatch-color-dot input[type="color"] {
+      position: absolute;
+      inset: -8px;
+      width: 44px;
+      height: 44px;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .swatch-label {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.2;
+    }
+
+    /* Theme Preset Mini-Board Cards */
+    .theme-preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .theme-card {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 11px 12px;
+      border-radius: 15px;
+      border: 1.5px solid transparent;
+      background: var(--panel-elevated);
+      cursor: pointer;
+      text-align: left;
+      transition: transform var(--dur-micro) var(--ease-spring), border-color var(--dur-micro) ease;
+    }
+
+    .theme-card:active {
+      transform: scale(0.96);
+    }
+
+    .theme-card.active {
+      border-color: var(--accent-primary);
+    }
+
+    .theme-mini-preview {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      flex-shrink: 0;
+    }
+
+    /* Statistics Circular Progress Ring & Cards */
+    .stats-hero {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel-elevated);
+      border: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
+    }
+
+    .win-ring-wrap {
+      position: relative;
+      width: 84px;
+      height: 84px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .win-ring-svg {
+      width: 84px;
+      height: 84px;
+      transform: rotate(-90deg);
+    }
+
+    .win-ring-bg {
+      fill: none;
+      stroke: color-mix(in srgb, var(--text-muted) 20%, transparent);
+      stroke-width: 7;
+    }
+
+    .win-ring-fg {
+      fill: none;
+      stroke: var(--accent-primary);
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-dasharray: 220;
+      stroke-dashoffset: 220;
+      transition: stroke-dashoffset calc(750ms * var(--speed-mult)) var(--ease-out-expo);
+    }
+
+    .win-ring-label {
+      position: absolute;
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .stat-box {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: var(--panel-elevated);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-box-val {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-main);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-box-lbl {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    /* Staggered Leaderboard List */
+    .leaderboard-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .lb-row {
+      display: grid;
+      grid-template-columns: 32px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      border-radius: 14px;
+      background: var(--panel-elevated);
+      border: 1px solid transparent;
+      animation: lbStagger calc(280ms * var(--speed-mult)) var(--ease-out-expo) backwards;
+      animation-delay: calc(var(--idx, 0) * 38ms);
+    }
+
+    .lb-row.is-top {
+      border-color: color-mix(in srgb, var(--accent-primary) 55%, transparent);
+      background: color-mix(in srgb, var(--accent-primary) 10%, var(--panel-elevated));
+    }
+
+    @keyframes lbStagger {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .lb-rank {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: var(--panel-bg);
+      color: var(--text-muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lb-row.is-top .lb-rank {
+      background: var(--accent-primary);
+      color: #141413;
+    }
+
+    /* Action Buttons */
+    .btn-primary, .btn-secondary {
+      border: none;
+      font-family: var(--font-ui);
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 12px 18px;
+      border-radius: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform var(--dur-micro) var(--ease-spring), filter var(--dur-micro) ease;
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: #141413;
+    }
+
+    .btn-secondary {
+      background: var(--panel-elevated);
+      color: var(--text-main);
+      border: 1px solid var(--panel-border);
+    }
+
+    .btn-primary:active, .btn-secondary:active {
+      transform: scale(0.95);
+    }
+
+    /* Toast Notification Pill */
+    .toast-stack {
+      position: fixed;
+      top: calc(max(16px, var(--safe-top)) + 54px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 95;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast-pill {
+      padding: 9px 16px;
+      border-radius: 999px;
+      background: var(--panel-elevated);
+      color: var(--text-main);
+      border: 1px solid color-mix(in srgb, var(--accent-primary) 50%, var(--panel-border));
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+      font-size: 0.8rem;
+      font-weight: 600;
+      animation: toastIn calc(260ms * var(--speed-mult)) var(--ease-spring);
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateY(-12px) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+    .ambient-layer,
+    .ambient-noise {
+      display: none !important;
+    }
+  </style>
+</head>
+<body data-surface="flat" data-grid-style="crosshair" data-motion="full">
+
+  <!-- Global SVG Defs for User's Mine Icon Mask (avoids duplicate mask ID collisions) -->
+  <svg width="0" height="0" style="position:absolute; width:0; height:0; overflow:hidden;" aria-hidden="true">
+    <defs>
+      <mask id="mine-hole-mask">
+        <rect width="100" height="100" fill="#fff"/>
+        <circle cx="50" cy="50" r="12" fill="#000"/>
+      </mask>
+    </defs>
+  </svg>
+
+  <canvas id="fx-canvas" aria-hidden="true"></canvas>
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+  <div class="sr-only" id="sr-announcer" aria-live="assertive"></div>
+
+  <!-- MAIN GAME SHELL -->
+  <main class="app-shell" id="app-shell">
+    <div class="ambient-layer" aria-hidden="true"></div>
+    <div class="ambient-noise" aria-hidden="true"></div>
+
+    <!-- Compact Minimal Header inspired by Reference Screenshot -->
+    <header class="app-header">
+      <button class="icon-btn" id="btn-menu" aria-label="Open Game Menu & Leaderboard" title="Menu & Settings (Esc)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </button>
+
+      <!-- Center HUD: Mine Counter + Mechanical Odometer + Timer -->
+      <div class="hud-center" id="hud-center-trigger" role="button" tabindex="0" aria-label="Game status and quick restart" title="Click to start a fresh board (R)">
+        <div class="hud-mine-row">
+          <!-- User's Custom Mine SVG -->
+          <svg class="cog-icon" viewBox="0 0 100 100" aria-hidden="true">
+            <g mask="url(#mine-hole-mask)">
+              <g stroke="currentColor" stroke-width="7" stroke-linecap="round">
+                <line x1="14" y1="50" x2="86" y2="50"/>
+                <line x1="50" y1="14" x2="50" y2="86"/>
+                <line x1="24.5" y1="24.5" x2="75.5" y2="75.5"/>
+                <line x1="75.5" y1="24.5" x2="24.5" y2="75.5"/>
+              </g>
+              <circle cx="50" cy="50" r="25" fill="currentColor"/>
+            </g>
+          </svg>
+          <div class="odometer" id="odo-mines" aria-label="Remaining mines"></div>
+        </div>
+        <div class="hud-timer-row">
+          <div class="odometer" id="odo-timer" aria-label="Elapsed time"></div>
+          <span>S</span>
+        </div>
+      </div>
+
+      <button class="icon-btn" id="btn-theme" aria-label="Open Live Theme Studio" title="Customize Theme & Colors">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2.2C6.5 2.2 2 6.4 2 11.7c0 5.2 4.3 9.5 9.6 9.5 1.7 0 3-.9 3-2.4 0-.6-.2-1.2-.6-1.6-.4-.4-.6-.9-.6-1.5 0-1.2 1-2.1 2.2-2.1h1.5c2.7 0 4.9-2.1 4.9-4.8C22 5.3 17.4 2.2 12 2.2Zm-5.5 9.3a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2Zm3.2-4a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2Zm4.6 0a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2Zm3.2 4a1.6 1.6 0 1 1 0-3.2 1.6 1.6 0 0 1 0 3.2Z"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Playable Minesweeper Stage -->
+    <section class="board-stage" id="board-stage" aria-label="Minesweeper Board">
+      <div class="board-scale-plane" id="board-scale-plane">
+        <div class="board-grid" id="board-grid" role="grid" aria-label="Minefield"></div>
+      </div>
+    </section>
+
+    <!-- Bottom Floating Dock: Non-Blocking Result Pill + Mode Pill -->
+    <footer class="bottom-dock">
+      <div class="result-banner" id="result-banner" role="status">
+        <div class="result-banner-text">
+          <span class="result-badge" id="result-badge">CLEAR</span>
+          <span id="result-summary">Cleared in 24s</span>
+        </div>
+        <button class="result-banner-btn" id="btn-retry-layout" style="display:none; background:transparent; border:1px solid var(--text-muted);">Retry Seed</button>
+        <button class="result-banner-btn" id="btn-next-game">New Board</button>
+      </div>
+
+      <div class="control-bar-wrap">
+        <button class="aux-pill-btn" id="btn-zoom-fit" aria-label="Fit or Zoom Board" title="Cycle Board Zoom">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/>
+          </svg>
+        </button>
+
+        <!-- Signature Reference Pill Switcher: Mine/Dig Mode vs Flag Mode -->
+        <div class="mode-pill" id="mode-pill" data-mode="dig" role="radiogroup" aria-label="Input Mode">
+          <div class="mode-pill-thumb" aria-hidden="true"></div>
+          <button class="mode-btn" data-target="dig" role="radio" aria-checked="true" aria-label="Dig Mode (Reveal Cells)" title="Dig Mode">
+            <!-- User's Custom Mine SVG -->
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <g mask="url(#mine-hole-mask)">
+                <g stroke="currentColor" stroke-width="7" stroke-linecap="round">
+                  <line x1="14" y1="50" x2="86" y2="50"/>
+                  <line x1="50" y1="14" x2="50" y2="86"/>
+                  <line x1="24.5" y1="24.5" x2="75.5" y2="75.5"/>
+                  <line x1="75.5" y1="24.5" x2="24.5" y2="75.5"/>
+                </g>
+                <circle cx="50" cy="50" r="25" fill="currentColor"/>
+              </g>
+            </svg>
+          </button>
+          <button class="mode-btn" data-target="flag" role="radio" aria-checked="false" aria-label="Flag Mode (Mark Mines)" title="Flag Mode (F)">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5.5 3a1 1 0 0 1 1 1v.6h11.3c.8 0 1.3.9.8 1.6l-2.4 3.4 2.4 3.4c.5.7 0 1.6-.8 1.6H6.5V20a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1Z"/>
+            </svg>
+          </button>
+        </div>
+
+        <button class="aux-pill-btn" id="btn-quick-new" aria-label="New Game" title="Start Fresh Game (R)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+          </svg>
+        </button>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ==========================================
+       DRAWER 1: GAME MENU, STATS, LEADERBOARD & PWA
+       ========================================== -->
+  <div class="sheet-backdrop" id="sheet-menu" data-state="closed" aria-hidden="true">
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="menu-sheet-title">
+      <div class="sheet-drag-handle" data-close-sheet="sheet-menu"><div class="sheet-drag-bar"></div></div>
+      <div class="sheet-header">
+        <h2 class="sheet-title" id="menu-sheet-title">Command Center</h2>
+        <button class="icon-btn" data-close-sheet="sheet-menu" aria-label="Close Menu" style="width:36px;height:36px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <nav class="segmented-nav" style="--tab-count: 4;" id="menu-tabs">
+        <div class="segmented-nav-indicator" id="menu-tab-indicator"></div>
+        <button class="segmented-tab active" data-tab="pane-game">Board</button>
+        <button class="segmented-tab" data-tab="pane-stats">Stats</button>
+        <button class="segmented-tab" data-tab="pane-ranks">Ranks</button>
+        <button class="segmented-tab" data-tab="pane-system">App & PWA</button>
+      </nav>
+
+      <div class="sheet-body">
+        <!-- TAB 1: DIFFICULTY & GAMEPLAY RULES -->
+        <div class="tab-pane active" id="pane-game">
+          <div class="preset-grid" id="difficulty-grid">
+            <button class="preset-card active" data-diff="reference">
+              <span class="preset-card-title">Pocket <span>6 × 9</span></span>
+              <span class="preset-card-meta">10 Mines • Reference Layout</span>
+            </button>
+            <button class="preset-card" data-diff="beginner">
+              <span class="preset-card-title">Beginner <span>9 × 9</span></span>
+              <span class="preset-card-meta">10 Mines • Standard Intro</span>
+            </button>
+            <button class="preset-card" data-diff="intermediate">
+              <span class="preset-card-title">Intermediate <span>16 × 16</span></span>
+              <span class="preset-card-meta">40 Mines • Tactical Grid</span>
+            </button>
+            <button class="preset-card" data-diff="expert">
+              <span class="preset-card-title">Expert <span>16 × 30</span></span>
+              <span class="preset-card-meta">99 Mines • Grandmaster</span>
+            </button>
+          </div>
+
+          <div class="control-group">
+            <div class="control-row">
+              <span class="control-label-title">Custom Dimensions</span>
+              <span class="control-label-sub" id="custom-dim-label">6 × 9 • 10 Mines</span>
+            </div>
+            <div class="control-row">
+              <span class="control-label-sub" style="width:65px;">Width</span>
+              <input type="range" id="inp-width" min="5" max="30" value="6" />
+            </div>
+            <div class="control-row">
+              <span class="control-label-sub" style="width:65px;">Height</span>
+              <input type="range" id="inp-height" min="5" max="30" value="9" />
+            </div>
+            <div class="control-row">
+              <span class="control-label-sub" style="width:65px;">Mines</span>
+              <input type="range" id="inp-mines" min="3" max="40" value="10" />
+            </div>
+            <button class="btn-primary" id="btn-apply-custom" style="margin-top:4px;">Launch Custom Board</button>
+          </div>
+
+          <div class="control-group">
+            <div class="control-row">
+              <div class="control-label">
+                <span class="control-label-title">Guaranteed Safe Opening</span>
+                <span class="control-label-sub">First tap always clears a 3×3 zero-mine pocket</span>
+              </div>
+              <button class="spring-switch" id="sw-safe-radius" role="switch" aria-checked="true"><div class="spring-switch-thumb"></div></button>
+            </div>
+            <div class="control-row">
+              <div class="control-label">
+                <span class="control-label-title">Number Chording</span>
+                <span class="control-label-sub">Tap satisfied numbers to sweep neighbors</span>
+              </div>
+              <button class="spring-switch" id="sw-chording" role="switch" aria-checked="true"><div class="spring-switch-thumb"></div></button>
+            </div>
+            <div class="control-row">
+              <div class="control-label">
+                <span class="control-label-title">Question Marks (?)</span>
+                <span class="control-label-sub">Cycle Flag → Question Mark → Clear</span>
+              </div>
+              <button class="spring-switch" id="sw-qmark" role="switch" aria-checked="false"><div class="spring-switch-thumb"></div></button>
+            </div>
+            <div class="control-row">
+              <div class="control-label">
+                <span class="control-label-title">Long-Press to Flag</span>
+                <span class="control-label-sub">Hold unrevealed tile (260ms) to place flag</span>
+              </div>
+              <button class="spring-switch" id="sw-longpress" role="switch" aria-checked="true"><div class="spring-switch-thumb"></div></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: PERSONAL STATISTICS -->
+        <div class="tab-pane" id="pane-stats">
+          <div class="stats-hero">
+            <div class="win-ring-wrap">
+              <svg class="win-ring-svg" viewBox="0 0 80 80">
+                <circle class="win-ring-bg" cx="40" cy="40" r="35"/>
+                <circle class="win-ring-fg" id="stat-ring-arc" cx="40" cy="40" r="35"/>
+              </svg>
+              <span class="win-ring-label" id="stat-win-pct">0%</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <span style="font-size:1.05rem;font-weight:700;">Career Mastery</span>
+              <span style="font-size:0.8rem;color:var(--text-muted);" id="stat-summary-line">0 victories across 0 games</span>
+              <span style="font-size:0.76rem;color:var(--accent-primary);font-weight:600;" id="stat-streak-line">Current Streak: 0 • Best: 0</span>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span class="stat-box-val" id="stat-best-ref">—</span>
+              <span class="stat-box-lbl">Best Pocket (6×9)</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-box-val" id="stat-best-beg">—</span>
+              <span class="stat-box-lbl">Best Beginner (9×9)</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-box-val" id="stat-best-int">—</span>
+              <span class="stat-box-lbl">Best Intermediate</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-box-val" id="stat-best-exp">—</span>
+              <span class="stat-box-lbl">Best Expert</span>
+            </div>
+          </div>
+
+          <button class="btn-secondary" id="btn-reset-stats">Reset Career Statistics</button>
+        </div>
+
+        <!-- TAB 3: PERSONAL LEADERBOARD -->
+        <div class="tab-pane" id="pane-ranks">
+          <div class="control-row">
+            <div class="choice-pills" id="lb-filter-pills">
+              <button class="choice-pill active" data-lb-diff="all">All</button>
+              <button class="choice-pill" data-lb-diff="reference">6×9</button>
+              <button class="choice-pill" data-lb-diff="beginner">9×9</button>
+              <button class="choice-pill" data-lb-diff="intermediate">16×16</button>
+              <button class="choice-pill" data-lb-diff="expert">Expert</button>
+            </div>
+            <div class="choice-pills" id="lb-sort-pills">
+              <button class="choice-pill active" data-lb-sort="time">Fastest</button>
+              <button class="choice-pill" data-lb-sort="3bvs">3BV/s</button>
+            </div>
+          </div>
+          <div class="leaderboard-list" id="leaderboard-list"></div>
+        </div>
+
+        <!-- TAB 4: AUDIO, MOTION & STANDALONE PWA -->
+        <div class="tab-pane" id="pane-system">
+          <div class="control-group">
+            <div class="control-row">
+              <div class="control-label">
+                <span class="control-label-title">Harmonic Web Audio</span>
+                <span class="control-label-sub">Procedural marimba cascades & tactile clicks</span>
+              </div>
+              <button class="spring-switch" id="sw-sound" role="switch" aria-checked="true"><div class="spring-switch-thumb"></div></button>
+            </div>
+            <div class="control-row">
+              <div class="control-label">
+                <span class="control-label-title">Haptic Vibration</span>
+                <span class="control-label-sub">Physical pulse feedback on Android devices</span>
+              </div>
+              <button class="spring-switch" id="sw-haptics" role="switch" aria-checked="true"><div class="spring-switch-thumb"></div></button>
+            </div>
+            <div class="control-row">
+              <div class="control-label">
+                <span class="control-label-title">Celebration Particles</span>
+                <span class="control-label-sub">Micro-sparks on dig and victory confetti</span>
+              </div>
+              <button class="spring-switch" id="sw-particles" role="switch" aria-checked="true"><div class="spring-switch-thumb"></div></button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <span class="control-label-title">Install Standalone App (PWA)</span>
+            <span class="control-label-sub" id="pwa-status-text">Works 100% offline. Install to your phone home screen for a fullscreen native experience.</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+              <button class="btn-primary" id="btn-install-pwa" style="flex:1;">Install to Home Screen</button>
+              <button class="btn-secondary" id="btn-download-bundle" style="flex:1;">Export PWA Bundle</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       DRAWER 2: LIVE THEME STUDIO
+       ========================================== -->
+  <div class="sheet-backdrop" id="sheet-theme" data-state="closed" aria-hidden="true">
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="theme-sheet-title">
+      <div class="sheet-drag-handle" data-close-sheet="sheet-theme"><div class="sheet-drag-bar"></div></div>
+      <div class="sheet-header">
+        <h2 class="sheet-title" id="theme-sheet-title">Theme Studio</h2>
+        <button class="icon-btn" data-close-sheet="sheet-theme" aria-label="Close Theme Studio" style="width:36px;height:36px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <nav class="segmented-nav" style="--tab-count: 3;" id="theme-tabs">
+        <div class="segmented-nav-indicator" id="theme-tab-indicator"></div>
+        <button class="segmented-tab active" data-tab="pane-presets">Presets</button>
+        <button class="segmented-tab" data-tab="pane-colors">Colors & 1–8</button>
+        <button class="segmented-tab" data-tab="pane-geometry">Shape & Type</button>
+      </nav>
+
+      <div class="sheet-body">
+        <!-- TAB 1: CURATED PRESETS -->
+        <div class="tab-pane active" id="pane-presets">
+          <div class="theme-preset-grid" id="theme-preset-grid"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-secondary" id="btn-random-theme" style="flex:1;">Randomize Palette</button>
+            <button class="btn-secondary" id="btn-reset-theme" style="flex:1;">Reset Midnight Rose</button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-secondary" id="btn-export-theme" style="flex:1;">Copy Theme JSON</button>
+            <button class="btn-secondary" id="btn-import-theme" style="flex:1;">Import Theme JSON</button>
+          </div>
+        </div>
+
+        <!-- TAB 2: LIVE COLOR PICKERS -->
+        <div class="tab-pane" id="pane-colors">
+          <span class="control-label-title">Surface & Interface</span>
+          <div class="swatch-grid" id="surface-swatch-grid"></div>
+          <span class="control-label-title" style="margin-top:6px;">Number Palette (1–8)</span>
+          <div class="swatch-grid" id="number-swatch-grid"></div>
+        </div>
+
+        <!-- TAB 3: GEOMETRY, SURFACE & TYPOGRAPHY -->
+        <div class="tab-pane" id="pane-geometry">
+          <div class="control-group">
+            <div class="control-row">
+              <span class="control-label-title">Blob Corner Radius</span>
+              <span class="control-label-sub" id="lbl-radius">9px</span>
+            </div>
+            <input type="range" id="inp-radius" min="0" max="20" value="9" />
+
+            <div class="control-row" style="margin-top:6px;">
+              <span class="control-label-title">Cell Touch Size</span>
+              <span class="control-label-sub" id="lbl-cellsize">44px</span>
+            </div>
+            <input type="range" id="inp-cellsize" min="32" max="60" value="44" />
+          </div>
+
+          <div class="control-group">
+            <span class="control-label-title">Typography Style</span>
+            <div class="choice-pills" id="font-pills">
+              <button class="choice-pill active" data-font="'Inter', -apple-system, BlinkMacSystemFont, sans-serif">Modern Sans</button>
+              <button class="choice-pill" data-font="'JetBrains Mono', 'SF Mono', monospace">Terminal Mono</button>
+              <button class="choice-pill" data-font="'Quicksand', 'Nunito', system-ui, sans-serif">Soft Rounded</button>
+              <button class="choice-pill" data-font="'Georgia', 'Times New Roman', serif">Editorial Serif</button>
+            </div>
+
+            <span class="control-label-title" style="margin-top:8px;">Unrevealed Surface Finish</span>
+            <div class="choice-pills" id="surface-pills">
+              <button class="choice-pill active" data-surface="flat">Minimalist Matte (Ref)</button>
+              <button class="choice-pill" data-surface="tactile">Tactile Raised Bevel</button>
+            </div>
+
+            <span class="control-label-title" style="margin-top:8px;">Inner Grid Lines</span>
+            <div class="choice-pills" id="grid-pills">
+              <button class="choice-pill active" data-grid="crosshair">Crosshair Gaps (Ref)</button>
+              <button class="choice-pill" data-grid="full">Continuous Grid</button>
+              <button class="choice-pill" data-grid="none">Hidden</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================================
+       1. THEME PRESETS & PERSISTENT STATE
+       ============================================================================ */
+    const THEME_PRESETS = {
+      'midnight-rose': {
+        name: 'Midnight Rose',
+        vars: {
+          '--bg-main': '#141413', '--bg-board': '#141413',
+          '--cell-unrevealed': '#b83365', '--cell-revealed': '#141413',
+          '--grid-line': '#5c2849', '--accent-primary': '#b83365',
+          '--accent-secondary': '#d9d098', '--text-main': '#d9d098',
+          '--text-muted': '#8e8768', '--flag-color': '#d9d098',
+          '--mine-color': '#d9d098', '--detonated-bg': '#e03c52',
+          '--panel-bg': '#1c1b1a', '--panel-elevated': '#252322', '--panel-border': '#382431',
+          '--num-1': '#d9d098', '--num-2': '#e2c07d', '--num-3': '#e89973', '--num-4': '#d67489',
+          '--num-5': '#b88ce0', '--num-6': '#7cc4b8', '--num-7': '#f0ae65', '--num-8': '#ff6b8b'
+        }
+      },
+      'oled-obsidian': {
+        name: 'OLED Obsidian',
+        vars: {
+          '--bg-main': '#000000', '--bg-board': '#000000',
+          '--cell-unrevealed': '#27272a', '--cell-revealed': '#000000',
+          '--grid-line': '#1f1f23', '--accent-primary': '#f43f5e',
+          '--accent-secondary': '#fafafa', '--text-main': '#fafafa',
+          '--text-muted': '#71717a', '--flag-color': '#f43f5e',
+          '--mine-color': '#fafafa', '--detonated-bg': '#e11d48',
+          '--panel-bg': '#09090b', '--panel-elevated': '#141417', '--panel-border': '#27272a',
+          '--num-1': '#38bdf8', '--num-2': '#4ade80', '--num-3': '#fb7185', '--num-4': '#c084fc',
+          '--num-5': '#fbbf24', '--num-6': '#2dd4bf', '--num-7': '#f472b6', '--num-8': '#a1a1aa'
+        }
+      },
+      'lavender-velvet': {
+        name: 'Lavender Dream',
+        vars: {
+          '--bg-main': '#13111c', '--bg-board': '#13111c',
+          '--cell-unrevealed': '#6d4aff', '--cell-revealed': '#13111c',
+          '--grid-line': '#31255a', '--accent-primary': '#6d4aff',
+          '--accent-secondary': '#e9d5ff', '--text-main': '#f3e8ff',
+          '--text-muted': '#9381b8', '--flag-color': '#f0abfc',
+          '--mine-color': '#e9d5ff', '--detonated-bg': '#f43f5e',
+          '--panel-bg': '#1b1729', '--panel-elevated': '#252038', '--panel-border': '#392e5c',
+          '--num-1': '#e9d5ff', '--num-2': '#a5f3fc', '--num-3': '#fda4af', '--num-4': '#c4b5fd',
+          '--num-5': '#fde047', '--num-6': '#6ee7b7', '--num-7': '#f9a8d4', '--num-8': '#cbd5e1'
+        }
+      },
+      'ocean-abyss': {
+        name: 'Ocean Depth',
+        vars: {
+          '--bg-main': '#071318', '--bg-board': '#071318',
+          '--cell-unrevealed': '#0d9488', '--cell-revealed': '#071318',
+          '--grid-line': '#134e4a', '--accent-primary': '#0d9488',
+          '--accent-secondary': '#ccfbf1', '--text-main': '#ccfbf1',
+          '--text-muted': '#5eead4', '--flag-color': '#fde047',
+          '--mine-color': '#ccfbf1', '--detonated-bg': '#f43f5e',
+          '--panel-bg': '#0b1d24', '--panel-elevated': '#112a33', '--panel-border': '#164e63',
+          '--num-1': '#99f6e4', '--num-2': '#fde047', '--num-3': '#fda4af', '--num-4': '#7dd3fc',
+          '--num-5': '#d8b4fe', '--num-6': '#6ee7b7', '--num-7': '#fdba74', '--num-8': '#f1f5f9'
+        }
+      },
+      'forest-terminal': {
+        name: 'Forest Terminal',
+        vars: {
+          '--bg-main': '#0b130e', '--bg-board': '#0b130e',
+          '--cell-unrevealed': '#2d6a4f', '--cell-revealed': '#0b130e',
+          '--grid-line': '#1b4332', '--accent-primary': '#40916c',
+          '--accent-secondary': '#d8f3dc', '--text-main': '#d8f3dc',
+          '--text-muted': '#74c69d', '--flag-color': '#ffb703',
+          '--mine-color': '#d8f3dc', '--detonated-bg': '#e63946',
+          '--panel-bg': '#111d16', '--panel-elevated': '#18291f', '--panel-border': '#2d6a4f',
+          '--num-1': '#b7e4c7', '--num-2': '#ffd166', '--num-3': '#ff8fa3', '--num-4': '#90e0ef',
+          '--num-5': '#cdb4db', '--num-6': '#52b788', '--num-7': '#f4a261', '--num-8': '#e9ecef'
+        }
+      },
+      'solar-paper': {
+        name: 'Warm Paper',
+        vars: {
+          '--bg-main': '#f5f0e6', '--bg-board': '#f5f0e6',
+          '--cell-unrevealed': '#d96b43', '--cell-revealed': '#f5f0e6',
+          '--grid-line': '#dccfc0', '--accent-primary': '#d96b43',
+          '--accent-secondary': '#2b2623', '--text-main': '#2b2623',
+          '--text-muted': '#7c7065', '--flag-color': '#fff8ee',
+          '--mine-color': '#2b2623', '--detonated-bg': '#c92a2a',
+          '--panel-bg': '#ebe3d5', '--panel-elevated': '#e0d6c5', '--panel-border': '#cbbba4',
+          '--num-1': '#2b2623', '--num-2': '#2b7a78', '--num-3': '#c92a2a', '--num-4': '#5f3dc4',
+          '--num-5': '#b45309', '--num-6': '#0ca678', '--num-7': '#862e9c', '--num-8': '#495057'
+        }
+      },
+      'retro-arcade': {
+        name: 'Cyber Arcade',
+        vars: {
+          '--bg-main': '#0f0a1c', '--bg-board': '#0f0a1c',
+          '--cell-unrevealed': '#e11d74', '--cell-revealed': '#0f0a1c',
+          '--grid-line': '#44155b', '--accent-primary': '#00f5d4',
+          '--accent-secondary': '#fee440', '--text-main': '#fee440',
+          '--text-muted': '#9b5de5', '--flag-color': '#00f5d4',
+          '--mine-color': '#fee440', '--detonated-bg': '#ff0055',
+          '--panel-bg': '#18102b', '--panel-elevated': '#23173d', '--panel-border': '#522277',
+          '--num-1': '#00f5d4', '--num-2': '#fee440', '--num-3': '#ff007f', '--num-4': '#00bbf9',
+          '--num-5': '#9b5de5', '--num-6': '#00f5d4', '--num-7': '#f15bb5', '--num-8': '#ffffff'
+        }
+      },
+      'monochrome-ink': {
+        name: 'Monochrome Ink',
+        vars: {
+          '--bg-main': '#161616', '--bg-board': '#161616',
+          '--cell-unrevealed': '#525252', '--cell-revealed': '#161616',
+          '--grid-line': '#2e2e2e', '--accent-primary': '#d4d4d4',
+          '--accent-secondary': '#f5f5f5', '--text-main': '#f5f5f5',
+          '--text-muted': '#8a8a8a', '--flag-color': '#ffffff',
+          '--mine-color': '#f5f5f5', '--detonated-bg': '#a3a3a3',
+          '--panel-bg': '#1f1f1f', '--panel-elevated': '#292929', '--panel-border': '#3d3d3d',
+          '--num-1': '#e5e5e5', '--num-2': '#d4d4d4', '--num-3': '#c2c2c2', '--num-4': '#b0b0b0',
+          '--num-5': '#9e9e9e', '--num-6': '#8c8c8c', '--num-7': '#7a7a7a', '--num-8': '#ffffff'
+        }
+      }
+    };
+
+    const DIFFICULTY_PRESETS = {
+      reference:    { id: 'reference',    name: 'Pocket 6×9',   cols: 6,  rows: 9,  mines: 10 },
+      beginner:     { id: 'beginner',     name: 'Beginner',     cols: 9,  rows: 9,  mines: 10 },
+      intermediate: { id: 'intermediate', name: 'Intermediate', cols: 16, rows: 16, mines: 40 },
+      expert:       { id: 'expert',       name: 'Expert',       cols: 16, rows: 30, mines: 99 }
+    };
+
+    const STORAGE_KEY = 'midnight_rose_minesweeper_v3';
+
+    const state = {
+      difficulty: 'reference',
+      cols: 6,
+      rows: 9,
+      mines: 10,
+      mode: 'dig', // 'dig' | 'flag'
+      status: 'idle', // 'idle' | 'playing' | 'won' | 'lost'
+      firstMoveDone: false,
+      flagsPlaced: 0,
+      revealedCount: 0,
+      elapsedSeconds: 0,
+      startTimeMs: 0,
+      timerId: null,
+      zoomMode: 'auto', // 'auto' | '100' | '125'
+      board: [], // 2D array of cell objects
+      savedLayoutMines: null, // Allows retrying exact same seed
+      settings: {
+        safeRadius: true,
+        chording: true,
+        qmark: false,
+        longPress: true,
+        sound: true,
+        haptics: true,
+        particles: true,
+        surface: 'flat',
+        gridStyle: 'crosshair',
+        cellRadius: 9,
+        cellSize: 44,
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        themeId: 'midnight-rose',
+        customVars: { ...THEME_PRESETS['midnight-rose'].vars }
+      },
+      stats: {
+        played: 0,
+        won: 0,
+        currentStreak: 0,
+        bestStreak: 0,
+        bestTimes: { reference: null, beginner: null, intermediate: null, expert: null },
+        leaderboard: []
+      },
+      lbFilter: 'all',
+      lbSort: 'time'
+    };
+
+    /* ============================================================================
+       2. PROCEDURAL HARMONIC WEB AUDIO & HAPTICS ENGINE
+       ============================================================================ */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.scale = [1, 1.125, 1.25, 1.5, 1.667, 2, 2.25, 2.5];
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      haptic(pattern) {
+        if (!state.settings.haptics) return;
+        if (navigator.vibrate) {
+          try { navigator.vibrate(pattern); } catch (_) {}
+        }
+      }
+
+      playTone({ freq = 440, type = 'sine', duration = 0.08, gain = 0.12, delay = 0, slideTo = null }) {
+        if (!state.settings.sound) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime + delay;
+        const osc = this.ctx.createOscillator();
+        const env = this.ctx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        if (slideTo) {
+          osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+        }
+
+        env.gain.setValueAtTime(0.0001, now);
+        env.gain.linearRampToValueAtTime(gain, now + 0.008);
+        env.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+        osc.connect(env);
+        env.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + duration + 0.015);
+      }
+
+      dig(cascadeCount = 1) {
+        this.haptic(8);
+        if (cascadeCount <= 1) {
+          this.playTone({ freq: 310, slideTo: 420, type: 'triangle', duration: 0.065, gain: 0.11 });
+        } else {
+          const steps = Math.min(cascadeCount, 7);
+          for (let i = 0; i < steps; i++) {
+            const ratio = this.scale[i % this.scale.length];
+            this.playTone({
+              freq: 290 * ratio,
+              type: 'sine',
+              duration: 0.11,
+              gain: 0.085 * (1 - i * 0.08),
+              delay: i * 0.032
+            });
+          }
+        }
+      }
+
+      flag(placed = true) {
+        this.haptic(placed ? [10, 20, 14] : 8);
+        if (placed) {
+          this.playTone({ freq: 520, slideTo: 740, type: 'triangle', duration: 0.075, gain: 0.12 });
+        } else {
+          this.playTone({ freq: 620, slideTo: 410, type: 'triangle', duration: 0.07, gain: 0.09 });
+        }
+      }
+
+      error() {
+        this.haptic([18, 30, 18]);
+        this.playTone({ freq: 175, slideTo: 135, type: 'sawtooth', duration: 0.11, gain: 0.07 });
+      }
+
+      win() {
+        this.haptic([15, 40, 20, 40, 35]);
+        const notes = [440, 554.37, 659.25, 880, 1108.73];
+        notes.forEach((freq, idx) => {
+          this.playTone({
+            freq,
+            type: 'triangle',
+            duration: 0.28,
+            gain: 0.12,
+            delay: idx * 0.065
+          });
+        });
+      }
+
+      lose() {
+        this.haptic([45, 40, 80]);
+        this.playTone({ freq: 150, slideTo: 48, type: 'sawtooth', duration: 0.36, gain: 0.16 });
+        this.playTone({ freq: 112, slideTo: 42, type: 'triangle', duration: 0.42, gain: 0.16, delay: 0.04 });
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    /* ============================================================================
+       3. INTERACTIVE PARTICLE, SHOCKWAVE & CONFETTI CANVAS ENGINE
+       ============================================================================ */
+    class ParticleFX {
+      constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.particles = [];
+        this.rings = [];
+        this.rafId = null;
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+      }
+
+      resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        this.canvas.width = window.innerWidth * dpr;
+        this.canvas.height = window.innerHeight * dpr;
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      spawnSparks(x, y, color, count = 8, speed = 3.2) {
+        if (!state.settings.particles) return;
+        for (let i = 0; i < count; i++) {
+          const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+          const vel = speed * (0.55 + Math.random() * 0.65);
+          this.particles.push({
+            x, y,
+            vx: Math.cos(angle) * vel,
+            vy: Math.sin(angle) * vel - 0.6,
+            size: 2.5 + Math.random() * 2.5,
+            color,
+            alpha: 1,
+            gravity: 0.12,
+            decay: 0.032 + Math.random() * 0.015,
+            shape: 'circle'
+          });
+        }
+        this.startLoop();
+      }
+
+      spawnRing(x, y, color, maxRadius = 48) {
+        if (!state.settings.particles) return;
+        this.rings.push({
+          x, y,
+          radius: 6,
+          maxRadius,
+          color,
+          alpha: 0.72
+        });
+        this.startLoop();
+      }
+
+      spawnVictoryConfetti() {
+        if (!state.settings.particles) return;
+        const colors = [
+          state.settings.customVars['--accent-primary'],
+          state.settings.customVars['--accent-secondary'],
+          state.settings.customVars['--num-2'],
+          state.settings.customVars['--num-6']
+        ];
+        const cx = window.innerWidth / 2;
+        const cy = window.innerHeight * 0.42;
+
+        for (let i = 0; i < 56; i++) {
+          const angle = -Math.PI / 2 + (Math.random() - 0.5) * 1.9;
+          const speed = 5 + Math.random() * 7.5;
+          this.particles.push({
+            x: cx + (Math.random() - 0.5) * 80,
+            y: cy + (Math.random() - 0.5) * 30,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: 5 + Math.random() * 4,
+            color: colors[i % colors.length],
+            alpha: 1,
+            gravity: 0.18,
+            decay: 0.011 + Math.random() * 0.008,
+            rot: Math.random() * Math.PI,
+            vRot: (Math.random() - 0.5) * 0.2,
+            shape: 'rect'
+          });
+        }
+        this.startLoop();
+      }
+
+      startLoop() {
+        if (this.rafId) return;
+        const tick = () => {
+          this.ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+          for (let i = this.rings.length - 1; i >= 0; i--) {
+            const r = this.rings[i];
+            r.radius += (r.maxRadius - r.radius) * 0.18;
+            r.alpha -= 0.045;
+            if (r.alpha <= 0.01) {
+              this.rings.splice(i, 1);
+              continue;
+            }
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+            this.ctx.strokeStyle = r.color;
+            this.ctx.globalAlpha = Math.max(0, r.alpha);
+            this.ctx.lineWidth = 2;
+            this.ctx.stroke();
+            this.ctx.restore();
+          }
+
+          for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += p.gravity;
+            p.vx *= 0.98;
+            p.alpha -= p.decay;
+
+            if (p.alpha <= 0.01) {
+              this.particles.splice(i, 1);
+              continue;
+            }
+
+            this.ctx.save();
+            this.ctx.globalAlpha = Math.max(0, p.alpha);
+            this.ctx.fillStyle = p.color;
+            this.ctx.translate(p.x, p.y);
+            if (p.shape === 'rect') {
+              p.rot += p.vRot;
+              this.ctx.rotate(p.rot);
+              this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+            } else {
+              this.ctx.beginPath();
+              this.ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+              this.ctx.fill();
+            }
+            this.ctx.restore();
+          }
+
+          if (this.particles.length > 0 || this.rings.length > 0) {
+            this.rafId = requestAnimationFrame(tick);
+          } else {
+            this.rafId = null;
+          }
+        };
+        this.rafId = requestAnimationFrame(tick);
+      }
+    }
+
+    const fx = new ParticleFX(document.getElementById('fx-canvas'));
+
+    /* ============================================================================
+       4. MECHANICAL ROLLING ODOMETER COMPONENT
+       ============================================================================ */
+    class MechanicalOdometer {
+      constructor(el) {
+        this.el = el;
+        this.currentStr = '';
+      }
+
+      setValue(val) {
+        const str = String(val);
+        const chars = str.split('');
+
+        while (this.el.children.length > chars.length) {
+          this.el.removeChild(this.el.firstChild);
+        }
+        while (this.el.children.length < chars.length) {
+          const col = document.createElement('span');
+          col.className = 'odo-col';
+          const ribbon = document.createElement('span');
+          ribbon.className = 'odo-ribbon';
+          for (let d = 0; d <= 9; d++) {
+            const sp = document.createElement('span');
+            sp.textContent = d;
+            ribbon.appendChild(sp);
+          }
+          const minus = document.createElement('span');
+          minus.textContent = '-';
+          ribbon.appendChild(minus);
+          col.appendChild(ribbon);
+          this.el.insertBefore(col, this.el.firstChild);
+        }
+
+        chars.forEach((ch, idx) => {
+          const col = this.el.children[idx];
+          const ribbon = col.firstChild;
+          const slot = ch === '-' ? 10 : parseInt(ch, 10) || 0;
+          ribbon.style.transform = `translateY(-${slot * 1.2}em)`;
+        });
+
+        this.currentStr = str;
+      }
+    }
+
+    const odoMines = new MechanicalOdometer(document.getElementById('odo-mines'));
+    const odoTimer = new MechanicalOdometer(document.getElementById('odo-timer'));
+
+    /* ============================================================================
+       5. SVG GLYPH TEMPLATES (INCLUDING USER'S CUSTOM MINE SVG)
+       ============================================================================ */
+    const SVG_FLAG = `<svg width="58%" height="58%" viewBox="0 0 24 24" fill="var(--flag-color)"><path d="M5.5 3a1 1 0 0 1 1 1v.6h11.3c.8 0 1.3.9.8 1.6l-2.4 3.4 2.4 3.4c.5.7 0 1.6-.8 1.6H6.5V20a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1Z"/></svg>`;
+
+    const SVG_MINE = `
+      <svg width="68%" height="68%" viewBox="0 0 100 100" aria-hidden="true">
+        <g mask="url(#mine-hole-mask)">
+          <g stroke="currentColor" stroke-width="7" stroke-linecap="round">
+            <line x1="14" y1="50" x2="86" y2="50"/>
+            <line x1="50" y1="14" x2="50" y2="86"/>
+            <line x1="24.5" y1="24.5" x2="75.5" y2="75.5"/>
+            <line x1="75.5" y1="24.5" x2="24.5" y2="75.5"/>
+          </g>
+          <circle cx="50" cy="50" r="25" fill="currentColor"/>
+        </g>
+      </svg>
+    `;
+
+    const SVG_FALSE_FLAG = `<svg width="62%" height="62%" viewBox="0 0 24 24" fill="none" stroke="#ff6b8b" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>`;
+
+    /* ============================================================================
+       6. CORE MINESWEEPER ENGINE & ORGANIC BLOB RENDERER
+       ============================================================================ */
+    const boardGridEl = document.getElementById('board-grid');
+    const boardScalePlaneEl = document.getElementById('board-scale-plane');
+    const boardStageEl = document.getElementById('board-stage');
+    const resultBannerEl = document.getElementById('result-banner');
+
+    function getNeighbors(r, c) {
+      const list = [];
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          const nr = r + dr;
+          const nc = c + dc;
+          if (nr >= 0 && nr < state.rows && nc >= 0 && nc < state.cols) {
+            list.push(state.board[nr][nc]);
+          }
+        }
+      }
+      return list;
+    }
+
+    function initGame({ retrySameSeed = false } = {}) {
+      stopTimer();
+      state.status = 'idle';
+      state.firstMoveDone = retrySameSeed && Array.isArray(state.savedLayoutMines);
+      state.flagsPlaced = 0;
+      state.revealedCount = 0;
+      state.elapsedSeconds = 0;
+
+      odoMines.setValue(state.mines);
+      odoTimer.setValue(0);
+      resultBannerEl.classList.remove('visible');
+
+      boardGridEl.style.gridTemplateColumns = `repeat(${state.cols}, var(--cell-size))`;
+      boardGridEl.style.gridTemplateRows = `repeat(${state.rows}, var(--cell-size))`;
+      boardGridEl.innerHTML = '';
+      state.board = [];
+
+      const fragment = document.createDocumentFragment();
+
+      for (let r = 0; r < state.rows; r++) {
+        const row = [];
+        for (let c = 0; c < state.cols; c++) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'cell unrevealed';
+          btn.dataset.r = r;
+          btn.dataset.c = c;
+          btn.setAttribute('role', 'gridcell');
+          btn.setAttribute('aria-label', `Row ${r + 1}, Column ${c + 1}, Unrevealed`);
+
+          const glyph = document.createElement('span');
+          glyph.className = 'cell-glyph';
+          btn.appendChild(glyph);
+
+          const cellObj = {
+            r, c,
+            isMine: false,
+            isRevealed: false,
+            isFlagged: false,
+            isQuestion: false,
+            detonated: false,
+            falseFlag: false,
+            adjMines: 0,
+            el: btn,
+            glyphEl: glyph,
+            renderSig: 'U'
+          };
+
+          row.push(cellObj);
+          fragment.appendChild(btn);
+        }
+        state.board.push(row);
+      }
+
+      boardGridEl.appendChild(fragment);
+
+      if (retrySameSeed && state.savedLayoutMines) {
+        state.savedLayoutMines.forEach(([mr, mc]) => {
+          if (state.board[mr]?.[mc]) state.board[mr][mc].isMine = true;
+        });
+        computeAdjacentCounts();
+      } else {
+        state.savedLayoutMines = null;
+      }
+
+      updateBlobGeometry();
+      fitBoardToViewport();
+
+      boardGridEl.classList.remove('board-spawn');
+      void boardGridEl.offsetWidth;
+      boardGridEl.classList.add('board-spawn');
+    }
+
+    function placeMines(safeR, safeC) {
+      const totalCells = state.rows * state.cols;
+      const forbidden = new Set();
+
+      if (state.settings.safeRadius) {
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const nr = safeR + dr;
+            const nc = safeC + dc;
+            if (nr >= 0 && nr < state.rows && nc >= 0 && nc < state.cols) {
+              forbidden.add(`${nr},${nc}`);
+            }
+          }
+        }
+        if (totalCells - forbidden.size < state.mines) {
+          forbidden.clear();
+          forbidden.add(`${safeR},${safeC}`);
+        }
+      } else {
+        forbidden.add(`${safeR},${safeC}`);
+      }
+
+      const candidates = [];
+      for (let r = 0; r < state.rows; r++) {
+        for (let c = 0; c < state.cols; c++) {
+          if (!forbidden.has(`${r},${c}`)) candidates.push([r, c]);
+        }
+      }
+
+      for (let i = candidates.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+      }
+
+      const selected = candidates.slice(0, state.mines);
+      state.savedLayoutMines = selected;
+
+      selected.forEach(([r, c]) => {
+        state.board[r][c].isMine = true;
+      });
+
+      computeAdjacentCounts();
+    }
+
+    function computeAdjacentCounts() {
+      for (let r = 0; r < state.rows; r++) {
+        for (let c = 0; c < state.cols; c++) {
+          const cell = state.board[r][c];
+          if (cell.isMine) continue;
+          cell.adjMines = getNeighbors(r, c).filter(n => n.isMine).length;
+        }
+      }
+    }
+
+    function loadReferenceDemoOpening() {
+      initGame();
+      const startR = Math.min(state.rows - 3, 5);
+      const startC = Math.min(state.cols - 2, 3);
+      placeMines(startR, startC);
+      state.firstMoveDone = true;
+      state.status = 'playing';
+      revealFromCell(startR, startC, false);
+      startTimer();
+    }
+
+    /* ============================================================================
+       7. ORGANIC CONTIGUOUS BLOB & CONCAVE FILLET GEOMETRY
+       ============================================================================ */
+    function isCoveredBlob(r, c) {
+      if (r < 0 || r >= state.rows || c < 0 || c >= state.cols) return false;
+      const cell = state.board[r][c];
+      return !cell.isRevealed;
+    }
+
+    function updateBlobGeometry() {
+      const rad = `${state.settings.cellRadius}px`;
+
+      for (let r = 0; r < state.rows; r++) {
+        for (let c = 0; c < state.cols; c++) {
+          const cell = state.board[r][c];
+          const el = cell.el;
+
+          if (!cell.isRevealed) {
+            const top = isCoveredBlob(r - 1, c);
+            const bottom = isCoveredBlob(r + 1, c);
+            const left = isCoveredBlob(r, c - 1);
+            const right = isCoveredBlob(r, c + 1);
+
+            const tl = (!top && !left) ? rad : '0px';
+            const tr = (!top && !right) ? rad : '0px';
+            const br = (!bottom && !right) ? rad : '0px';
+            const bl = (!bottom && !left) ? rad : '0px';
+
+            el.style.borderRadius = `${tl} ${tr} ${br} ${bl}`;
+            el.style.backgroundImage = '';
+          } else {
+            el.style.borderRadius = cell.detonated ? `${Math.round(state.settings.cellRadius * 0.8)}px` : '0px';
+
+            const rightIsBlob = isCoveredBlob(r, c + 1) || c === state.cols - 1;
+            const bottomIsBlob = isCoveredBlob(r + 1, c) || r === state.rows - 1;
+            el.classList.toggle('no-grid-r', rightIsBlob);
+            el.classList.toggle('no-grid-b', bottomIsBlob);
+
+            const uTop = isCoveredBlob(r - 1, c);
+            const uBot = isCoveredBlob(r + 1, c);
+            const uLeft = isCoveredBlob(r, c - 1);
+            const uRight = isCoveredBlob(r, c + 1);
+
+            const fillets = [];
+            if (uTop && uLeft && isCoveredBlob(r - 1, c - 1)) {
+              fillets.push(`radial-gradient(circle at 100% 100%, transparent ${rad}, var(--cell-unrevealed) calc(${rad} + 0.6px)) 0 0 / ${rad} ${rad} no-repeat`);
+            }
+            if (uTop && uRight && isCoveredBlob(r - 1, c + 1)) {
+              fillets.push(`radial-gradient(circle at 0% 100%, transparent ${rad}, var(--cell-unrevealed) calc(${rad} + 0.6px)) 100% 0 / ${rad} ${rad} no-repeat`);
+            }
+            if (uBot && uLeft && isCoveredBlob(r + 1, c - 1)) {
+              fillets.push(`radial-gradient(circle at 100% 0%, transparent ${rad}, var(--cell-unrevealed) calc(${rad} + 0.6px)) 0 100% / ${rad} ${rad} no-repeat`);
+            }
+            if (uBot && uRight && isCoveredBlob(r + 1, c + 1)) {
+              fillets.push(`radial-gradient(circle at 0% 0%, transparent ${rad}, var(--cell-unrevealed) calc(${rad} + 0.6px)) 100% 100% / ${rad} ${rad} no-repeat`);
+            }
+
+            el.style.background = fillets.length > 0
+              ? `${fillets.join(', ')}, var(--cell-revealed)`
+              : 'var(--cell-revealed)';
+
+            if (cell.adjMines > 0 && !cell.isMine) {
+              const adjFlags = getNeighbors(r, c).filter(n => n.isFlagged).length;
+              el.classList.toggle('is-satisfied', adjFlags === cell.adjMines);
+            }
+          }
+        }
+      }
+    }
+
+    /* ============================================================================
+       8. DIFF-BASED CELL RENDERING & PHYSICAL DISSOLVING CAP CHOREOGRAPHY
+       ============================================================================ */
+    function animateCellReveal(cell, originR, originC) {
+      const el = cell.el;
+      const glyph = cell.glyphEl;
+      const dist = Math.hypot(cell.r - originR, cell.c - originC);
+      const delayMs = Math.min(dist * 34, 240) * (document.body.dataset.motion === 'reduced' ? 0 : 1);
+
+      el.classList.remove('unrevealed', 'is-pressed', 'is-neighbor-pressed');
+      el.classList.add('revealed');
+
+      if (cell.adjMines > 0 && !cell.isMine) {
+        el.classList.add('has-number');
+        el.dataset.num = cell.adjMines;
+        glyph.textContent = cell.adjMines;
+      } else {
+        glyph.textContent = '';
+      }
+
+      if (document.body.dataset.motion !== 'reduced' && el.animate) {
+        const cap = document.createElement('span');
+        cap.className = 'reveal-cap-ghost';
+        cap.style.borderRadius = el.style.borderRadius || `${state.settings.cellRadius}px`;
+        el.appendChild(cap);
+
+        const dx = (cell.c - originC) * 3.5;
+        const dy = (cell.r - originR) * 3.5 - 5;
+
+        const capAnim = cap.animate([
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: `translate(${dx}px, ${dy}px) scale(0.62)`, opacity: 0 }
+        ], {
+          duration: 280,
+          delay: delayMs,
+          easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+          fill: 'forwards'
+        });
+        capAnim.onfinish = () => cap.remove();
+
+        if (cell.adjMines > 0) {
+          glyph.animate([
+            { transform: 'scale(0.45) translateY(5px)', opacity: 0 },
+            { transform: 'scale(1) translateY(0)', opacity: 1 }
+          ], {
+            duration: 300,
+            delay: delayMs + 55,
+            easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+            fill: 'backwards'
+          });
+        }
+      }
+    }
+
+    function revealFromCell(startR, startC, triggerAudio = true) {
+      const origin = state.board[startR][startC];
+      if (!origin || origin.isRevealed || origin.isFlagged) return;
+
+      if (!state.firstMoveDone) {
+        placeMines(startR, startC);
+        state.firstMoveDone = true;
+        state.status = 'playing';
+        startTimer();
+      }
+
+      if (origin.isMine) {
+        triggerDefeat(origin);
+        return;
+      }
+
+      const queue = [origin];
+      const visited = new Set([`${startR},${startC}`]);
+      const newlyRevealed = [];
+
+      while (queue.length > 0) {
+        const curr = queue.shift();
+        if (!curr.isRevealed && !curr.isMine) {
+          if (curr.isFlagged) {
+            curr.isFlagged = false;
+            state.flagsPlaced--;
+          }
+          curr.isRevealed = true;
+          curr.isQuestion = false;
+          state.revealedCount++;
+          newlyRevealed.push(curr);
+        }
+
+        if (curr.adjMines === 0) {
+          for (const nb of getNeighbors(curr.r, curr.c)) {
+            const key = `${nb.r},${nb.c}`;
+            if (!visited.has(key) && !nb.isRevealed && !nb.isMine && !nb.isFlagged) {
+              visited.add(key);
+              queue.push(nb);
+            }
+          }
+        }
+      }
+
+      newlyRevealed.forEach(cell => {
+        animateCellReveal(cell, startR, startC);
+        cell.el.setAttribute('aria-label', `Row ${cell.r + 1}, Column ${cell.c + 1}, Revealed ${cell.adjMines || 'empty'}`);
+      });
+
+      updateBlobGeometry();
+      odoMines.setValue(Math.max(0, state.mines - state.flagsPlaced));
+
+      if (triggerAudio && newlyRevealed.length > 0) {
+        sound.dig(newlyRevealed.length);
+        const rect = origin.el.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        fx.spawnSparks(cx, cy, state.settings.customVars['--accent-primary'], Math.min(12, 5 + newlyRevealed.length));
+        if (newlyRevealed.length >= 4) {
+          fx.spawnRing(cx, cy, state.settings.customVars['--accent-secondary'], 64);
+        }
+      }
+
+      checkVictory();
+    }
+
+    function toggleFlagOnCell(r, c) {
+      if (state.status === 'won' || state.status === 'lost') return;
+      const cell = state.board[r][c];
+      if (!cell || cell.isRevealed) return;
+
+      const rect = cell.el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+
+      if (!cell.isFlagged && !cell.isQuestion) {
+        cell.isFlagged = true;
+        state.flagsPlaced++;
+        cell.glyphEl.innerHTML = SVG_FLAG;
+        if (cell.glyphEl.animate) {
+          cell.glyphEl.animate([
+            { transform: 'scale(0.2) translateY(-9px) rotate(-18deg)', opacity: 0 },
+            { transform: 'scale(1.16) translateY(0) rotate(4deg)', opacity: 1 },
+            { transform: 'scale(1) translateY(0) rotate(0deg)', opacity: 1 }
+          ], { duration: 240, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' });
+        }
+        sound.flag(true);
+        fx.spawnSparks(cx, cy, state.settings.customVars['--flag-color'], 6, 2.2);
+      } else if (cell.isFlagged) {
+        cell.isFlagged = false;
+        state.flagsPlaced--;
+        if (state.settings.qmark) {
+          cell.isQuestion = true;
+          cell.glyphEl.textContent = '?';
+        } else {
+          cell.glyphEl.innerHTML = '';
+        }
+        sound.flag(false);
+      } else if (cell.isQuestion) {
+        cell.isQuestion = false;
+        cell.glyphEl.innerHTML = '';
+        sound.flag(false);
+      }
+
+      odoMines.setValue(state.mines - state.flagsPlaced);
+      const hudCenter = document.getElementById('hud-center-trigger');
+      hudCenter.classList.remove('pulse-cog');
+      void hudCenter.offsetWidth;
+      hudCenter.classList.add('pulse-cog');
+
+      updateBlobGeometry();
+    }
+
+    function chordCell(r, c) {
+      if (!state.settings.chording || state.status !== 'playing') return;
+      const cell = state.board[r][c];
+      if (!cell || !cell.isRevealed || cell.adjMines <= 0) return;
+
+      const neighbors = getNeighbors(r, c);
+      const flaggedCount = neighbors.filter(n => n.isFlagged).length;
+
+      if (flaggedCount === cell.adjMines) {
+        const unflaggedCovered = neighbors.filter(n => !n.isRevealed && !n.isFlagged);
+        if (unflaggedCovered.length === 0) return;
+        unflaggedCovered.forEach(n => revealFromCell(n.r, n.c, true));
+      } else {
+        sound.error();
+        if (cell.el.animate) {
+          cell.el.animate([
+            { transform: 'translateX(0)' },
+            { transform: 'translateX(-4px)' },
+            { transform: 'translateX(4px)' },
+            { transform: 'translateX(-3px)' },
+            { transform: 'translateX(0)' }
+          ], { duration: 220 });
+        }
+        neighbors.filter(n => !n.isRevealed && !n.isFlagged).forEach(n => {
+          n.el.classList.add('chord-hint');
+          setTimeout(() => n.el.classList.remove('chord-hint'), 210);
+        });
+      }
+    }
+
+    /* ============================================================================
+       9. VICTORY, DEFEAT & 3BV EFFICIENCY ANALYTICS
+       ============================================================================ */
+    function computeBoard3BV() {
+      const visited = Array.from({ length: state.rows }, () => Array(state.cols).fill(false));
+      let bv = 0;
+
+      for (let r = 0; r < state.rows; r++) {
+        for (let c = 0; c < state.cols; c++) {
+          const cell = state.board[r][c];
+          if (!cell.isMine && cell.adjMines === 0 && !visited[r][c]) {
+            bv++;
+            const q = [cell];
+            visited[r][c] = true;
+            while (q.length) {
+              const cur = q.shift();
+              for (const nb of getNeighbors(cur.r, cur.c)) {
+                if (!nb.isMine && !visited[nb.r][nb.c]) {
+                  visited[nb.r][nb.c] = true;
+                  if (nb.adjMines === 0) q.push(nb);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      for (let r = 0; r < state.rows; r++) {
+        for (let c = 0; c < state.cols; c++) {
+          const cell = state.board[r][c];
+          if (!cell.isMine && !visited[r][c]) bv++;
+        }
+      }
+      return Math.max(1, bv);
+    }
+
+    function checkVictory() {
+      if (state.status === 'won' || state.status === 'lost') return;
+      const safeTotal = state.rows * state.cols - state.mines;
+      if (state.revealedCount < safeTotal) return;
+
+      state.status = 'won';
+      stopTimer();
+      const finalSec = Math.max(1, state.elapsedSeconds);
+
+      let idx = 0;
+      for (let r = 0; r < state.rows; r++) {
+        for (let c = 0; c < state.cols; c++) {
+          const cell = state.board[r][c];
+          if (cell.isMine && !cell.isFlagged) {
+            cell.isFlagged = true;
+            state.flagsPlaced++;
+            setTimeout(() => {
+              cell.glyphEl.innerHTML = SVG_FLAG;
+              if (cell.glyphEl.animate) {
+                cell.glyphEl.animate([
+                  { transform: 'scale(0) rotate(-25deg)', opacity: 0 },
+                  { transform: 'scale(1.2) rotate(0deg)', opacity: 1 },
+                  { transform: 'scale(1)', opacity: 1 }
+                ], { duration: 260, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' });
+              }
+            }, idx * 28);
+            idx++;
+          }
+        }
+      }
+
+      odoMines.setValue(0);
+      sound.win();
+      fx.spawnVictoryConfetti();
+
+      const bv = computeBoard3BV();
+      const bvs = +(bv / finalSec).toFixed(2);
+      state.stats.played++;
+      state.stats.won++;
+      state.stats.currentStreak++;
+      if (state.stats.currentStreak > state.stats.bestStreak) {
+        state.stats.bestStreak = state.stats.currentStreak;
+      }
+
+      const diffKey = state.difficulty;
+      let isNewRecord = false;
+      if (DIFFICULTY_PRESETS[diffKey]) {
+        const prev = state.stats.bestTimes[diffKey];
+        if (prev === null || finalSec < prev) {
+          state.stats.bestTimes[diffKey] = finalSec;
+          isNewRecord = true;
+        }
+      }
+
+      state.stats.leaderboard.push({
+        id: Date.now(),
+        difficulty: state.difficulty,
+        dims: `${state.cols}×${state.rows}`,
+        time: finalSec,
+        bv,
+        bvs,
+        date: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      });
+
+      savePersistentData();
+
+      document.getElementById('result-badge').textContent = isNewRecord ? 'NEW RECORD' : 'CLEARED';
+      document.getElementById('result-summary').textContent = `${finalSec}s • ${bvs} 3BV/s`;
+      document.getElementById('btn-retry-layout').style.display = 'none';
+      resultBannerEl.classList.add('visible');
+      announceSR(`Victory! Board cleared in ${finalSec} seconds.`);
+    }
+
+    function triggerDefeat(detonatedCell) {
+      state.status = 'lost';
+      stopTimer();
+      detonatedCell.detonated = true;
+      detonatedCell.isRevealed = true;
+      detonatedCell.el.classList.remove('unrevealed');
+      detonatedCell.el.classList.add('revealed', 'detonated');
+      detonatedCell.glyphEl.innerHTML = SVG_MINE;
+
+      const rect = detonatedCell.el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      sound.lose();
+      fx.spawnSparks(cx, cy, state.settings.customVars['--detonated-bg'], 18, 4.5);
+      fx.spawnRing(cx, cy, state.settings.customVars['--detonated-bg'], 95);
+
+      for (let r = 0; r < state.rows; r++) {
+        for (let c = 0; c < state.cols; c++) {
+          const cell = state.board[r][c];
+          if (cell === detonatedCell) continue;
+          const dist = Math.hypot(r - detonatedCell.r, c - detonatedCell.c);
+          const delay = Math.min(dist * 45, 380);
+
+          if (cell.isMine && !cell.isFlagged) {
+            setTimeout(() => {
+              if (state.status !== 'lost') return;
+              cell.isRevealed = true;
+              cell.el.classList.remove('unrevealed');
+              cell.el.classList.add('revealed');
+              cell.glyphEl.innerHTML = SVG_MINE;
+              updateBlobGeometry();
+            }, delay);
+          } else if (!cell.isMine && cell.isFlagged) {
+            setTimeout(() => {
+              if (state.status !== 'lost') return;
+              cell.falseFlag = true;
+              cell.el.classList.add('false-flag');
+              cell.glyphEl.innerHTML = SVG_FALSE_FLAG;
+            }, delay);
+          }
+        }
+      }
+
+      updateBlobGeometry();
+
+      state.stats.played++;
+      state.stats.currentStreak = 0;
+      savePersistentData();
+
+      document.getElementById('result-badge').textContent = 'DETONATED';
+      document.getElementById('result-summary').textContent = `${state.elapsedSeconds}s elapsed`;
+      document.getElementById('btn-retry-layout').style.display = 'inline-flex';
+      resultBannerEl.classList.add('visible');
+      announceSR('Mine detonated. Game over.');
+    }
+
+    /* ============================================================================
+       10. TIMER & VIEWPORT AUTO-FITTER
+       ============================================================================ */
+    function startTimer() {
+      stopTimer();
+      state.startTimeMs = Date.now() - state.elapsedSeconds * 1000;
+      state.timerId = setInterval(() => {
+        if (state.status !== 'playing') return;
+        const sec = Math.min(999, Math.floor((Date.now() - state.startTimeMs) / 1000));
+        if (sec !== state.elapsedSeconds) {
+          state.elapsedSeconds = sec;
+          odoTimer.setValue(sec);
+        }
+      }, 250);
+    }
+
+    function stopTimer() {
+      if (state.timerId) {
+        clearInterval(state.timerId);
+        state.timerId = null;
+      }
+    }
+
+    function fitBoardToViewport() {
+      const stageRect = boardStageEl.getBoundingClientRect();
+      const cellPx = state.settings.cellSize;
+      const naturalW = state.cols * cellPx + 8;
+      const naturalH = state.rows * cellPx + 8;
+
+      let scale = 1;
+      if (state.zoomMode === 'auto') {
+        const availW = Math.max(200, stageRect.width - 24);
+        const availH = Math.max(200, stageRect.height - 24);
+        scale = Math.min(availW / naturalW, availH / naturalH, 1.18);
+      } else if (state.zoomMode === '125') {
+        scale = 1.25;
+      }
+
+      boardScalePlaneEl.style.transform = `scale(${scale.toFixed(3)})`;
+    }
+
+    window.addEventListener('resize', fitBoardToViewport);
+
+    /* ============================================================================
+       11. TACTILE POINTER SCRUBBING, DEPRESSION & KEYBOARD CONTROLS
+       ============================================================================ */
+    let activeCell = null;
+    let longPressTimer = null;
+    let longPressTriggered = false;
+
+    function setPressedCell(cell) {
+      if (activeCell === cell) return;
+      clearPressedCell();
+      if (!cell || cell.isRevealed) return;
+      activeCell = cell;
+      cell.el.classList.add('is-pressed');
+      getNeighbors(cell.r, cell.c).forEach(nb => {
+        if (!nb.isRevealed) nb.el.classList.add('is-neighbor-pressed');
+      });
+    }
+
+    function clearPressedCell() {
+      if (!activeCell) return;
+      activeCell.el.classList.remove('is-pressed');
+      getNeighbors(activeCell.r, activeCell.c).forEach(nb => {
+        nb.el.classList.remove('is-neighbor-pressed');
+      });
+      activeCell = null;
+    }
+
+    boardGridEl.addEventListener('pointerdown', (e) => {
+      if (e.button === 2) return;
+      const cellEl = e.target.closest('.cell');
+      if (!cellEl) return;
+      const r = +cellEl.dataset.r;
+      const c = +cellEl.dataset.c;
+      const cell = state.board[r]?.[c];
+      if (!cell) return;
+
+      longPressTriggered = false;
+      setPressedCell(cell);
+
+      if (state.settings.longPress && !cell.isRevealed && e.pointerType !== 'mouse') {
+        clearTimeout(longPressTimer);
+        longPressTimer = setTimeout(() => {
+          longPressTriggered = true;
+          clearPressedCell();
+          toggleFlagOnCell(r, c);
+        }, 250);
+      }
+    });
+
+    boardGridEl.addEventListener('pointermove', (e) => {
+      if (!activeCell) return;
+      const elUnder = document.elementFromPoint(e.clientX, e.clientY)?.closest('.cell');
+      if (!elUnder) {
+        clearTimeout(longPressTimer);
+        clearPressedCell();
+        return;
+      }
+      const r = +elUnder.dataset.r;
+      const c = +elUnder.dataset.c;
+      const cell = state.board[r]?.[c];
+      if (cell !== activeCell) {
+        clearTimeout(longPressTimer);
+        setPressedCell(cell);
+      }
+    });
+
+    boardGridEl.addEventListener('pointerup', (e) => {
+      clearTimeout(longPressTimer);
+      clearPressedCell();
+      if (longPressTriggered || e.button === 2) return;
+
+      const cellEl = e.target.closest('.cell');
+      if (!cellEl) return;
+      const r = +cellEl.dataset.r;
+      const c = +cellEl.dataset.c;
+      const cell = state.board[r]?.[c];
+      if (!cell || state.status === 'won' || state.status === 'lost') return;
+
+      if (e.button === 1 || (cell.isRevealed && cell.adjMines > 0)) {
+        chordCell(r, c);
+        return;
+      }
+
+      if (state.mode === 'flag') {
+        toggleFlagOnCell(r, c);
+      } else {
+        revealFromCell(r, c, true);
+      }
+    });
+
+    boardGridEl.addEventListener('pointercancel', () => {
+      clearTimeout(longPressTimer);
+      clearPressedCell();
+    });
+
+    boardGridEl.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const cellEl = e.target.closest('.cell');
+      if (!cellEl) return;
+      toggleFlagOnCell(+cellEl.dataset.r, +cellEl.dataset.c);
+    });
+
+    const modePillEl = document.getElementById('mode-pill');
+    function setInputMode(newMode) {
+      state.mode = newMode;
+      modePillEl.dataset.mode = newMode;
+      modePillEl.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.setAttribute('aria-checked', String(btn.dataset.target === newMode));
+      });
+      sound.haptic(6);
+    }
+
+    modePillEl.addEventListener('click', (e) => {
+      const btn = e.target.closest('.mode-btn');
+      if (btn) {
+        setInputMode(btn.dataset.target);
+      } else {
+        setInputMode(state.mode === 'dig' ? 'flag' : 'dig');
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeAllSheets();
+        return;
+      }
+      if (document.body.classList.contains('sheet-active')) return;
+
+      if (e.key === 'f' || e.key === 'F') {
+        const focused = document.activeElement?.closest('.cell');
+        if (focused) {
+          toggleFlagOnCell(+focused.dataset.r, +focused.dataset.c);
+        } else {
+          setInputMode(state.mode === 'dig' ? 'flag' : 'dig');
+        }
+      } else if (e.key === 'r' || e.key === 'R') {
+        initGame();
+      } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        const focused = document.activeElement?.closest('.cell');
+        let r = focused ? +focused.dataset.r : 0;
+        let c = focused ? +focused.dataset.c : 0;
+        if (e.key === 'ArrowUp') r = Math.max(0, r - 1);
+        if (e.key === 'ArrowDown') r = Math.min(state.rows - 1, r + 1);
+        if (e.key === 'ArrowLeft') c = Math.max(0, c - 1);
+        if (e.key === 'ArrowRight') c = Math.min(state.cols - 1, c + 1);
+        state.board[r]?.[c]?.el.focus();
+      }
+    });
+
+    /* ============================================================================
+       12. DRAWER NAVIGATION, SWIPE-TO-DISMISS & LIVE THEME STUDIO
+       ============================================================================ */
+    function openSheet(sheetId) {
+      const sheet = document.getElementById(sheetId);
+      if (!sheet) return;
+      sheet.dataset.state = 'open';
+      sheet.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('sheet-active');
+      if (sheetId === 'sheet-menu') {
+        renderStatsUI();
+        renderLeaderboardUI();
+      }
+    }
+
+    function closeSheet(sheetId) {
+      const sheet = document.getElementById(sheetId);
+      if (!sheet) return;
+      sheet.dataset.state = 'closed';
+      sheet.setAttribute('aria-hidden', 'true');
+      if (!document.querySelector('.sheet-backdrop[data-state="open"]')) {
+        document.body.classList.remove('sheet-active');
+      }
+    }
+
+    function closeAllSheets() {
+      document.querySelectorAll('.sheet-backdrop').forEach(s => {
+        s.dataset.state = 'closed';
+        s.setAttribute('aria-hidden', 'true');
+      });
+      document.body.classList.remove('sheet-active');
+    }
+
+    document.getElementById('btn-menu').addEventListener('click', () => openSheet('sheet-menu'));
+    document.getElementById('btn-theme').addEventListener('click', () => openSheet('sheet-theme'));
+    document.getElementById('hud-center-trigger').addEventListener('click', () => initGame());
+    document.getElementById('btn-quick-new').addEventListener('click', () => initGame());
+    document.getElementById('btn-next-game').addEventListener('click', () => initGame());
+    document.getElementById('btn-retry-layout').addEventListener('click', () => initGame({ retrySameSeed: true }));
+
+    document.getElementById('btn-zoom-fit').addEventListener('click', () => {
+      state.zoomMode = state.zoomMode === 'auto' ? '125' : state.zoomMode === '125' ? '100' : 'auto';
+      fitBoardToViewport();
+      showToast(`Board Zoom: ${state.zoomMode.toUpperCase()}`);
+    });
+
+    document.querySelectorAll('[data-close-sheet]').forEach(btn => {
+      btn.addEventListener('click', () => closeSheet(btn.dataset.closeSheet));
+    });
+
+    document.querySelectorAll('.sheet-backdrop').forEach(backdrop => {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) closeSheet(backdrop.id);
+      });
+    });
+
+    function bindSegmentedTabs(navId) {
+      const nav = document.getElementById(navId);
+      const indicator = nav.querySelector('.segmented-nav-indicator');
+      const tabs = Array.from(nav.querySelectorAll('.segmented-tab'));
+      const sheetPanel = nav.closest('.sheet-panel');
+
+      tabs.forEach((tab, idx) => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          indicator.style.transform = `translateX(${idx * 100}%)`;
+
+          sheetPanel.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.toggle('active', pane.id === tab.dataset.tab);
+          });
+          sound.haptic(5);
+        });
+      });
+    }
+
+    bindSegmentedTabs('menu-tabs');
+    bindSegmentedTabs('theme-tabs');
+
+    const inpW = document.getElementById('inp-width');
+    const inpH = document.getElementById('inp-height');
+    const inpM = document.getElementById('inp-mines');
+    const customDimLbl = document.getElementById('custom-dim-label');
+
+    function syncCustomSlidersLabel() {
+      const w = +inpW.value;
+      const h = +inpH.value;
+      const maxM = Math.max(3, Math.floor(w * h * 0.65));
+      inpM.max = maxM;
+      if (+inpM.value > maxM) inpM.value = maxM;
+      customDimLbl.textContent = `${w} × ${h} • ${inpM.value} Mines`;
+    }
+
+    [inpW, inpH, inpM].forEach(el => el.addEventListener('input', syncCustomSlidersLabel));
+
+    document.querySelectorAll('#difficulty-grid .preset-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const diff = DIFFICULTY_PRESETS[card.dataset.diff];
+        if (!diff) return;
+        document.querySelectorAll('#difficulty-grid .preset-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        state.difficulty = diff.id;
+        state.cols = diff.cols;
+        state.rows = diff.rows;
+        state.mines = diff.mines;
+        inpW.value = diff.cols;
+        inpH.value = diff.rows;
+        inpM.value = diff.mines;
+        syncCustomSlidersLabel();
+        savePersistentData();
+        closeSheet('sheet-menu');
+        initGame();
+      });
+    });
+
+    document.getElementById('btn-apply-custom').addEventListener('click', () => {
+      state.difficulty = 'custom';
+      state.cols = +inpW.value;
+      state.rows = +inpH.value;
+      state.mines = +inpM.value;
+      document.querySelectorAll('#difficulty-grid .preset-card').forEach(c => c.classList.remove('active'));
+      savePersistentData();
+      closeSheet('sheet-menu');
+      initGame();
+    });
+
+    function bindSwitch(id, settingKey) {
+      const btn = document.getElementById(id);
+      btn.setAttribute('aria-checked', String(!!state.settings[settingKey]));
+      btn.addEventListener('click', () => {
+        state.settings[settingKey] = !state.settings[settingKey];
+        btn.setAttribute('aria-checked', String(state.settings[settingKey]));
+        savePersistentData();
+      });
+    }
+
+    bindSwitch('sw-safe-radius', 'safeRadius');
+    bindSwitch('sw-chording', 'chording');
+    bindSwitch('sw-qmark', 'qmark');
+    bindSwitch('sw-longpress', 'longPress');
+    bindSwitch('sw-sound', 'sound');
+    bindSwitch('sw-haptics', 'haptics');
+    bindSwitch('sw-particles', 'particles');
+
+    /* ============================================================================
+       13. THEME STUDIO: SWATCHES, PRESETS & GEOMETRY CONTROLS
+       ============================================================================ */
+    const SURFACE_SWATCH_DEFS = [
+      { key: '--bg-main', label: 'Background' },
+      { key: '--cell-unrevealed', label: 'Unrevealed Blob' },
+      { key: '--cell-revealed', label: 'Revealed Cell' },
+      { key: '--grid-line', label: 'Grid Crosshair' },
+      { key: '--accent-primary', label: 'Primary Accent' },
+      { key: '--text-main', label: 'Primary Text' },
+      { key: '--flag-color', label: 'Flag Icon' },
+      { key: '--detonated-bg', label: 'Detonated Mine' }
+    ];
+
+    function applyThemeVariables() {
+      const root = document.documentElement;
+      Object.entries(state.settings.customVars).forEach(([k, v]) => {
+        root.style.setProperty(k, v);
+      });
+      root.style.setProperty('--cell-radius', `${state.settings.cellRadius}px`);
+      root.style.setProperty('--cell-size', `${state.settings.cellSize}px`);
+      root.style.setProperty('--font-ui', state.settings.fontFamily);
+      root.style.setProperty('--font-num', state.settings.fontFamily);
+      document.body.dataset.surface = state.settings.surface;
+      document.body.dataset.gridStyle = state.settings.gridStyle;
+      document.getElementById('meta-theme-color').setAttribute('content', state.settings.customVars['--bg-main']);
+      if (state.board.length > 0) {
+        updateBlobGeometry();
+        fitBoardToViewport();
+      }
+    }
+
+    function buildThemeStudioUI() {
+      const presetGrid = document.getElementById('theme-preset-grid');
+      presetGrid.innerHTML = '';
+      Object.entries(THEME_PRESETS).forEach(([id, preset]) => {
+        const card = document.createElement('button');
+        card.className = `theme-card ${state.settings.themeId === id ? 'active' : ''}`;
+        card.innerHTML = `
+          <div class="theme-mini-preview" style="background:${preset.vars['--bg-main']}">
+            <span style="background:${preset.vars['--cell-unrevealed']}"></span>
+            <span style="background:${preset.vars['--cell-unrevealed']}"></span>
+            <span style="background:${preset.vars['--cell-unrevealed']}"></span>
+            <span style="background:${preset.vars['--bg-main']};color:${preset.vars['--num-1']};font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;">1</span>
+          </div>
+          <div>
+            <div style="font-size:0.84rem;font-weight:700;color:var(--text-main);">${preset.name}</div>
+            <div style="font-size:0.7rem;color:var(--text-muted);">${preset.vars['--cell-unrevealed']}</div>
+          </div>
+        `;
+        card.addEventListener('click', () => {
+          state.settings.themeId = id;
+          state.settings.customVars = { ...preset.vars };
+          applyThemeVariables();
+          buildThemeStudioUI();
+          savePersistentData();
+        });
+        presetGrid.appendChild(card);
+      });
+
+      const surfGrid = document.getElementById('surface-swatch-grid');
+      surfGrid.innerHTML = '';
+      SURFACE_SWATCH_DEFS.forEach(({ key, label }) => {
+        const val = state.settings.customVars[key] || '#ffffff';
+        const item = document.createElement('label');
+        item.className = 'swatch-item';
+        item.innerHTML = `
+          <span class="swatch-color-dot" style="background:${val}">
+            <input type="color" value="${val}" />
+          </span>
+          <span class="swatch-label">${label}</span>
+        `;
+        const inp = item.querySelector('input');
+        const dot = item.querySelector('.swatch-color-dot');
+        inp.addEventListener('input', () => {
+          state.settings.customVars[key] = inp.value;
+          if (key === '--bg-main') state.settings.customVars['--bg-board'] = inp.value;
+          dot.style.background = inp.value;
+          applyThemeVariables();
+          savePersistentData();
+        });
+        surfGrid.appendChild(item);
+      });
+
+      const numGrid = document.getElementById('number-swatch-grid');
+      numGrid.innerHTML = '';
+      for (let n = 1; n <= 8; n++) {
+        const key = `--num-${n}`;
+        const val = state.settings.customVars[key];
+        const item = document.createElement('label');
+        item.className = 'swatch-item';
+        item.innerHTML = `
+          <span class="swatch-color-dot" style="background:${val}">
+            <input type="color" value="${val}" />
+          </span>
+          <span class="swatch-label">Number ${n}</span>
+        `;
+        const inp = item.querySelector('input');
+        const dot = item.querySelector('.swatch-color-dot');
+        inp.addEventListener('input', () => {
+          state.settings.customVars[key] = inp.value;
+          dot.style.background = inp.value;
+          applyThemeVariables();
+          savePersistentData();
+        });
+        numGrid.appendChild(item);
+      }
+    }
+
+    document.getElementById('inp-radius').addEventListener('input', (e) => {
+      state.settings.cellRadius = +e.target.value;
+      document.getElementById('lbl-radius').textContent = `${state.settings.cellRadius}px`;
+      applyThemeVariables();
+      savePersistentData();
+    });
+
+    document.getElementById('inp-cellsize').addEventListener('input', (e) => {
+      state.settings.cellSize = +e.target.value;
+      document.getElementById('lbl-cellsize').textContent = `${state.settings.cellSize}px`;
+      applyThemeVariables();
+      savePersistentData();
+    });
+
+    document.querySelectorAll('#font-pills .choice-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('#font-pills .choice-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        state.settings.fontFamily = pill.dataset.font;
+        applyThemeVariables();
+        savePersistentData();
+      });
+    });
+
+    document.querySelectorAll('#surface-pills .choice-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('#surface-pills .choice-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        state.settings.surface = pill.dataset.surface;
+        applyThemeVariables();
+        savePersistentData();
+      });
+    });
+
+    document.querySelectorAll('#grid-pills .choice-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('#grid-pills .choice-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        state.settings.gridStyle = pill.dataset.grid;
+        applyThemeVariables();
+        savePersistentData();
+      });
+    });
+
+    document.getElementById('btn-reset-theme').addEventListener('click', () => {
+      state.settings.themeId = 'midnight-rose';
+      state.settings.customVars = { ...THEME_PRESETS['midnight-rose'].vars };
+      state.settings.cellRadius = 9;
+      state.settings.surface = 'flat';
+      state.settings.gridStyle = 'crosshair';
+      applyThemeVariables();
+      buildThemeStudioUI();
+      savePersistentData();
+      showToast('Restored Midnight Rose Default');
+    });
+
+    document.getElementById('btn-random-theme').addEventListener('click', () => {
+      const hue = Math.floor(Math.random() * 360);
+      const hslToHex = (h, s, l) => {
+        l /= 100;
+        const a = s * Math.min(l, 1 - l) / 100;
+        const f = n => {
+          const k = (n + h / 30) % 12;
+          const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+          return Math.round(255 * color).toString(16).padStart(2, '0');
+        };
+        return `#${f(0)}${f(8)}${f(4)}`;
+      };
+      state.settings.themeId = 'custom';
+      state.settings.customVars['--bg-main'] = hslToHex(hue, 18, 8);
+      state.settings.customVars['--bg-board'] = hslToHex(hue, 18, 8);
+      state.settings.customVars['--cell-revealed'] = hslToHex(hue, 18, 8);
+      state.settings.customVars['--cell-unrevealed'] = hslToHex((hue + 330) % 360, 62, 46);
+      state.settings.customVars['--accent-primary'] = hslToHex((hue + 330) % 360, 62, 46);
+      state.settings.customVars['--grid-line'] = hslToHex(hue, 36, 24);
+      state.settings.customVars['--text-main'] = hslToHex((hue + 45) % 360, 48, 78);
+      state.settings.customVars['--flag-color'] = hslToHex((hue + 45) % 360, 48, 78);
+      applyThemeVariables();
+      buildThemeStudioUI();
+      savePersistentData();
+      showToast('Generated Harmonic Palette');
+    });
+
+    document.getElementById('btn-export-theme').addEventListener('click', async () => {
+      const json = JSON.stringify(state.settings.customVars, null, 2);
+      try {
+        await navigator.clipboard.writeText(json);
+        showToast('Theme JSON copied to clipboard');
+      } catch (_) {
+        showToast('Export ready');
+      }
+    });
+
+    document.getElementById('btn-import-theme').addEventListener('click', () => {
+      const raw = prompt('Paste Theme JSON:');
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        const hexRegex = /^#[0-9a-fA-F]{6}$/;
+        Object.entries(parsed).forEach(([k, v]) => {
+          if (k.startsWith('--') && hexRegex.test(v)) {
+            state.settings.customVars[k] = v;
+          }
+        });
+        applyThemeVariables();
+        buildThemeStudioUI();
+        savePersistentData();
+        showToast('Custom Theme Imported');
+      } catch (_) {
+        showToast('Invalid Theme JSON');
+      }
+    });
+
+    /* ============================================================================
+       14. STATS, LEADERBOARD & PERSISTENCE
+       ============================================================================ */
+    function renderStatsUI() {
+      const { played, won, currentStreak, bestStreak, bestTimes } = state.stats;
+      const pct = played > 0 ? Math.round((won / played) * 100) : 0;
+      document.getElementById('stat-win-pct').textContent = `${pct}%`;
+      const arc = document.getElementById('stat-ring-arc');
+      const circumference = 220;
+      arc.style.strokeDashoffset = String(circumference - (circumference * pct) / 100);
+
+      document.getElementById('stat-summary-line').textContent = `${won} victories across ${played} games`;
+      document.getElementById('stat-streak-line').textContent = `Current Streak: ${currentStreak} • Best: ${bestStreak}`;
+
+      document.getElementById('stat-best-ref').textContent = bestTimes.reference ? `${bestTimes.reference}s` : '—';
+      document.getElementById('stat-best-beg').textContent = bestTimes.beginner ? `${bestTimes.beginner}s` : '—';
+      document.getElementById('stat-best-int').textContent = bestTimes.intermediate ? `${bestTimes.intermediate}s` : '—';
+      document.getElementById('stat-best-exp').textContent = bestTimes.expert ? `${bestTimes.expert}s` : '—';
+    }
+
+    function renderLeaderboardUI() {
+      const listEl = document.getElementById('leaderboard-list');
+      listEl.innerHTML = '';
+
+      let entries = [...state.stats.leaderboard];
+      if (state.lbFilter !== 'all') {
+        entries = entries.filter(e => e.difficulty === state.lbFilter);
+      }
+
+      if (state.lbSort === 'time') {
+        entries.sort((a, b) => a.time - b.time);
+      } else {
+        entries.sort((a, b) => b.bvs - a.bvs);
+      }
+
+      entries = entries.slice(0, 12);
+
+      if (entries.length === 0) {
+        listEl.innerHTML = `<div style="text-align:center;padding:28px 12px;color:var(--text-muted);font-size:0.84rem;">Clear a board to record your first personal record.</div>`;
+        return;
+      }
+
+      entries.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = `lb-row ${idx === 0 ? 'is-top' : ''}`;
+        row.style.setProperty('--idx', idx);
+        row.innerHTML = `
+          <div class="lb-rank">${idx + 1}</div>
+          <div>
+            <div style="font-size:0.88rem;font-weight:700;color:var(--text-main);">${item.time}s <span style="font-weight:500;color:var(--text-muted);font-size:0.76rem;">(${item.dims})</span></div>
+            <div style="font-size:0.72rem;color:var(--text-muted);">${item.bvs} 3BV/s • ${item.date}</div>
+          </div>
+          <div style="font-size:0.76rem;font-weight:700;color:var(--accent-secondary);">${item.bv} 3BV</div>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    document.querySelectorAll('#lb-filter-pills .choice-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('#lb-filter-pills .choice-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        state.lbFilter = pill.dataset.lbDiff;
+        renderLeaderboardUI();
+      });
+    });
+
+    document.querySelectorAll('#lb-sort-pills .choice-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        document.querySelectorAll('#lb-sort-pills .choice-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        state.lbSort = pill.dataset.lbSort;
+        renderLeaderboardUI();
+      });
+    });
+
+    document.getElementById('btn-reset-stats').addEventListener('click', () => {
+      state.stats = {
+        played: 0, won: 0, currentStreak: 0, bestStreak: 0,
+        bestTimes: { reference: null, beginner: null, intermediate: null, expert: null },
+        leaderboard: []
+      };
+      savePersistentData();
+      renderStatsUI();
+      renderLeaderboardUI();
+      showToast('Career Statistics Reset');
+    });
+
+    function savePersistentData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          difficulty: state.difficulty,
+          cols: state.cols,
+          rows: state.rows,
+          mines: state.mines,
+          settings: state.settings,
+          stats: state.stats
+        }));
+      } catch (_) {}
+    }
+
+    function loadPersistentData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed.difficulty) state.difficulty = parsed.difficulty;
+        if (parsed.cols) state.cols = parsed.cols;
+        if (parsed.rows) state.rows = parsed.rows;
+        if (parsed.mines) state.mines = parsed.mines;
+        if (parsed.settings) {
+          state.settings = { ...state.settings, ...parsed.settings };
+          state.settings.customVars = { ...THEME_PRESETS['midnight-rose'].vars, ...(parsed.settings.customVars || {}) };
+        }
+        if (parsed.stats) {
+          state.stats = { ...state.stats, ...parsed.stats };
+        }
+      } catch (_) {}
+    }
+
+    /* ============================================================================
+       15. STANDALONE PWA MANIFEST, CUSTOM ICON GENERATOR & SERVICE WORKER
+       ============================================================================ */
+    function generateCustomAppIcon(size = 512) {
+      const c = document.createElement('canvas');
+      c.width = size;
+      c.height = size;
+      const ctx = c.getContext('2d');
+
+      ctx.fillStyle = '#141413';
+      ctx.fillRect(0, 0, size, size);
+
+      const pad = size * 0.14;
+      const w = size - pad * 2;
+      ctx.fillStyle = '#b83365';
+      ctx.beginPath();
+      ctx.roundRect(pad, pad, w, w * 0.56, size * 0.08);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.roundRect(pad, pad + w * 0.35, w * 0.45, w * 0.65, size * 0.08);
+      ctx.fill();
+
+      ctx.fillStyle = '#d9d098';
+      ctx.font = `700 ${Math.round(size * 0.26)}px Inter, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('1', pad + w * 0.74, pad + w * 0.78);
+
+      return c.toDataURL('image/png');
+    }
+
+    let deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+    });
+
+    function setupPWA() {
+      const icon192 = generateCustomAppIcon(192);
+      const icon512 = generateCustomAppIcon(512);
+
+      const fav = document.createElement('link');
+      fav.rel = 'icon';
+      fav.href = icon192;
+      document.head.appendChild(fav);
+
+      const manifestObj = {
+        name: 'Midnight Rose — Minesweeper',
+        short_name: 'Minesweeper',
+        description: 'Premium minimalist Minesweeper with organic blob geometry and live theme studio.',
+        start_url: './',
+        scope: './',
+        display: 'standalone',
+        orientation: 'any',
+        background_color: '#141413',
+        theme_color: '#141413',
+        icons: [
+          { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+          { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+        ]
+      };
+
+      const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+      const manifestLink = document.createElement('link');
+      manifestLink.rel = 'manifest';
+      manifestLink.href = URL.createObjectURL(manifestBlob);
+      document.head.appendChild(manifestLink);
+
+      if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+        const swCode = `
+          const CACHE_NAME = 'midnight-rose-pwa-v3';
+          self.addEventListener('install', (e) => {
+            self.skipWaiting();
+            e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['./'])));
+          });
+          self.addEventListener('activate', (e) => {
+            e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k)))));
+            self.clients.claim();
+          });
+          self.addEventListener('fetch', (e) => {
+            if (e.request.method !== 'GET') return;
+            e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+          });
+        `;
+        const swBlob = new Blob([swCode], { type: 'application/javascript' });
+        navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+      }
+    }
+
+    document.getElementById('btn-install-pwa').addEventListener('click', async () => {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+      } else {
+        showToast('On mobile: Tap Browser Menu → "Add to Home Screen"');
+      }
+    });
+
+    document.getElementById('btn-download-bundle').addEventListener('click', () => {
+      const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'index.html';
+      a.click();
+      showToast('Downloaded Standalone index.html');
+    });
+
+    /* ============================================================================
+       16. UTILITIES & INITIALIZATION
+       ============================================================================ */
+    function showToast(msg) {
+      const stack = document.getElementById('toast-stack');
+      const pill = document.createElement('div');
+      pill.className = 'toast-pill';
+      pill.textContent = msg;
+      stack.appendChild(pill);
+      setTimeout(() => {
+        pill.style.opacity = '0';
+        pill.style.transition = 'opacity 220ms ease';
+        setTimeout(() => pill.remove(), 220);
+      }, 2200);
+    }
+
+    function announceSR(msg) {
+      document.getElementById('sr-announcer').textContent = msg;
+    }
+
+    // Boot Sequence
+    loadPersistentData();
+    applyThemeVariables();
+    buildThemeStudioUI();
+    setupPWA();
+    loadReferenceDemoOpening();
+  </script>
+</body>
+</html>
