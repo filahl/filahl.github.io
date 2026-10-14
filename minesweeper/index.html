@@ -3612,7 +3612,7 @@
       deferredInstallPrompt = e;
     });
 
-function setupPWA() {
+    function setupPWA() {
       const icon192 = generateCustomAppIcon(192);
       const icon512 = generateCustomAppIcon(512);
 
@@ -3620,6 +3620,11 @@ function setupPWA() {
       const bg = state.settings.customVars['--bg-main'] || '#141413';
       document.documentElement.style.backgroundColor = bg;
       document.body.style.backgroundColor = bg;
+
+      const fav = document.createElement('link');
+      fav.rel = 'icon';
+      fav.href = icon192;
+      document.head.appendChild(fav);
 
       const manifestObj = {
         name: 'Midnight Rose — Minesweeper',
@@ -3636,7 +3641,6 @@ function setupPWA() {
         ]
       };
 
-      // Data URI místo Blob URL (Brave Blob URL v manifestu při instalaci často zahodí)
       const manifestDataUri = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj));
       let link = document.querySelector('link[rel="manifest"]');
       if (!link) {
@@ -3645,28 +3649,6 @@ function setupPWA() {
         document.head.appendChild(link);
       }
       link.href = manifestDataUri;
-
-      // Vynucení nativního Fullscreenu přes 'click' a 'touchend' (pointerdown Brave blokuje!)
-      const enterFullscreen = () => {
-        const el = document.documentElement;
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-          if (el.requestFullscreen) {
-            el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
-          } else if (el.webkitRequestFullscreen) {
-            el.webkitRequestFullscreen();
-          }
-        }
-      };
-
-      document.addEventListener('click', enterFullscreen);
-      document.addEventListener('touchend', enterFullscreen);
-    }
-
-      const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
-      const manifestLink = document.createElement('link');
-      manifestLink.rel = 'manifest';
-      manifestLink.href = URL.createObjectURL(manifestBlob);
-      document.head.appendChild(manifestLink);
 
       if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
         const swCode = `
@@ -3687,6 +3669,21 @@ function setupPWA() {
         const swBlob = new Blob([swCode], { type: 'application/javascript' });
         navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
       }
+
+      // Vynucení nativního Fullscreenu při kliknutí nebo doteku
+      const enterFullscreen = () => {
+        const el = document.documentElement;
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (el.requestFullscreen) {
+            el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+          } else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen();
+          }
+        }
+      };
+
+      document.addEventListener('click', enterFullscreen);
+      document.addEventListener('touchend', enterFullscreen);
     }
 
     document.getElementById('btn-install-pwa').addEventListener('click', async () => {
@@ -3735,27 +3732,9 @@ function setupPWA() {
     buildThemeStudioUI();
     setupPWA();
     loadReferenceDemoOpening();
-  
-  // 1. Vynutí čisté pozadí i pod systémovou lištou dole
-    document.documentElement.style.backgroundColor = 'var(--bg-main)';
-    document.body.style.backgroundColor = 'var(--bg-main)';
-
-    // 2. Funkce pro přepnutí do plného Fullscreenu (skryje horní hodiny i spodní čárku)
-    function toggleNativeFullscreen() {
-      const docEl = document.documentElement;
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        if (docEl.requestFullscreen) {
-          docEl.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
-        } else if (docEl.webkitRequestFullscreen) {
-          docEl.webkitRequestFullscreen();
-        }
-      }
-    }
-
-    // Automaticky aktivuje Fullscreen při prvním klepnutí do herního pole
-    boardGridEl.addEventListener('pointerdown', () => {
-      toggleNativeFullscreen();
-    }, { once: true });
+  </script>
+</body>
+</html>
   </script>
 </body>
 </html>
