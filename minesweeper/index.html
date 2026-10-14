@@ -3612,30 +3612,55 @@
       deferredInstallPrompt = e;
     });
 
-    function setupPWA() {
+function setupPWA() {
       const icon192 = generateCustomAppIcon(192);
       const icon512 = generateCustomAppIcon(512);
 
-      const fav = document.createElement('link');
-      fav.rel = 'icon';
-      fav.href = icon192;
-      document.head.appendChild(fav);
+      // Nastaví barvu pozadí i pro systémové okraje
+      const bg = state.settings.customVars['--bg-main'] || '#141413';
+      document.documentElement.style.backgroundColor = bg;
+      document.body.style.backgroundColor = bg;
 
       const manifestObj = {
         name: 'Midnight Rose — Minesweeper',
         short_name: 'Minesweeper',
-        description: 'Premium minimalist Minesweeper with organic blob geometry and live theme studio.',
-        start_url: './',
-        scope: './',
-        display: 'standalone',
-        orientation: 'any',
-        background_color: '#141413',
-        theme_color: '#141413',
+        start_url: location.href,
+        display: 'fullscreen',
+        display_override: ['fullscreen', 'standalone'],
+        orientation: 'portrait',
+        background_color: bg,
+        theme_color: bg,
         icons: [
           { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
           { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
         ]
       };
+
+      // Data URI místo Blob URL (Brave Blob URL v manifestu při instalaci často zahodí)
+      const manifestDataUri = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj));
+      let link = document.querySelector('link[rel="manifest"]');
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'manifest';
+        document.head.appendChild(link);
+      }
+      link.href = manifestDataUri;
+
+      // Vynucení nativního Fullscreenu přes 'click' a 'touchend' (pointerdown Brave blokuje!)
+      const enterFullscreen = () => {
+        const el = document.documentElement;
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (el.requestFullscreen) {
+            el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+          } else if (el.webkitRequestFullscreen) {
+            el.webkitRequestFullscreen();
+          }
+        }
+      };
+
+      document.addEventListener('click', enterFullscreen);
+      document.addEventListener('touchend', enterFullscreen);
+    }
 
       const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
       const manifestLink = document.createElement('link');
