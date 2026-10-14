@@ -3710,6 +3710,27 @@
     buildThemeStudioUI();
     setupPWA();
     loadReferenceDemoOpening();
+  
+  // 1. Vynutí čisté pozadí i pod systémovou lištou dole
+    document.documentElement.style.backgroundColor = 'var(--bg-main)';
+    document.body.style.backgroundColor = 'var(--bg-main)';
+
+    // 2. Funkce pro přepnutí do plného Fullscreenu (skryje horní hodiny i spodní čárku)
+    function toggleNativeFullscreen() {
+      const docEl = document.documentElement;
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen();
+        }
+      }
+    }
+
+    // Automaticky aktivuje Fullscreen při prvním klepnutí do herního pole
+    boardGridEl.addEventListener('pointerdown', () => {
+      toggleNativeFullscreen();
+    }, { once: true });
   </script>
 </body>
 </html>
