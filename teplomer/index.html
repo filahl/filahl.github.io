@@ -7,7 +7,13 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Teploměr · doma</title>
+<title>Teploměr</title>
+
+<!-- PWA Manifest a Ikona -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jacquard+24&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -503,6 +509,13 @@
 </div>
 
 <script>
+  // ==== Registrace PWA Service Workeru ====
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+
   // ==== Šifrovaná ntfy témata ====
   // Témata nejsou v kódu v čitelné podobě. Jsou zašifrovaná (AES-GCM) klíčem
   // odvozeným z PINu (PBKDF2). Nový blob vygeneruješ skriptem zasifruj.mjs.
