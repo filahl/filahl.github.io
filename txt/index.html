@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bez názvu - Poznámkový blok</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Ploché pozadí plochy Windows pro kontext přesouvatelného/měnitelného okna -->
+    <div id="desktop">
+        <!-- Hlavní okno Poznámkového bloku (Windows 10 Classic Win32 vzhled) -->
+        <div id="notepad-window" class="win-window active-window" style="width: 800px; height: 500px; left: calc(50% - 400px); top: calc(50% - 250px);">
+            <!-- Okraje pro změnu velikosti okna -->
+            <div class="resize-handle resize-n" data-resize="n"></div>
+            <div class="resize-handle resize-s" data-resize="s"></div>
+            <div class="resize-handle resize-e" data-resize="e"></div>
+            <div class="resize-handle resize-w" data-resize="w"></div>
+            <div class="resize-handle resize-ne" data-resize="ne"></div>
+            <div class="resize-handle resize-nw" data-resize="nw"></div>
+            <div class="resize-handle resize-se" data-resize="se"></div>
+            <div class="resize-handle resize-sw" data-resize="sw"></div>
+
+            <!-- Titulkový pruh -->
+            <div id="titlebar" class="win-titlebar">
+                <div class="win-titlebar-left">
+                    <svg class="win-app-icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+                        <rect x="2" y="1" width="11" height="14" fill="#ffffff" stroke="#3a6ea5" stroke-width="1"/>
+                        <rect x="2" y="1" width="11" height="3" fill="#5b9bd5"/>
+                        <line x1="4" y1="0" x2="4" y2="2" stroke="#1d4e89" stroke-width="1"/>
+                        <line x1="7" y1="0" x2="7" y2="2" stroke="#1d4e89" stroke-width="1"/>
+                        <line x1="10" y1="0" x2="10" y2="2" stroke="#1d4e89" stroke-width="1"/>
+                        <line x1="4" y1="6" x2="11" y2="6" stroke="#808080" stroke-width="1"/>
+                        <line x1="4" y1="8" x2="11" y2="8" stroke="#808080" stroke-width="1"/>
+                        <line x1="4" y1="10" x2="11" y2="10" stroke="#808080" stroke-width="1"/>
+                        <line x1="4" y1="12" x2="9" y2="12" stroke="#808080" stroke-width="1"/>
+                    </svg>
+                    <span id="window-title">Bez názvu - Poznámkový blok</span>
+                </div>
+                <div class="win-titlebar-controls">
+                    <button type="button" id="btn-minimize" class="win-caption-btn" title="Minimalizovat" aria-label="Minimalizovat">
+                        <svg width="10" height="10" viewBox="0 0 10 10"><line x1="0" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="1"/></svg>
+                    </button>
+                    <button type="button" id="btn-maximize" class="win-caption-btn" title="Maximalizovat" aria-label="Maximalizovat">
+                        <svg id="icon-maximize" width="10" height="10" viewBox="0 0 10 10"><rect x="0.5" y="0.5" width="9" height="9" fill="none" stroke="currentColor" stroke-width="1"/></svg>
+                        <svg id="icon-restore" width="10" height="10" viewBox="0 0 10 10" style="display:none;">
+                            <polyline points="2.5,2.5 2.5,0.5 9.5,0.5 9.5,7.5 7.5,7.5" fill="none" stroke="currentColor" stroke-width="1"/>
+                            <rect x="0.5" y="2.5" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1"/>
+                        </svg>
+                    </button>
+                    <button type="button" id="btn-close" class="win-caption-btn win-close-btn" title="Zavřít" aria-label="Zavřít">
+                        <svg width="10" height="10" viewBox="0 0 10 10">
+                            <line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/>
+                            <line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hlavní nabídka (Menu bar) -->
+            <div id="menubar" class="win-menubar" role="menubar">
+                <!-- SOUBOR -->
+                <div class="menu-item" data-menu="file" role="menuitem" tabindex="-1">
+                    <span class="menu-label"><u>S</u>oubor</span>
+                    <div class="menu-dropdown" id="menu-file">
+                        <div class="menu-entry" data-action="new">
+                            <span class="menu-check"></span>
+                            <span class="menu-text"><u>N</u>ový</span>
+                            <span class="menu-shortcut">Ctrl+N</span>
+                        </div>
+                        <div class="menu-entry" data-action="open">
+                            <span class="menu-check"></span>
+                            <span class="menu-text"><u>O</u>tevřít…</span>
+                            <span class="menu-shortcut">Ctrl+O</span>
+                        </div>
+                        <div class="menu-entry" data-action="save">
+                            <span class="menu-check"></span>
+                            <span class="menu-text"><u>U</u>ložit</span>
+                            <span class="menu-shortcut">Ctrl+S</span>
+                        </div>
+                        <div class="menu-entry" data-action="save-as">
+                            <span class="menu-check"></span>
+                            <span class="menu-text">Uložit <u>j</u>ako…</span>
+                            <span class="menu-shortcut">Ctrl+Shift+S</span>
+                        </div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" data-action="page-setup">
+                            <span class="menu-check"></span>
+                            <span class="menu-text">Vzhled <u>s</u>tránky…</span>
+                            <span class="menu-shortcut"></span>
+                        </div>
+                        <div class="menu-entry" data-action="print">
+                            <span class="menu-check"></span>
+                            <span class="menu-text"><u>T</u>isk…</span>
+                            <span class="menu-shortcut">Ctrl+P</span>
+                        </div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" data-action="exit">
+                            <span class="menu-check"></span>
+                            <span class="menu-text"><u>K</u>onec</span>
+                            <span class="menu-shortcut"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ÚPRAVY -->
+                <div class="menu-item" data-menu="edit" role="menuitem" tabindex="-1">
+                    <span class="menu-label">Ú<u>p</u>ravy</span>
+                    <div class="menu-dropdown" id="menu-edit">
+                        <div class="menu-entry" data-action="undo" id="menu-item-undo">
+                            <span class="menu-check"></span>
+                            <span class="menu-text"><u>Z</u>pět</span>
+                            <span class="menu-shortcut">Ctrl+Z</span>
+                        </div>
+                        <div class="menu-entry" data-action="redo" id="menu-item-redo">
+                            <span class="menu-check"></span>
+                            <span class="menu-text">Z<u>n</u>ovu</span>
+                            <span class="menu-shortcut">Ctrl+Y</span>
+                        </div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" data-action="cut" id="menu-item-cut">
+                            <span class="menu-check"></span>
+                            <span class="menu-text"><u>V</u>yjmout</span>
+                            <span class="menu-shortcut">Ctrl+X</span>
+                        </div>
+                        <div class="menu-entry" data-action="copy" id="menu-item-copy">
+                            <span class="menu-check"></span>
+                            <span class="menu-text"><u>K</u>opírovat</span>
+                            <span class="menu-shortcut">Ctrl+C</span>
+                        </div>
+                        <div class="menu-entry" data-action="paste" id="menu-item-paste">
+                            <span class="menu-check"></span>
+                            <span class="menu-text">V<u>l</u>ožit</span>
+                            <span class="menu-shortcut">Ctrl+V</span>
+                        </div>
+                        <div class="menu-entry" data-action="delete" id="menu-item-delete">
+                            <span class="menu-check"></span>
+                            <span class="menu-text">O<u>d</u>stranit</span>
+                            <span class="menu-shortcut">Del</span>
+                        </div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" data-action="find" id="menu-item-find">
+                            <span class="menu-check"></span>
+                            <span class="menu-text"><u>H</u>ledat…</span>
+                            <span class="menu-shortcut">Ctrl+F</span>
+                        </div>
+                        <div class="menu-entry" data-action="find-next" id="menu-item-find-next">
+                            <span class="menu-check"></span>
+                            <span class="menu-text">Najít <u>d</u>alší</span>
+                            <span class="menu-shortcut">F3</span>
+                        </div>
+                        <div class="menu-entry" data-action="replace" id="menu-item-replace">
+                            <span class="menu-check"></span>
+                            <span class="menu-text"><u>N</u>ahradit…</span>
+                            <span class="menu-shortcut">Ctrl+H</span>
+                        </div>
+                        <div class="menu-entry" data-action="goto" id="menu-item-goto">
+                            <span class="menu-check"></span>
+                            <span class="menu-text"><u>P</u>řejít na…</span>
+                            <span class="menu-shortcut">Ctrl+G</span>
+                        </div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" data-action="select-all">
+                            <span class="menu-check"></span>
+                            <span class="menu-text">Vybrat <u>v</u>še</span>
+                            <span class="menu-shortcut">Ctrl+A</span>
+                        </div>
+                        <div class="menu-entry" data-action="time-date">
+                            <span class="menu-check"></span>
+                            <span class="menu-text">Čas a da<u>t</u>um</span>
+                            <span class="menu-shortcut">F5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FORMÁT -->
+                <div class="menu-item" data-menu="format" role="menuitem" tabindex="-1">
+                    <span class="menu-label">F<u>o</u>rmát</span>
+                    <div class="menu-dropdown" id="menu-format">
+                        <div class="menu-entry" data-action="word-wrap" id="menu-item-word-wrap">
+                            <span class="menu-check" id="check-word-wrap"></span>
+                            <span class="menu-text"><u>Z</u>alamování řádků</span>
+                            <span class="menu-shortcut"></span>
+                        </div>
+                        <div class="menu-entry" data-action="font">
+                            <span class="menu-check"></span>
+                            <span class="menu-text"><u>P</u>ísmo…</span>
+                            <span class="menu-shortcut"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ZOBRAZIT -->
+                <div class="menu-item" data-menu="view" role="menuitem" tabindex="-1">
+                    <span class="menu-label"><u>Z</u>obrazit</span>
+                    <div class="menu-dropdown" id="menu-view">
+                        <div class="menu-entry" data-action="status-bar" id="menu-item-status-bar">
+                            <span class="menu-check" id="check-status-bar">✓</span>
+                            <span class="menu-text"><u>S</u>tavový řádek</span>
+                            <span class="menu-shortcut"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NÁPOVĚDA -->
+                <div class="menu-item" data-menu="help" role="menuitem" tabindex="-1">
+                    <span class="menu-label">Nápo<u>v</u>ěda</span>
+                    <div class="menu-dropdown" id="menu-help">
+                        <div class="menu-entry" data-action="help-view">
+                            <span class="menu-check"></span>
+                            <span class="menu-text"><u>Z</u>obrazit nápovědu</span>
+                            <span class="menu-shortcut"></span>
+                        </div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" data-action="about">
+                            <span class="menu-check"></span>
+                            <span class="menu-text"><u>O</u> programu Poznámkový blok</span>
+                            <span class="menu-shortcut"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hlavní textový editor -->
+            <div class="editor-container">
+                <textarea id="editor" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" aria-label="Textový editor"></textarea>
+            </div>
+
+            <!-- Stavový řádek -->
+            <div id="statusbar" class="win-statusbar">
+                <div class="status-cell status-main"></div>
+                <div class="status-cell status-pos" id="status-pos">Řádek 1, sloupec 1</div>
+                <div class="status-cell status-zoom" id="status-zoom">100%</div>
+                <div class="status-cell status-eol" id="status-eol">Windows (CRLF)</div>
+                <div class="status-cell status-encoding" id="status-encoding">UTF-8</div>
+            </div>
+        </div>
+
+        <!-- Panel na spodní liště při minimalizaci okna -->
+        <div id="minimized-bar" class="minimized-taskbar-item" style="display: none;">
+            <svg class="win-app-icon" viewBox="0 0 16 16" width="16" height="16">
+                <rect x="2" y="1" width="11" height="14" fill="#ffffff" stroke="#3a6ea5" stroke-width="1"/>
+                <rect x="2" y="1" width="11" height="3" fill="#5b9bd5"/>
+            </svg>
+            <span id="minimized-title">Bez názvu - Poznámkový blok</span>
+        </div>
+
+        <!-- Kontextová nabídka pravého tlačítka -->
+        <div id="context-menu" class="menu-dropdown context-menu" style="display: none;">
+            <div class="menu-entry" data-action="undo" id="ctx-undo">
+                <span class="menu-check"></span>
+                <span class="menu-text"><u>Z</u>pět</span>
+            </div>
+            <div class="menu-entry" data-action="redo" id="ctx-redo">
+                <span class="menu-check"></span>
+                <span class="menu-text">Z<u>n</u>ovu</span>
+            </div>
+            <div class="menu-separator"></div>
+            <div class="menu-entry" data-action="cut" id="ctx-cut">
+                <span class="menu-check"></span>
+                <span class="menu-text"><u>V</u>yjmout</span>
+            </div>
+            <div class="menu-entry" data-action="copy" id="ctx-copy">
+                <span class="menu-check"></span>
+                <span class="menu-text"><u>K</u>opírovat</span>
+            </div>
+            <div class="menu-entry" data-action="paste" id="ctx-paste">
+                <span class="menu-check"></span>
+                <span class="menu-text">V<u>l</u>ožit</span>
+            </div>
+            <div class="menu-entry" data-action="delete" id="ctx-delete">
+                <span class="menu-check"></span>
+                <span class="menu-text">O<u>d</u>stranit</span>
+            </div>
+            <div class="menu-separator"></div>
+            <div class="menu-entry" data-action="select-all" id="ctx-select-all">
+                <span class="menu-check"></span>
+                <span class="menu-text">Vybrat <u>v</u>še</span>
+            </div>
+        </div>
+
+        <!-- ================= DIALOGOVÁ OKNA ================= -->
+
+        <!-- Překryvná vrstva pro modální dialogy -->
+        <div id="modal-backdrop" class="modal-backdrop" style="display: none;"></div>
+
+        <!-- 1. Dialog: Potvrzení neuložených změn -->
+        <div id="dialog-unsaved" class="win-dialog modal-dialog" style="display: none; width: 370px;">
+            <div class="win-titlebar dialog-titlebar">
+                <div class="win-titlebar-left">
+                    <span>Poznámkový blok</span>
+                </div>
+                <div class="win-titlebar-controls">
+                    <button type="button" class="win-caption-btn win-close-btn" data-close-dialog="dialog-unsaved" aria-label="Zavřít">
+                        <svg width="10" height="10" viewBox="0 0 10 10"><line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/><line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="dialog-body unsaved-body">
+                <p id="unsaved-message" class="unsaved-msg-text">Chcete uložit změny v souboru Bez názvu?</p>
+            </div>
+            <div class="dialog-footer">
+                <button type="button" id="btn-unsaved-save" class="win-btn default-btn"><u>U</u>ložit</button>
+                <button type="button" id="btn-unsaved-dontsave" class="win-btn"><u>N</u>eukládat</button>
+                <button type="button" id="btn-unsaved-cancel" class="win-btn">Zrušit</button>
+            </div>
+        </div>
+
+        <!-- 2. Dialog: Uložit jako -->
+        <div id="dialog-save-as" class="win-dialog modal-dialog" style="display: none; width: 420px;">
+            <div class="win-titlebar dialog-titlebar">
+                <div class="win-titlebar-left">
+                    <span>Uložit jako</span>
+                </div>
+                <div class="win-titlebar-controls">
+                    <button type="button" class="win-caption-btn win-close-btn" data-close-dialog="dialog-save-as" aria-label="Zavřít">
+                        <svg width="10" height="10" viewBox="0 0 10 10"><line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/><line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="dialog-body">
+                <div class="form-row">
+                    <label for="save-filename-input" class="form-label-fixed">Název souboru:</label>
+                    <input type="text" id="save-filename-input" class="win-input flex-fill" value="Bez názvu.txt">
+                </div>
+                <div class="form-row">
+                    <label for="save-type-select" class="form-label-fixed">Uložit jako typ:</label>
+                    <select id="save-type-select" class="win-select flex-fill">
+                        <option value=".txt">Textové dokumenty (*.txt)</option>
+                        <option value="">Všechny soubory (*.*)</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="save-encoding-select" class="form-label-fixed">Kódování:</label>
+                    <select id="save-encoding-select" class="win-select flex-fill">
+                        <option value="UTF-8">UTF-8</option>
+                        <option value="UTF-8-BOM">UTF-8 s BOM</option>
+                    </select>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button type="button" id="btn-save-as-confirm" class="win-btn default-btn"><u>U</u>ložit</button>
+                <button type="button" id="btn-save-as-cancel" class="win-btn" data-close-dialog="dialog-save-as">Zrušit</button>
+            </div>
+        </div>
+
+        <!-- 3. Dialog: Hledat (nemodální plovoucí okno jako v originálním Notepadu) -->
+        <div id="dialog-find" class="win-dialog modeless-dialog" style="display: none; width: 380px; left: 220px; top: 160px;">
+            <div class="win-titlebar dialog-titlebar">
+                <div class="win-titlebar-left">
+                    <span>Hledat</span>
+                </div>
+                <div class="win-titlebar-controls">
+                    <button type="button" class="win-caption-btn win-close-btn" data-close-dialog="dialog-find" aria-label="Zavřít">
+                        <svg width="10" height="10" viewBox="0 0 10 10"><line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/><line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="dialog-body find-layout">
+                <div class="find-main-col">
+                    <div class="form-row">
+                        <label for="find-input" class="find-label"><u>N</u>ajít:</label>
+                        <input type="text" id="find-input" class="win-input flex-fill">
+                    </div>
+                    <div class="find-options-row">
+                        <div class="find-checkboxes">
+                            <label class="win-checkbox-label">
+                                <input type="checkbox" id="find-match-case"> Rozlišovat <u>m</u>alá a velká písmena
+                            </label>
+                            <label class="win-checkbox-label">
+                                <input type="checkbox" id="find-wrap-around" checked> <u>O</u>btékat text
+                            </label>
+                        </div>
+                        <fieldset class="win-fieldset direction-fieldset">
+                            <legend>Směr</legend>
+                            <label class="win-radio-label">
+                                <input type="radio" name="find-dir" id="find-dir-up" value="up"> N<u>a</u>horu
+                            </label>
+                            <label class="win-radio-label">
+                                <input type="radio" name="find-dir" id="find-dir-down" value="down" checked> <u>D</u>olů
+                            </label>
+                        </fieldset>
+                    </div>
+                </div>
+                <div class="find-btn-col">
+                    <button type="button" id="btn-find-next" class="win-btn default-btn"><u>N</u>ajít další</button>
+                    <button type="button" class="win-btn" data-close-dialog="dialog-find">Zrušit</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Dialog: Nahradit (nemodální plovoucí okno) -->
+        <div id="dialog-replace" class="win-dialog modeless-dialog" style="display: none; width: 405px; left: 220px; top: 160px;">
+            <div class="win-titlebar dialog-titlebar">
+                <div class="win-titlebar-left">
+                    <span>Nahradit</span>
+                </div>
+                <div class="win-titlebar-controls">
+                    <button type="button" class="win-caption-btn win-close-btn" data-close-dialog="dialog-replace" aria-label="Zavřít">
+                        <svg width="10" height="10" viewBox="0 0 10 10"><line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/><line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="dialog-body find-layout">
+                <div class="find-main-col">
+                    <div class="form-row">
+                        <label for="replace-find-input" class="replace-label"><u>N</u>ajít:</label>
+                        <input type="text" id="replace-find-input" class="win-input flex-fill">
+                    </div>
+                    <div class="form-row">
+                        <label for="replace-with-input" class="replace-label">Nahradit <u>č</u>ím:</label>
+                        <input type="text" id="replace-with-input" class="win-input flex-fill">
+                    </div>
+                    <div class="find-checkboxes" style="margin-top: 10px;">
+                        <label class="win-checkbox-label">
+                            <input type="checkbox" id="replace-match-case"> Rozlišovat <u>m</u>alá a velká písmena
+                        </label>
+                        <label class="win-checkbox-label">
+                            <input type="checkbox" id="replace-wrap-around" checked> <u>O</u>btékat text
+                        </label>
+                    </div>
+                </div>
+                <div class="find-btn-col">
+                    <button type="button" id="btn-replace-find-next" class="win-btn default-btn"><u>N</u>ajít další</button>
+                    <button type="button" id="btn-replace-one" class="win-btn">Nah<u>r</u>adit</button>
+                    <button type="button" id="btn-replace-all" class="win-btn">Nahradit <u>v</u>še</button>
+                    <button type="button" class="win-btn" data-close-dialog="dialog-replace">Zrušit</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Dialog: Přejít na řádek -->
+        <div id="dialog-goto" class="win-dialog modal-dialog" style="display: none; width: 260px;">
+            <div class="win-titlebar dialog-titlebar">
+                <div class="win-titlebar-left">
+                    <span>Přejít na řádek</span>
+                </div>
+                <div class="win-titlebar-controls">
+                    <button type="button" class="win-caption-btn win-close-btn" data-close-dialog="dialog-goto" aria-label="Zavřít">
+                        <svg width="10" height="10" viewBox="0 0 10 10"><line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/><line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="dialog-body">
+                <label for="goto-line-input" class="block-label"><u>Č</u>íslo řádku:</label>
+                <input type="text" id="goto-line-input" class="win-input full-width" inputmode="numeric">
+            </div>
+            <div class="dialog-footer">
+                <button type="button" id="btn-goto-confirm" class="win-btn default-btn">Přejít</button>
+                <button type="button" class="win-btn" data-close-dialog="dialog-goto">Zrušit</button>
+            </div>
+        </div>
+
+        <!-- 6. Dialog: Písmo -->
+        <div id="dialog-font" class="win-dialog modal-dialog" style="display: none; width: 430px;">
+            <div class="win-titlebar dialog-titlebar">
+                <div class="win-titlebar-left">
+                    <span>Písmo</span>
+                </div>
+                <div class="win-titlebar-controls">
+                    <button type="button" class="win-caption-btn win-close-btn" data-close-dialog="dialog-font" aria-label="Zavřít">
+                        <svg width="10" height="10" viewBox="0 0 10 10"><line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/><line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="dialog-body">
+                <div class="font-grid">
+                    <!-- Rodina písma -->
+                    <div class="font-col font-col-family">
+                        <label for="font-family-input" class="block-label"><u>P</u>ísmo:</label>
+                        <input type="text" id="font-family-input" class="win-input full-width" readonly>
+                        <select id="font-family-list" class="win-listbox full-width" size="7">
+                            <option value="Consolas">Consolas</option>
+                            <option value="'Lucida Console'">Lucida Console</option>
+                            <option value="'Courier New'">Courier New</option>
+                            <option value="Tahoma">Tahoma</option>
+                            <option value="'Segoe UI'">Segoe UI</option>
+                            <option value="Arial">Arial</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="'Times New Roman'">Times New Roman</option>
+                            <option value="Georgia">Georgia</option>
+                        </select>
+                    </div>
+                    <!-- Řez písma -->
+                    <div class="font-col font-col-style">
+                        <label for="font-style-input" class="block-label">Ř<u>e</u>z písma:</label>
+                        <input type="text" id="font-style-input" class="win-input full-width" readonly>
+                        <select id="font-style-list" class="win-listbox full-width" size="7">
+                            <option value="normal-normal">Obyčejné</option>
+                            <option value="italic-normal">Kurzíva</option>
+                            <option value="normal-bold">Tučné</option>
+                            <option value="italic-bold">Tučná kurzíva</option>
+                        </select>
+                    </div>
+                    <!-- Velikost -->
+                    <div class="font-col font-col-size">
+                        <label for="font-size-input" class="block-label"><u>V</u>elikost:</label>
+                        <input type="text" id="font-size-input" class="win-input full-width">
+                        <select id="font-size-list" class="win-listbox full-width" size="7">
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="14">14</option>
+                            <option value="16">16</option>
+                            <option value="18">18</option>
+                            <option value="20">20</option>
+                            <option value="22">22</option>
+                            <option value="24">24</option>
+                            <option value="26">26</option>
+                            <option value="28">28</option>
+                            <option value="36">36</option>
+                            <option value="48">48</option>
+                            <option value="72">72</option>
+                        </select>
+                    </div>
+                </div>
+
+                <fieldset class="win-fieldset sample-fieldset">
+                    <legend>Ukázka</legend>
+                    <div id="font-sample-box" class="font-sample-box">AaBbYyZz ŘřŠšŽž</div>
+                </fieldset>
+
+                <div class="form-row" style="margin-top: 8px;">
+                    <label for="font-script-select" class="block-label" style="margin-right: 8px;"><u>S</u>kript:</label>
+                    <select id="font-script-select" class="win-select" style="width: 180px;">
+                        <option value="ce">Středoevropský</option>
+                        <option value="west">Západní</option>
+                    </select>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button type="button" id="btn-font-ok" class="win-btn default-btn">OK</button>
+                <button type="button" class="win-btn" data-close-dialog="dialog-font">Zrušit</button>
+            </div>
+        </div>
+
+        <!-- 7. Dialog: Vzhled stránky (Nastavení stránky) -->
+        <div id="dialog-page-setup" class="win-dialog modal-dialog" style="display: none; width: 440px;">
+            <div class="win-titlebar dialog-titlebar">
+                <div class="win-titlebar-left">
+                    <span>Vzhled stránky</span>
+                </div>
+                <div class="win-titlebar-controls">
+                    <button type="button" class="win-caption-btn win-close-btn" data-close-dialog="dialog-page-setup" aria-label="Zavřít">
+                        <svg width="10" height="10" viewBox="0 0 10 10"><line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/><line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="dialog-body">
+                <div class="page-setup-top">
+                    <div class="page-setup-left">
+                        <fieldset class="win-fieldset">
+                            <legend>Papír</legend>
+                            <div class="form-row">
+                                <label for="page-size-select" style="width: 65px;"><u>V</u>elikost:</label>
+                                <select id="page-size-select" class="win-select flex-fill">
+                                    <option value="A4">A4</option>
+                                    <option value="Letter">Letter</option>
+                                    <option value="Legal">Legal</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <label for="page-source-select" style="width: 65px;"><u>Z</u>droj:</label>
+                                <select id="page-source-select" class="win-select flex-fill">
+                                    <option value="auto">Automatický výběr</option>
+                                </select>
+                            </div>
+                        </fieldset>
+
+                        <div class="page-setup-mid-row">
+                            <fieldset class="win-fieldset" style="width: 115px;">
+                                <legend>Orientace</legend>
+                                <label class="win-radio-label block-radio">
+                                    <input type="radio" name="page-orientation" id="orient-portrait" value="portrait" checked> Na <u>v</u>ýšku
+                                </label>
+                                <label class="win-radio-label block-radio">
+                                    <input type="radio" name="page-orientation" id="orient-landscape" value="landscape"> Na šíř<u>k</u>u
+                                </label>
+                            </fieldset>
+
+                            <fieldset class="win-fieldset flex-fill">
+                                <legend>Okraje (milimetry)</legend>
+                                <div class="margins-grid">
+                                    <label for="margin-left"><u>V</u>levo:</label>
+                                    <input type="number" id="margin-left" class="win-input" value="20" min="0" max="100">
+                                    <label for="margin-right">Vp<u>r</u>avo:</label>
+                                    <input type="number" id="margin-right" class="win-input" value="20" min="0" max="100">
+                                    <label for="margin-top"><u>N</u>ahoře:</label>
+                                    <input type="number" id="margin-top" class="win-input" value="25" min="0" max="100">
+                                    <label for="margin-bottom"><u>D</u>ole:</label>
+                                    <input type="number" id="margin-bottom" class="win-input" value="25" min="0" max="100">
+                                </div>
+                            </fieldset>
+                        </div>
+
+                        <div class="form-row" style="margin-top: 8px;">
+                            <label for="page-header-input" style="width: 65px;"><u>Z</u>áhlaví:</label>
+                            <input type="text" id="page-header-input" class="win-input flex-fill" value="&f">
+                        </div>
+                        <div class="form-row">
+                            <label for="page-footer-input" style="width: 65px;">Zá<u>p</u>atí:</label>
+                            <input type="text" id="page-footer-input" class="win-input flex-fill" value="Stránka &p">
+                        </div>
+                    </div>
+
+                    <div class="page-setup-right">
+                        <fieldset class="win-fieldset preview-fieldset">
+                            <legend>Náhled</legend>
+                            <div class="page-preview-container">
+                                <div id="page-preview-sheet" class="page-preview-sheet">
+                                    <div id="page-preview-margins" class="page-preview-margins"></div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button type="button" id="btn-page-setup-ok" class="win-btn default-btn">OK</button>
+                <button type="button" class="win-btn" data-close-dialog="dialog-page-setup">Zrušit</button>
+            </div>
+        </div>
+
+        <!-- 8. Dialog: Zobrazit nápovědu -->
+        <div id="dialog-help" class="win-dialog modal-dialog" style="display: none; width: 460px;">
+            <div class="win-titlebar dialog-titlebar">
+                <div class="win-titlebar-left">
+                    <span>Nápověda - Poznámkový blok</span>
+                </div>
+                <div class="win-titlebar-controls">
+                    <button type="button" class="win-caption-btn win-close-btn" data-close-dialog="dialog-help" aria-label="Zavřít">
+                        <svg width="10" height="10" viewBox="0 0 10 10"><line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/><line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="dialog-body help-body">
+                <div class="help-scrollbox">
+                    <p><strong>Poznámkový blok (Notepad.exe) — Přehled funkcí a zkratek</strong></p>
+                    <p>Poznámkový blok je základní textový editor určený k vytváření a úpravám prostých textových souborů s plnou podporou českých znaků a kódování UTF-8.</p>
+                    <table class="help-table">
+                        <thead>
+                            <tr><th>Klávesová zkratka</th><th>Akce</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Ctrl + N</td><td>Nový dokument</td></tr>
+                            <tr><td>Ctrl + O</td><td>Otevřít lokální soubor</td></tr>
+                            <tr><td>Ctrl + S</td><td>Uložit dokument</td></tr>
+                            <tr><td>Ctrl + Shift + S</td><td>Uložit jako…</td></tr>
+                            <tr><td>Ctrl + P</td><td>Tisk dokumentu</td></tr>
+                            <tr><td>Ctrl + Z / Ctrl + Y</td><td>Zpět / Znovu</td></tr>
+                            <tr><td>Ctrl + X / C / V</td><td>Vyjmout / Kopírovat / Vložit</td></tr>
+                            <tr><td>Del</td><td>Odstranit vybraný text</td></tr>
+                            <tr><td>Ctrl + F / F3</td><td>Hledat… / Najít další</td></tr>
+                            <tr><td>Ctrl + H</td><td>Nahradit…</td></tr>
+                            <tr><td>Ctrl + G</td><td>Přejít na řádek (při vypnutém zalamování)</td></tr>
+                            <tr><td>Ctrl + A</td><td>Vybrat vše</td></tr>
+                            <tr><td>F5</td><td>Vložit aktuální čas a datum</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top:8px;"><strong>Poznámka k omezením webového prohlížeče:</strong><br>
+                    V prohlížečích s podporou File System Access API umožňuje příkaz <em>Uložit</em> přímý zápis do otevřeného souboru po udělení souhlasu. V ostatních prohlížečích funguje <em>Uložit</em> pomocí standardního stažení souboru.</p>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button type="button" class="win-btn default-btn" data-close-dialog="dialog-help">OK</button>
+            </div>
+        </div>
+
+        <!-- 9. Dialog: O programu Poznámkový blok -->
+        <div id="dialog-about" class="win-dialog modal-dialog" style="display: none; width: 410px;">
+            <div class="win-titlebar dialog-titlebar">
+                <div class="win-titlebar-left">
+                    <span>O programu Poznámkový blok</span>
+                </div>
+                <div class="win-titlebar-controls">
+                    <button type="button" class="win-caption-btn win-close-btn" data-close-dialog="dialog-about" aria-label="Zavřít">
+                        <svg width="10" height="10" viewBox="0 0 10 10"><line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/><line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="dialog-body about-body">
+                <div class="about-header">
+                    <svg viewBox="0 0 32 32" width="36" height="36" style="flex-shrink: 0;">
+                        <rect x="4" y="2" width="22" height="28" fill="#ffffff" stroke="#3a6ea5" stroke-width="1.5"/>
+                        <rect x="4" y="2" width="22" height="6" fill="#5b9bd5"/>
+                        <line x1="8" y1="12" x2="22" y2="12" stroke="#808080" stroke-width="1.5"/>
+                        <line x1="8" y1="16" x2="22" y2="16" stroke="#808080" stroke-width="1.5"/>
+                        <line x1="8" y1="20" x2="22" y2="20" stroke="#808080" stroke-width="1.5"/>
+                        <line x1="8" y1="24" x2="18" y2="24" stroke="#808080" stroke-width="1.5"/>
+                    </svg>
+                    <div>
+                        <div class="about-title">Microsoft Windows — Poznámkový blok</div>
+                        <div class="about-subtitle">Verze 10.0 (Sestavení Web Win32 Classic Recreation)</div>
+                    </div>
+                </div>
+                <div class="menu-separator" style="margin: 10px 0;"></div>
+                <p class="about-text">
+                    Věrná webová rekonstrukce klasické systémové aplikace <strong>notepad.exe</strong> vytvořená pomocí čistého HTML5, CSS3 a Vanilla JavaScriptu.
+                </p>
+                <p class="about-text" style="margin-top: 6px;">
+                    Plně lokální běh v prohlížeči bez externích knihoven a síťových požadavků.
+                </p>
+            </div>
+            <div class="dialog-footer">
+                <button type="button" class="win-btn default-btn" data-close-dialog="dialog-about">OK</button>
+            </div>
+        </div>
+
+        <!-- 10. Dialog: Informační upozornění (např. Nelze najít / Číslo řádku mimo rozsah) -->
+        <div id="dialog-alert" class="win-dialog modal-dialog" style="display: none; width: 320px;">
+            <div class="win-titlebar dialog-titlebar">
+                <div class="win-titlebar-left">
+                    <span>Poznámkový blok</span>
+                </div>
+                <div class="win-titlebar-controls">
+                    <button type="button" class="win-caption-btn win-close-btn" data-close-dialog="dialog-alert" aria-label="Zavřít">
+                        <svg width="10" height="10" viewBox="0 0 10 10"><line x1="0" y1="0" x2="10" y2="10" stroke="currentColor" stroke-width="1"/><line x1="10" y1="0" x2="0" y2="10" stroke="currentColor" stroke-width="1"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="dialog-body alert-body">
+                <div class="alert-icon-row">
+                    <svg width="32" height="32" viewBox="0 0 32 32" style="flex-shrink: 0;">
+                        <circle cx="16" cy="16" r="14" fill="#1976d2" stroke="#0d47a1" stroke-width="1"/>
+                        <rect x="14.5" y="13" width="3" height="11" fill="#ffffff"/>
+                        <circle cx="16" cy="9" r="2" fill="#ffffff"/>
+                    </svg>
+                    <span id="alert-message-text">Nelze najít „“.</span>
+                </div>
+            </div>
+            <div class="dialog-footer" style="justify-content: center;">
+                <button type="button" id="btn-alert-ok" class="win-btn default-btn" data-close-dialog="dialog-alert">OK</button>
+            </div>
+        </div>
+
+        <!-- Skrytý input pro otevření souboru -->
+        <input type="file" id="file-input" accept=".txt,.log,.md,.html,.htm,.css,.js,.json,.xml,.csv,.ini,.cfg,.bat,.sh,.py,.c,.cpp,.h,text/*" style="display: none;">
+    </div>
+
+    <!-- Tiskový kontejner (zobrazí se výhradně při tisku přes @media print) -->
+    <div id="print-container" aria-hidden="true">
+        <div id="print-header"></div>
+        <pre id="print-content"></pre>
+        <div id="print-footer"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
