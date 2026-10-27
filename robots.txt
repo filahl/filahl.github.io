@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /css/
+Disallow: /js/
+Disallow: /etc/
+Disallow: /lightbox/
+Disallow: /txt/
+Disallow: /soon/
+Disallow: /test.html
+
+Sitemap: https://isaydiscoyousay.party/sitemap.xml
