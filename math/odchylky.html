@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Stereometrie – Odchylky a vzdálenosti (Krokovací nástroj)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0D1826;
+      --surface: #142236;
+      --surface-2: #1B2C45;
+      --border: #24374F;
+      --text: #EAF1F8;
+      --text-dim: #8CA3BE;
+      --cyan: #4FD8E0;
+      --amber: #F2A93C;
+      --fill: #b4f306;
+      --pink: #FF7AA8;
+      --green: #38E58B;
+      --solid-color: #3E5C82;
+      --solid-edge: #C9E4F5;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="light"]) {
+        --bg: #F3F6FA;
+        --surface: #FFFFFF;
+        --surface-2: #E9EFF6;
+        --border: #D3DDE8;
+        --text: #12202E;
+        --text-dim: #5A7086;
+        --cyan: #0E9AA6;
+        --amber: #C9791C;
+        --fill: #f3064d;
+        --pink: #C24672;
+        --green: #169855;
+        --solid-color: #7C9AC0;
+        --solid-edge: #23445F;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #app {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+
+    #canvas-wrap {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      order: 2;
+    }
+
+    canvas#scene {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    header {
+      position: relative;
+      z-index: 3;
+      order: 1;
+      padding: env(safe-area-inset-top, 0px) 16px 12px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .title-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 12px 0 10px 0;
+    }
+
+    .title-row h1 {
+      margin: 0;
+      font-size: 16.5px;
+      font-weight: 600;
+    }
+
+    .title-row .sub {
+      font-size: 11.5px;
+      color: var(--text-dim);
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin: 12px 0 8px 0;
+      font-weight: 600;
+    }
+
+    .presets-box {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .preset-btn {
+      text-align: left;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      line-height: 1.35;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .preset-btn:hover,
+    .preset-btn.active {
+      border-color: var(--cyan);
+      background: color-mix(in srgb, var(--cyan) 14%, var(--surface-2));
+    }
+
+    .preset-btn b {
+      color: var(--cyan);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .shape-select {
+      display: flex;
+      gap: 6px;
+      padding-bottom: 10px;
+    }
+
+    .shape-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 6px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text-dim);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .shape-btn.active {
+      color: var(--text);
+      border-color: var(--cyan);
+      background: color-mix(in srgb, var(--cyan) 14%, var(--surface-2));
+    }
+
+    .size-controls {
+      padding: 4px 0 10px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .dim-field {
+      margin-bottom: 10px;
+    }
+
+    .dim-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+
+    .dim-head .dim-name {
+      font-size: 12.5px;
+      color: var(--text);
+    }
+
+    .dim-head .dim-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--cyan);
+      font-weight: 600;
+    }
+
+    .dim-field input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 3px;
+      background: var(--surface-2);
+      accent-color: var(--cyan);
+      outline: none;
+      margin: 0;
+    }
+
+    .dim-field input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: var(--cyan);
+      border: 2px solid var(--surface);
+      cursor: pointer;
+    }
+
+    .tip {
+      margin: 8px 0 0 0;
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+
+    .zoom-controls {
+      position: absolute;
+      right: 12px;
+      bottom: 16px;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .zoom-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 19px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .vertex-labels,
+    .dim-labels,
+    .construct-labels {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .vlabel {
+      position: absolute;
+      transform: translate(-50%, -140%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dim);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 1px 5px;
+      opacity: 0.85;
+    }
+
+    .clabel {
+      position: absolute;
+      transform: translate(-50%, -135%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #0D1826;
+      background: var(--cyan);
+      border-radius: 5px;
+      padding: 2px 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+      white-space: nowrap;
+    }
+
+    .clabel.aux {
+      background: var(--amber);
+      color: #0D1826;
+    }
+
+    .clabel.sec {
+      background: var(--pink);
+      color: #fff;
+    }
+
+    .clabel.green {
+      background: var(--green);
+      color: #0D1826;
+    }
+
+    .dim-label {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      color: var(--cyan);
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 4px;
+      padding: 1px 4px;
+      opacity: 0.8;
+    }
+
+    footer {
+      position: relative;
+      z-index: 3;
+      order: 3;
+      padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px)) 16px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+    }
+
+    .math-log {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+      padding-right: 4px;
+    }
+
+    .step-card {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-dim);
+      padding: 9px 11px;
+      background: var(--surface-2);
+      border-radius: 8px;
+      border-left: 3px solid var(--border);
+    }
+
+    .step-card.active {
+      border-left-color: var(--cyan);
+      color: var(--text);
+      background: color-mix(in srgb, var(--cyan) 9%, var(--surface-2));
+    }
+
+    .step-card b {
+      color: var(--cyan);
+      font-weight: 600;
+    }
+
+    .step-card .formula {
+      display: block;
+      margin-top: 4px;
+      padding: 4px 7px;
+      background: var(--bg);
+      border-radius: 5px;
+      color: var(--amber);
+      font-weight: 500;
+    }
+
+    .step-card .result-badge {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 2px 7px;
+      background: var(--green);
+      color: #0D1826;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+
+    .foot-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .points-chips {
+      display: flex;
+      gap: 6px;
+    }
+
+    .chip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      height: 34px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      border: 1.5px solid var(--border);
+      color: var(--text-dim);
+      background: var(--surface-2);
+    }
+
+    .chip.filled {
+      color: #0D1826;
+      border-color: transparent;
+      cursor: pointer;
+    }
+
+    .chip[data-p="0"].filled {
+      background: var(--cyan);
+    }
+
+    .chip[data-p="1"].filled {
+      background: var(--amber);
+    }
+
+    .chip[data-p="2"].filled {
+      background: var(--pink);
+    }
+
+    .nav-btns {
+      display: flex;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .step-btn {
+      flex: 1;
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--cyan);
+      background: var(--cyan);
+      color: #0D1826;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .step-btn.secondary {
+      background: var(--surface-2);
+      color: var(--text);
+      border-color: var(--border);
+      flex: 0 0 auto;
+    }
+
+    .step-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      border-color: var(--border);
+      background: var(--surface-2);
+      color: var(--text-dim);
+    }
+
+    .reset-btn {
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    @media (min-width: 900px) {
+      #app {
+        flex-direction: row;
+      }
+
+      header {
+        order: 1;
+        flex: 0 0 300px;
+        border-bottom: none;
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+      }
+
+      footer {
+        order: 3;
+        flex: 0 0 360px;
+        border-top: none;
+        border-left: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .math-log {
+        max-height: calc(100vh - 180px);
+        flex: 1;
+      }
+
+      .foot-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .points-chips {
+        justify-content: stretch;
+      }
+
+      .chip {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <header>
+      <div class="title-row">
+        <h1>Odchylky a vzdálenosti</h1>
+        <span class="sub">stereometrie krok za krokem</span>
+      </div>
+
+      <div class="section-title">Vzorové úlohy ze zadání</div>
+      <div class="presets-box">
+        <button class="preset-btn active" id="preset1Btn">
+          <b>Úloha 1: Čtyřboký jehlan (a=6, b=8, v=10)</b>
+          Odchylka přímky AP od podstavy (P je střed CV) a vzdálenost bodu C od přímky AP.
+        </button>
+        <button class="preset-btn" id="preset2Btn">
+          <b>Úloha 2: Krychle ABCDEFGH (a=10)</b>
+          Bod P ve středu stěny CDGH. Odchylka přímek AP a AC + vzdálenost bodu C od AP.
+        </button>
+      </div>
+
+      <div class="section-title">Těleso</div>
+      <div class="shape-select">
+        <button class="shape-btn active" data-shape="jehlan">Jehlan</button>
+        <button class="shape-btn" data-shape="krychle">Krychle</button>
+        <button class="shape-btn" data-shape="kvadr">Kvádr</button>
+      </div>
+
+      <div class="size-controls">
+        <div class="section-title">Rozměry (cm)</div>
+        <div id="sizeControls"></div>
+      </div>
+
+      <p class="tip">
+        <b>Vlastní zadání:</b> Kliknutím na čipy <b>Bod 1 / Bod 2 / Bod 3</b> je smažete a můžete na tělese naklikat vlastní vrcholy, středy hran nebo středy stěn.
+        <br>• <b>Bod 1 a Bod 2</b> určují hlavní přímku (např. AP).
+        <br>• <b>Bod 3</b> určuje druhou přímku (Bod 1 – Bod 3) a bod, jehož vzdálenost od přímky počítáme.
+      </p>
+    </header>
+
+    <div id="canvas-wrap">
+      <canvas id="scene"></canvas>
+      <div class="vertex-labels" id="vertexLabels"></div>
+      <div class="dim-labels" id="dimLabels"></div>
+      <div class="construct-labels" id="constructLabels"></div>
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoomIn" aria-label="Přiblížit">+</button>
+        <button class="zoom-btn" id="zoomOut" aria-label="Oddálit">–</button>
+      </div>
+    </div>
+
+    <footer>
+      <div class="math-log" id="mathLog"></div>
+      <div class="foot-row">
+        <div class="points-chips">
+          <div class="chip" data-p="0" id="chip0">1: -</div>
+          <div class="chip" data-p="1" id="chip1">2: -</div>
+          <div class="chip" data-p="2" id="chip2">3: -</div>
+        </div>
+        <div class="nav-btns">
+          <button class="step-btn secondary" id="prevStepBtn" disabled>&larr; Zpět</button>
+          <button class="step-btn" id="nextStepBtn" disabled>Další krok &rarr;</button>
+        </div>
+        <button class="reset-btn" id="resetBtn">Vlastní body</button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    (function () {
+
+      // ============================================================================
+      // 1. VEKTOROVÁ MATEMATIKA A FORMÁTOVÁNÍ
+      // ============================================================================
+      function sub(a, b) { return { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z }; }
+      function add(a, b) { return { x: a.x + b.x, y: a.y + b.y, z: a.z + b.z }; }
+      function scaleV(a, s) { return { x: a.x * s, y: a.y * s, z: a.z * s }; }
+      function dot(a, b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+      function cross(a, b) {
+        return { x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x };
+      }
+      function length(a) { return Math.sqrt(dot(a, a)); }
+      function dist3D(a, b) { return length(sub(a, b)); }
+      function normalize(a) { var l = length(a) || 1; return scaleV(a, 1 / l); }
+      function lerp(a, b, t) { return add(a, scaleV(sub(b, a), t)); }
+
+      function fmt(n) {
+        if (Math.abs(n - Math.round(n)) < 1e-4) return String(Math.round(n));
+        return n.toFixed(2).replace('.', ',');
+      }
+
+      function fmtDeg(rad) {
+        var degTotal = rad * 180 / Math.PI;
+        var d = Math.floor(degTotal + 1e-6);
+        var m = Math.round((degTotal - d) * 60);
+        if (m === 60) { d += 1; m = 0; }
+        return fmt(degTotal) + '° (' + d + '°' + (m < 10 ? '0' : '') + m + '′)';
+      }
+
+      // ============================================================================
+      // 2. GEOMETRIE TĚLES (Souřadnice v cm + 3D měřítko pro scénu)
+      // ============================================================================
+      // Aby se těleso v cm (např. a=10 cm) pěkně vešlo do kamery, dělíme při vykreslení měřítkem.
+      // Veškeré výpočty ale probíhají v přesných centimetrech podle zadání!
+      var SCENE_SCALE = 0.35;
+
+      // Standardní české značení podstavy ABCD proti směru hodinových ručiček:
+      // A=(-hx, 0, hz) [vpředu vlevo], B=(hx, 0, hz) [vpředu vpravo],
+      // C=(hx, 0, -hz) [vzadu vpravo], D=(-hx, 0, -hz) [vzadu vlevo]
+      // Střed podstavy leží v [0, 0, 0], kladná osa Y míří vzhůru.
+      function buildBoxVerticesCm(a, b, v) {
+        var hx = a / 2, hz = b / 2;
+        return [
+          { x: -hx, y: 0, z: hz, name: 'A' },
+          { x: hx, y: 0, z: hz, name: 'B' },
+          { x: hx, y: 0, z: -hz, name: 'C' },
+          { x: -hx, y: 0, z: -hz, name: 'D' },
+          { x: -hx, y: v, z: hz, name: 'E' },
+          { x: hx, y: v, z: hz, name: 'F' },
+          { x: hx, y: v, z: -hz, name: 'G' },
+          { x: -hx, y: v, z: -hz, name: 'H' }
+        ];
+      }
+
+      function buildPyramidVerticesCm(a, b, v) {
+        var hx = a / 2, hz = b / 2;
+        return [
+          { x: -hx, y: 0, z: hz, name: 'A' },
+          { x: hx, y: 0, z: hz, name: 'B' },
+          { x: hx, y: 0, z: -hz, name: 'C' },
+          { x: -hx, y: 0, z: -hz, name: 'D' },
+          { x: 0, y: v, z: 0, name: 'V' }
+        ];
+      }
+
+      var BOX_EDGES = [
+        { v: [0, 1], dim: 'a' }, { v: [1, 2], dim: 'b' }, { v: [2, 3], dim: 'a' }, { v: [3, 0], dim: 'b' },
+        { v: [4, 5], dim: 'a' }, { v: [5, 6], dim: 'b' }, { v: [6, 7], dim: 'a' }, { v: [7, 4], dim: 'b' },
+        { v: [0, 4], dim: 'v' }, { v: [1, 5], dim: 'v' }, { v: [2, 6], dim: 'v' }, { v: [3, 7], dim: 'v' }
+      ];
+
+      var BOX_FACES = [
+        { name: 'ABCD', v: [0, 1, 2, 3] },
+        { name: 'EFGH', v: [4, 5, 6, 7] },
+        { name: 'ABFE', v: [0, 1, 5, 4] },
+        { name: 'BCGF', v: [1, 2, 6, 5] },
+        { name: 'CDGH', v: [2, 3, 7, 6] },
+        { name: 'DAEH', v: [3, 0, 4, 7] }
+      ];
+
+      var BOX_TRIANGLES = [
+        [0, 1, 2], [0, 2, 3], [4, 6, 5], [4, 7, 6],
+        [0, 5, 1], [0, 4, 5], [1, 6, 2], [1, 5, 6],
+        [2, 7, 3], [2, 6, 7], [3, 4, 0], [3, 7, 4]
+      ];
+
+      var PYR_EDGES = [
+        { v: [0, 1], dim: 'a' }, { v: [1, 2], dim: 'b' }, { v: [2, 3], dim: 'a' }, { v: [3, 0], dim: 'b' },
+        { v: [0, 4], dim: 's' }, { v: [1, 4], dim: 's' }, { v: [2, 4], dim: 's' }, { v: [3, 4], dim: 's' }
+      ];
+
+      var PYR_FACES = [
+        { name: 'ABCD', v: [0, 1, 2, 3] },
+        { name: 'ABV', v: [0, 1, 4] },
+        { name: 'BCV', v: [1, 2, 4] },
+        { name: 'CDV', v: [2, 3, 4] },
+        { name: 'DAV', v: [3, 0, 4] }
+      ];
+
+      var PYR_TRIANGLES = [
+        [0, 1, 2], [0, 2, 3],
+        [0, 4, 1], [1, 4, 2], [2, 4, 3], [3, 4, 0]
+      ];
+
+      var DIM_DEFS = {
+        jehlan: [
+          { key: 'a', label: 'Hrana a (cm)', def: 6 },
+          { key: 'b', label: 'Hrana b (cm)', def: 8 },
+          { key: 'v', label: 'Výška v (cm)', def: 10 }
+        ],
+        krychle: [
+          { key: 'a', label: 'Hrana a (cm)', def: 10 }
+        ],
+        kvadr: [
+          { key: 'a', label: 'Hrana a (cm)', def: 8 },
+          { key: 'b', label: 'Hrana b (cm)', def: 6 },
+          { key: 'v', label: 'Výška c (cm)', def: 10 }
+        ]
+      };
+
+      var dimsState = {
+        jehlan: { a: 6, b: 8, v: 10 },
+        krychle: { a: 10 },
+        kvadr: { a: 8, b: 6, v: 10 }
+      };
+
+      var currentShapeKey = 'jehlan';
+
+      function getShapeDef() {
+        var d = dimsState[currentShapeKey];
+        var a = d.a;
+        var b = (currentShapeKey === 'krychle') ? d.a : d.b;
+        var v = (currentShapeKey === 'krychle') ? d.a : d.v;
+        var centerOffset = { x: 0, y: -v / 2, z: 0 };
+
+        var vertsCm = (currentShapeKey === 'jehlan')
+          ? buildPyramidVerticesCm(a, b, v)
+          : buildBoxVerticesCm(a, b, v);
+
+        // Přepočet měřítka tak, aby se jakékoliv rozměry v cm vešly hezky do scény
+        var maxDim = Math.max(a, b, v, 1);
+        SCENE_SCALE = 3.8 / maxDim;
+
+        return {
+          a: a, b: b, v: v,
+          centerOffset: centerOffset,
+          verticesCm: vertsCm,
+          edges: (currentShapeKey === 'jehlan') ? PYR_EDGES : BOX_EDGES,
+          faces: (currentShapeKey === 'jehlan') ? PYR_FACES : BOX_FACES,
+          triangles: (currentShapeKey === 'jehlan') ? PYR_TRIANGLES : BOX_TRIANGLES
+        };
+      }
+
+      // Převod bodu v cm do souřadnic Three.js scény
+      function cmToScene(ptCm, def) {
+        def = def || getShapeDef();
+        return {
+          x: (ptCm.x + def.centerOffset.x) * SCENE_SCALE,
+          y: (ptCm.y + def.centerOffset.y) * SCENE_SCALE,
+          z: (ptCm.z + def.centerOffset.z) * SCENE_SCALE
+        };
+      }
+
+      // Vyhodnotí definici vybraného bodu (vrchol, bod na hraně nebo střed stěny) na 3D souřadnice v cm
+      function resolveSlotCm(def, slot) {
+        if (!slot) return null;
+        if (slot.type === 'vertex') {
+          var v = def.verticesCm[slot.idx];
+          return { x: v.x, y: v.y, z: v.z, label: slot.label || v.name, desc: 'vrchol ' + v.name };
+        }
+        if (slot.type === 'edge') {
+          var e = def.edges[slot.idx];
+          var va = def.verticesCm[e.v[0]], vb = def.verticesCm[e.v[1]];
+          var pos = lerp(va, vb, slot.t);
+          var edgeName = va.name + vb.name;
+          var lbl = slot.label || 'P';
+          var desc = Math.abs(slot.t - 0.5) < 0.02
+            ? ('střed hrany ' + edgeName)
+            : ('bod na hraně ' + edgeName);
+          return { x: pos.x, y: pos.y, z: pos.z, label: lbl, desc: desc };
+        }
+        if (slot.type === 'face') {
+          var f = def.faces[slot.idx];
+          var sum = { x: 0, y: 0, z: 0 };
+          f.v.forEach(function (vi) {
+            sum = add(sum, def.verticesCm[vi]);
+          });
+          var c = scaleV(sum, 1 / f.v.length);
+          var lblF = slot.label || 'P';
+          return { x: c.x, y: c.y, z: c.z, label: lblF, desc: 'střed stěny ' + f.name };
+        }
+        return null;
+      }
+
+      // ============================================================================
+      // 3. KROKOVACÍ ENGINE PRO ODCHYLKY A VZDÁLENOSTI
+      // ============================================================================
+      var slots = [null, null, null]; // 3 body: [Bod1 (např. A), Bod2 (např. P), Bod3 (např. C)]
+      var stepEngine = {
+        steps: [],      // Pole vygenerovaných výukových kroků
+        currentIdx: -1  // Aktuálně zobrazený krok (0 .. steps.length - 1)
+      };
+
+      // Sestaví kroky řešení pro 3 zadané body (X = Bod 1, Y = Bod 2, Z = Bod 3)
+      // Hlavní přímka je XY (např. AP), třetí bod je Z (např. C).
+      function buildCalculationSteps() {
+        stepEngine.steps = [];
+        stepEngine.currentIdx = -1;
+
+        if (slots.filter(Boolean).length < 3) return;
+
+        var def = getShapeDef();
+        var X = resolveSlotCm(def, slots[0]);
+        var Y = resolveSlotCm(def, slots[1]);
+        var Z = resolveSlotCm(def, slots[2]);
+
+        // Ošetření unikátních názvů bodů
+        if (Y.label === X.label) Y.label = 'P';
+        if (Z.label === X.label || Z.label === Y.label) Z.label = 'Q';
+
+        var dXY = dist3D(X, Y);
+        var dXZ = dist3D(X, Z);
+        var dYZ = dist3D(Y, Z);
+
+        if (dXY < 1e-3 || dXZ < 1e-3 || dYZ < 1e-3) {
+          stepEngine.steps.push({
+            title: 'Chyba zadání',
+            html: 'Některé ze zvolených bodů splývají. Zvolte 3 různé body.',
+            lines: [], dashed: [], points: [X, Y, Z], triangles: [], rightAngles: []
+          });
+          stepEngine.currentIdx = 0;
+          return;
+        }
+
+        // Pomocný bod Y' (kolmý průmět bodu Y do roviny podstavy y = 0)
+        var Yproj = { x: Y.x, y: 0, z: Y.z, label: Y.label + '′' };
+        var hY = Math.abs(Y.y - X.y);
+        var dXYproj = dist3D({ x: X.x, y: 0, z: X.z }, Yproj);
+
+        // Pomocný bod S (střed podstavy pro jehlan)
+        var S = { x: 0, y: 0, z: 0, label: 'S' };
+
+        // --- KROK 1: Analýza zadání a vyznačení přímky XY a bodu Z ---
+        var step1Points = [X, Y, Z];
+        if (currentShapeKey === 'jehlan') step1Points.push(S);
+
+        stepEngine.steps.push({
+          title: 'Krok 1: Analýza zadání a vyznačení prvků',
+          html: 'Máme zadány body <b>' + X.label + '</b> (' + X.desc + '), <b>' + Y.label + '</b> (' + Y.desc + ') a <b>' + Z.label + '</b> (' + Z.desc + ').<br>' +
+            'Hledáme:<br>' +
+            '1) Odchylku (úhel) přímky <b>' + X.label + Y.label + '</b>.<br>' +
+            '2) Vzdálenost bodu <b>' + Z.label + '</b> od přímky <b>' + X.label + Y.label + '</b>.',
+          lines: [
+            { p1: X, p2: Y, color: 'cyan' }
+          ],
+          dashed: (currentShapeKey === 'jehlan') ? [
+            { p1: def.verticesCm[4], p2: S, color: 'amber' },
+            { p1: X, p2: Z, color: 'amber' }
+          ] : [
+            { p1: X, p2: Z, color: 'amber' }
+          ],
+          points: step1Points,
+          triangles: [],
+          rightAngles: []
+        });
+
+        // --- KROK 2: Kolmý průmět a výpočet délky hlavní úsečky |XY| ---
+        var step2Html = '';
+        var step2Dashed = [];
+        var step2Points = [X, Y, Z];
+        var step2RightAngles = [];
+        var step2Tris = [];
+
+        if (hY > 1e-3 && dXYproj > 1e-3 && Math.abs(X.y) < 1e-3) {
+          step2Points.push(Yproj);
+          step2Dashed.push({ p1: Y, p2: Yproj, color: 'amber' });
+          step2Dashed.push({ p1: X, p2: Yproj, color: 'amber' });
+          step2RightAngles.push({ vertex: Yproj, pA: Y, pB: X });
+          step2Tris.push({ p1: X, p2: Yproj, p3: Y, color: 'amber' });
+
+          var alphaBaseRad = Math.atan2(hY, dXYproj);
+
+          if (currentShapeKey === 'jehlan' && slots[1].type === 'edge' && Math.abs(slots[1].t - 0.5) < 0.02) {
+            var uhlopricka = Math.sqrt(def.a * def.a + def.b * def.b);
+            step2Points.push(S);
+            step2Dashed.push({ p1: def.verticesCm[4], p2: S, color: 'amber' });
+            step2Html = 'Spustíme kolmici z bodu <b>' + Y.label + '</b> do podstavy – získáme průmět <b>' + Yproj.label + '</b>.<br>' +
+              'Úhlopříčka podstavy <b>|AC| = √(a² + b²) = √(' + fmt(def.a) + '² + ' + fmt(def.b) + '²) = ' + fmt(uhlopricka) + ' cm</b>.<br>' +
+              'Protože <b>' + Y.label + '</b> je uprostřed hrany CV, leží <b>' + Yproj.label + '</b> ve ¾ úhlopříčky AC od vrcholu A:<br>' +
+              '<span class="formula">|' + X.label + Yproj.label + '| = ¾ · |AC| = ' + fmt(dXYproj) + ' cm, &nbsp; |' + Y.label + Yproj.label + '| = ½ · v = ' + fmt(hY) + ' cm</span>' +
+              'Z pravoúhlého △<b>' + X.label + Yproj.label + Y.label + '</b> určíme délku <b>|' + X.label + Y.label + '|</b> a odchylku <b>α</b> přímky <b>' + X.label + Y.label + '</b> od podstavy:<br>' +
+              '<span class="formula">|' + X.label + Y.label + '| = √(' + fmt(dXYproj) + '² + ' + fmt(hY) + '²) = ' + fmt(dXY) + ' cm</span>' +
+              '<span class="result-badge">Odchylka ' + X.label + Y.label + ' od podstavy: α = ' + fmtDeg(alphaBaseRad) + '</span>';
+          } else {
+            step2Html = 'Sestrojíme kolmý průmět <b>' + Yproj.label + '</b> bodu <b>' + Y.label + '</b> do roviny podstavy.<br>' +
+              'V pravoúhlém trojúhelníku <b>△' + X.label + Yproj.label + Y.label + '</b> platí:<br>' +
+              '<span class="formula">|' + X.label + Yproj.label + '| = ' + fmt(dXYproj) + ' cm, &nbsp; |' + Y.label + Yproj.label + '| = ' + fmt(hY) + ' cm</span>' +
+              'Pomocí Pythagorovy věty vypočítáme délku úsečky <b>|' + X.label + Y.label + '|</b> a její odchylku od podstavy:<br>' +
+              '<span class="formula">|' + X.label + Y.label + '| = √(' + fmt(dXYproj) + '² + ' + fmt(hY) + '²) = ' + fmt(dXY) + ' cm</span>' +
+              '<span class="result-badge">Odchylka ' + X.label + Y.label + ' od podstavy: α = ' + fmtDeg(alphaBaseRad) + '</span>';
+          }
+        } else {
+          step2Html = 'Určíme prostorovou vzdálenost bodů <b>' + X.label + '</b> a <b>' + Y.label + '</b> pomocí souřadnic v krychli/kvádru:<br>' +
+            '<span class="formula">|' + X.label + Y.label + '| = √(Δx² + Δy² + Δz²) = ' + fmt(dXY) + ' cm</span>';
+        }
+
+        stepEngine.steps.push({
+          title: 'Krok 2: Pravoúhlý trojúhelník a délka |' + X.label + Y.label + '|',
+          html: step2Html,
+          lines: [{ p1: X, p2: Y, color: 'cyan' }],
+          dashed: step2Dashed,
+          points: step2Points,
+          triangles: step2Tris,
+          rightAngles: step2RightAngles
+        });
+
+        // --- KROK 3: Trojúhelník XYZ a délky všech jeho stran ---
+        stepEngine.steps.push({
+          title: 'Krok 3: Sestrojení trojúhelníku △' + X.label + Y.label + Z.label + ' a délky stran',
+          html: 'Pro výpočet vzájemných úhlů a vzdálenosti bodu <b>' + Z.label + '</b> od přímky <b>' + X.label + Y.label + '</b> si vyjmeme rovinný trojúhelník <b>△' + X.label + Y.label + Z.label + '</b> a spočítáme délky jeho zbývajících stran:<br>' +
+            '<span class="formula">' +
+            '|' + X.label + Y.label + '| = ' + fmt(dXY) + ' cm<br>' +
+            '|' + X.label + Z.label + '| = ' + fmt(dXZ) + ' cm<br>' +
+            '|' + Y.label + Z.label + '| = ' + fmt(dYZ) + ' cm' +
+            '</span>',
+          lines: [
+            { p1: X, p2: Y, color: 'cyan' },
+            { p1: X, p2: Z, color: 'amber' },
+            { p1: Y, p2: Z, color: 'amber' }
+          ],
+          dashed: [],
+          points: [X, Y, Z],
+          triangles: [{ p1: X, p2: Y, p3: Z, color: 'cyan' }],
+          rightAngles: []
+        });
+
+        // --- KROK 4: Odchylka přímek XY a XZ (Kosinová věta v trojúhelníku XYZ) ---
+        var cosPhi = (dXY * dXY + dXZ * dXZ - dYZ * dYZ) / (2 * dXY * dXZ);
+        cosPhi = Math.max(-1, Math.min(1, cosPhi));
+        var phiRad = Math.acos(cosPhi);
+        // Odchylka dvou přímek je vždy ostrý nebo pravý úhel (0° až 90°)
+        var lineAngleRad = phiRad > Math.PI / 2 ? (Math.PI - phiRad) : phiRad;
+
+        stepEngine.steps.push({
+          title: 'Krok 4: Odchylka přímek ' + X.label + Y.label + ' a ' + X.label + Z.label + ' (kosinová věta)',
+          html: 'V trojúhelníku <b>△' + X.label + Y.label + Z.label + '</b> známe všechny tři strany. Pomocí <b>kosinové věty</b> vypočítáme úhel <b>φ = ∠' + Y.label + X.label + Z.label + '</b> mezi přímkami <b>' + X.label + Y.label + '</b> a <b>' + X.label + Z.label + '</b>:<br>' +
+            '<span class="formula">' +
+            'cos φ = (|' + X.label + Y.label + '|² + |' + X.label + Z.label + '|² − |' + Y.label + Z.label + '|²) / (2 · |' + X.label + Y.label + '| · |' + X.label + Z.label + '|)<br>' +
+            'cos φ = (' + fmt(dXY * dXY) + ' + ' + fmt(dXZ * dXZ) + ' − ' + fmt(dYZ * dYZ) + ') / (2 · ' + fmt(dXY) + ' · ' + fmt(dXZ) + ') = ' + fmt(cosPhi) +
+            '</span>' +
+            '<span class="result-badge">Úhel ∠' + Y.label + X.label + Z.label + ' (odchylka ' + X.label + Y.label + ' a ' + X.label + Z.label + '): φ = ' + fmtDeg(lineAngleRad) + '</span>',
+          lines: [
+            { p1: X, p2: Y, color: 'cyan' },
+            { p1: X, p2: Z, color: 'pink' }
+          ],
+          dashed: [
+            { p1: Y, p2: Z, color: 'amber' }
+          ],
+          points: [X, Y, Z],
+          triangles: [{ p1: X, p2: Y, p3: Z, color: 'cyan' }],
+          rightAngles: [],
+          angleArc: { vertex: X, pA: Y, pB: Z, label: 'φ = ' + fmt(lineAngleRad * 180 / Math.PI) + '°' }
+        });
+
+        // --- KROK 5: Vzdálenost bodu Z od přímky XY (Výška trojúhelníku / pata kolmice K) ---
+        var dirXY = sub(Y, X);
+        var tFoot = dot(sub(Z, X), dirXY) / dot(dirXY, dirXY);
+        var K = add(X, scaleV(dirXY, tFoot));
+        K.label = 'K';
+        var distZtoXY = dist3D(Z, K);
+
+        var extraDashed = [];
+        if (tFoot < 0) extraDashed.push({ p1: K, p2: X, color: 'cyan' });
+        else if (tFoot > 1) extraDashed.push({ p1: Y, p2: K, color: 'cyan' });
+
+        stepEngine.steps.push({
+          title: 'Krok 5: Vzdálenost bodu ' + Z.label + ' od přímky ' + X.label + Y.label,
+          html: 'Vzdálenost bodu <b>' + Z.label + '</b> od přímky <b>' + X.label + Y.label + '</b> je délka výšky <b>v = |' + Z.label + 'K|</b> spuštěné z bodu <b>' + Z.label + '</b> kolmo na přímku <b>' + X.label + Y.label + '</b> (bod <b>K</b> je pata kolmice).<br>' +
+            'V pravoúhlém trojúhelníku <b>△' + X.label + 'K' + Z.label + '</b> platí:<br>' +
+            '<span class="formula">' +
+            'v = |' + Z.label + 'K| = |' + X.label + Z.label + '| · sin φ = ' + fmt(dXZ) + ' · sin(' + fmt(phiRad * 180 / Math.PI) + '°)' +
+            '</span>' +
+            '<span class="result-badge">Vzdálenost bodu ' + Z.label + ' od ' + X.label + Y.label + ': v = ' + fmt(distZtoXY) + ' cm</span>',
+          lines: [
+            { p1: X, p2: Y, color: 'cyan' },
+            { p1: Z, p2: K, color: 'green' }
+          ],
+          dashed: [
+            { p1: X, p2: Z, color: 'amber' },
+            { p1: Y, p2: Z, color: 'amber' }
+          ].concat(extraDashed),
+          points: [X, Y, Z, K],
+          triangles: [{ p1: X, p2: Y, p3: Z, color: 'cyan' }],
+          rightAngles: [{ vertex: K, pA: Z, pB: X }]
+        });
+
+        // Začneme na 1. kroku
+        stepEngine.currentIdx = 0;
+      }
+
+      // ============================================================================
+      // 4. THREE.JS SCÉNA A VYKRESLOVÁNÍ
+      // ============================================================================
+      var canvas = document.getElementById('scene');
+      var wrap = document.getElementById('canvas-wrap');
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(45, 1, 0.1, 150);
+      var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+      var markerGroup = new THREE.Group();
+      var constructGroup = new THREE.Group();
+      var snapGuidesGroup = new THREE.Group();
+      scene.add(markerGroup, constructGroup, snapGuidesGroup);
+
+      var currentMesh = null;
+      var occluderMesh = null;
+      var wireVisible = null;
+      var wireHidden = null;
+
+      var camState = { theta: 0.65, phi: 1.15, radius: 7.8 };
+      var MIN_R = 3.5, MAX_R = 22;
+
+      function updateCamera() {
+        var r = camState.radius;
+        camera.position.x = r * Math.sin(camState.phi) * Math.sin(camState.theta);
+        camera.position.y = r * Math.cos(camState.phi);
+        camera.position.z = r * Math.sin(camState.phi) * Math.cos(camState.theta);
+        camera.lookAt(0, 0, 0);
+        camera.updateMatrixWorld(true);
+      }
+
+      function resize() {
+        var w = wrap.clientWidth, h = wrap.clientHeight;
+        if (w === 0 || h === 0) return;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+      window.addEventListener('resize', resize);
+      if (window.ResizeObserver) new ResizeObserver(resize).observe(wrap);
+
+      function cssVar(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      }
+      function currentColors() {
+        return {
+          solid: new THREE.Color(cssVar('--solid-color')),
+          solidEdge: new THREE.Color(cssVar('--solid-edge')),
+          cyan: new THREE.Color(cssVar('--cyan')),
+          amber: new THREE.Color(cssVar('--amber')),
+          pink: new THREE.Color(cssVar('--pink')),
+          green: new THREE.Color(cssVar('--green'))
+        };
+      }
+
+      function disposeGroup(group) {
+        while (group.children.length) {
+          var obj = group.children.pop();
+          group.remove(obj);
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) obj.material.dispose();
+        }
+      }
+
+      function createThickSegmentScene(p1Scene, p2Scene, radius, color, renderOrder) {
+        var v1 = new THREE.Vector3(p1Scene.x, p1Scene.y, p1Scene.z);
+        var v2 = new THREE.Vector3(p2Scene.x, p2Scene.y, p2Scene.z);
+        var dir = new THREE.Vector3().subVectors(v2, v1);
+        var len = dir.length();
+        if (len < 1e-5) return null;
+
+        var geo = new THREE.CylinderGeometry(radius, radius, len, 10, 1, false);
+        var mat = new THREE.MeshBasicMaterial({ color: color, depthTest: false, depthWrite: false });
+        var mesh = new THREE.Mesh(geo, mat);
+        mesh.position.copy(v1).add(v2).multiplyScalar(0.5);
+        mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+        mesh.renderOrder = renderOrder || 15;
+        return mesh;
+      }
+
+      // Vytvoří značku pravého úhlu v prostoru
+      function createRightAngleMarker(def, vertexCm, pACm, pBCm, color) {
+        var V = cmToScene(vertexCm, def);
+        var A = cmToScene(pACm, def);
+        var B = cmToScene(pBCm, def);
+        var u = normalize(sub(A, V));
+        var v = normalize(sub(B, V));
+        var size = 0.22;
+        var p1 = add(V, scaleV(u, size));
+        var p2 = add(add(V, scaleV(u, size)), scaleV(v, size));
+        var p3 = add(V, scaleV(v, size));
+
+        var geo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(p1.x, p1.y, p1.z),
+          new THREE.Vector3(p2.x, p2.y, p2.z),
+          new THREE.Vector3(p3.x, p3.y, p3.z)
+        ]);
+        var mat = new THREE.LineBasicMaterial({ color: color, depthTest: false });
+        var line = new THREE.Line(geo, mat);
+        line.renderOrder = 18;
+        return line;
+      }
+
+      var constructLabelsEl = document.getElementById('constructLabels');
+      var constructLabelItems = [];
+
+      function renderCurrentState() {
+        disposeGroup(markerGroup);
+        disposeGroup(constructGroup);
+        constructLabelsEl.innerHTML = '';
+        constructLabelItems = [];
+
+        var def = getShapeDef();
+        var col = currentColors();
+        var colorMap = {
+          cyan: col.cyan,
+          amber: col.amber,
+          pink: col.pink,
+          green: col.green
+        };
+
+        // Pokud ještě nejsou vybrány všechny 3 body, vykreslíme naklikané body
+        if (stepEngine.currentIdx === -1 || stepEngine.steps.length === 0) {
+          var slotCols = [col.cyan, col.amber, col.pink];
+          slots.forEach(function (s, i) {
+            if (!s) return;
+            var ptCm = resolveSlotCm(def, s);
+            var sp = cmToScene(ptCm, def);
+            var geo = new THREE.SphereGeometry(0.11, 16, 16);
+            var mat = new THREE.MeshBasicMaterial({ color: slotCols[i], depthTest: false });
+            var mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(sp.x, sp.y, sp.z);
+            mesh.renderOrder = 22;
+            markerGroup.add(mesh);
+
+            var lbl = document.createElement('span');
+            lbl.className = 'clabel';
+            lbl.textContent = ptCm.label;
+            constructLabelsEl.appendChild(lbl);
+            constructLabelItems.push({ el: lbl, posScene: sp });
+          });
+          updateConstructLabels();
+          return;
+        }
+
+        var st = stepEngine.steps[stepEngine.currentIdx];
+
+        // 1. Vykreslení poloprůhledných pomocných trojúhelníků
+        (st.triangles || []).forEach(function (tr) {
+          var p1 = cmToScene(tr.p1, def);
+          var p2 = cmToScene(tr.p2, def);
+          var p3 = cmToScene(tr.p3, def);
+          var geo = new THREE.BufferGeometry();
+          geo.setAttribute('position', new THREE.Float32BufferAttribute([
+            p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z
+          ], 3));
+          var mat = new THREE.MeshBasicMaterial({
+            color: colorMap[tr.color] || col.cyan,
+            transparent: true,
+            opacity: 0.24,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+            depthTest: false
+          });
+          var mesh = new THREE.Mesh(geo, mat);
+          mesh.renderOrder = 9;
+          constructGroup.add(mesh);
+        });
+
+        // 2. Čárkované pomocné úsečky (průměty, kolmice, vedlejší strany)
+        (st.dashed || []).forEach(function (dl) {
+          var p1 = cmToScene(dl.p1, def);
+          var p2 = cmToScene(dl.p2, def);
+          var geo = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(p1.x, p1.y, p1.z),
+            new THREE.Vector3(p2.x, p2.y, p2.z)
+          ]);
+          var mat = new THREE.LineDashedMaterial({
+            color: colorMap[dl.color] || col.amber,
+            dashSize: 0.14,
+            gapSize: 0.09,
+            depthTest: false,
+            transparent: true,
+            opacity: 0.92
+          });
+          var line = new THREE.Line(geo, mat);
+          line.computeLineDistances();
+          line.renderOrder = 13;
+          constructGroup.add(line);
+        });
+
+        // 3. Plné zvýrazněné úsečky (hlavní přímka, výška v)
+        (st.lines || []).forEach(function (ln) {
+          var p1 = cmToScene(ln.p1, def);
+          var p2 = cmToScene(ln.p2, def);
+          var cyl = createThickSegmentScene(p1, p2, 0.036, colorMap[ln.color] || col.cyan, 16);
+          if (cyl) constructGroup.add(cyl);
+        });
+
+        // 4. Značky pravých úhlů
+        (st.rightAngles || []).forEach(function (ra) {
+          var marker = createRightAngleMarker(def, ra.vertex, ra.pA, ra.pB, col.green);
+          constructGroup.add(marker);
+        });
+
+        // 5. Oblouček úhlu (pokud je v kroku aktivní)
+        if (st.angleArc) {
+          var V = cmToScene(st.angleArc.vertex, def);
+          var A = cmToScene(st.angleArc.pA, def);
+          var B = cmToScene(st.angleArc.pB, def);
+          var u = normalize(sub(A, V));
+          var v = normalize(sub(B, V));
+          var arcPts = [];
+          var radius = 0.55;
+          for (var k = 0; k <= 20; k++) {
+            var t = k / 20;
+            var dir = normalize(lerp(u, v, t));
+            var pt = add(V, scaleV(dir, radius));
+            arcPts.push(new THREE.Vector3(pt.x, pt.y, pt.z));
+          }
+          var arcGeo = new THREE.BufferGeometry().setFromPoints(arcPts);
+          var arcMat = new THREE.LineBasicMaterial({ color: col.pink, depthTest: false });
+          var arcLine = new THREE.Line(arcGeo, arcMat);
+          arcLine.renderOrder = 19;
+          constructGroup.add(arcLine);
+
+          var midDir = normalize(lerp(u, v, 0.5));
+          var lblPos = add(V, scaleV(midDir, radius * 1.35));
+          var arcLbl = document.createElement('span');
+          arcLbl.className = 'clabel sec';
+          arcLbl.textContent = st.angleArc.label;
+          constructLabelsEl.appendChild(arcLbl);
+          constructLabelItems.push({ el: arcLbl, posScene: lblPos });
+        }
+
+        // 6. Body v aktuálním kroku
+        (st.points || []).forEach(function (ptCm) {
+          var sp = cmToScene(ptCm, def);
+          var isAux = ptCm.label.indexOf('′') !== -1 || ptCm.label === 'S';
+          var isFoot = ptCm.label === 'K';
+          var sphCol = isFoot ? col.green : (isAux ? col.amber : col.cyan);
+
+          var geo = new THREE.SphereGeometry(isAux ? 0.08 : 0.105, 16, 16);
+          var mat = new THREE.MeshBasicMaterial({ color: sphCol, depthTest: false });
+          var sphere = new THREE.Mesh(geo, mat);
+          sphere.position.set(sp.x, sp.y, sp.z);
+          sphere.renderOrder = 22;
+          markerGroup.add(sphere);
+
+          var lbl = document.createElement('span');
+          lbl.className = 'clabel' + (isFoot ? ' green' : (isAux ? ' aux' : ''));
+          lbl.textContent = ptCm.label;
+          constructLabelsEl.appendChild(lbl);
+          constructLabelItems.push({ el: lbl, posScene: sp });
+        });
+
+        updateConstructLabels();
+      }
+
+      function updateConstructLabels() {
+        constructLabelItems.forEach(function (item) {
+          var sp = projectToScreen(item.posScene);
+          item.el.style.left = sp.x + 'px';
+          item.el.style.top = sp.y + 'px';
+        });
+      }
+
+      function rebuildSolidMesh() {
+        [currentMesh, occluderMesh, wireVisible, wireHidden].forEach(function (obj) {
+          if (!obj) return;
+          scene.remove(obj);
+          obj.geometry.dispose();
+          obj.material.dispose();
+        });
+        currentMesh = occluderMesh = wireVisible = wireHidden = null;
+
+        var def = getShapeDef();
+        var col = currentColors();
+
+        var positions = [];
+        def.triangles.forEach(function (tri) {
+          tri.forEach(function (idx) {
+            var vScene = cmToScene(def.verticesCm[idx], def);
+            positions.push(vScene.x, vScene.y, vScene.z);
+          });
+        });
+        var faceGeo = new THREE.BufferGeometry();
+        faceGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+
+        var occluderMat = new THREE.MeshBasicMaterial({
+          colorWrite: false, depthWrite: true, depthTest: true, side: THREE.DoubleSide,
+          polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1
+        });
+        occluderMesh = new THREE.Mesh(faceGeo, occluderMat);
+        occluderMesh.renderOrder = 0;
+        scene.add(occluderMesh);
+
+        var mat = new THREE.MeshBasicMaterial({
+          color: col.solid, transparent: true, opacity: 0.38, side: THREE.DoubleSide, depthWrite: false
+        });
+        currentMesh = new THREE.Mesh(faceGeo, mat);
+        currentMesh.renderOrder = 1;
+        scene.add(currentMesh);
+
+        var linePositions = [];
+        def.edges.forEach(function (e) {
+          var a = cmToScene(def.verticesCm[e.v[0]], def);
+          var b = cmToScene(def.verticesCm[e.v[1]], def);
+          linePositions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+        });
+        var lineGeo = new THREE.BufferGeometry();
+        lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+
+        var visMat = new THREE.LineBasicMaterial({ color: col.solidEdge, depthTest: true, depthWrite: false });
+        wireVisible = new THREE.LineSegments(lineGeo, visMat);
+        wireVisible.renderOrder = 2;
+        scene.add(wireVisible);
+
+        var hideGeo = lineGeo.clone();
+        var hideMat = new THREE.LineDashedMaterial({
+          color: col.solidEdge, dashSize: 0.1, gapSize: 0.08,
+          transparent: true, opacity: 0.5, depthTest: true, depthWrite: false, depthFunc: THREE.GreaterDepth
+        });
+        wireHidden = new THREE.LineSegments(hideGeo, hideMat);
+        wireHidden.computeLineDistances();
+        wireHidden.renderOrder = 2;
+        scene.add(wireHidden);
+      }
+
+      // Vykreslení jemných záchytných bodů (středy hran a středy stěn) pro snadné klikání
+      function rebuildSnapGuides() {
+        disposeGroup(snapGuidesGroup);
+        var def = getShapeDef();
+        var edgeGeo = new THREE.SphereGeometry(0.045, 12, 12);
+        var edgeMat = new THREE.MeshBasicMaterial({ color: 0x8CA3BE, transparent: true, opacity: 0.45, depthTest: false });
+
+        def.edges.forEach(function (e) {
+          var v1 = def.verticesCm[e.v[0]], v2 = def.verticesCm[e.v[1]];
+          var mid = cmToScene(lerp(v1, v2, 0.5), def);
+          var s = new THREE.Mesh(edgeGeo, edgeMat);
+          s.position.set(mid.x, mid.y, mid.z);
+          snapGuidesGroup.add(s);
+        });
+
+        var faceGeo = new THREE.SphereGeometry(0.05, 12, 12);
+        var faceMat = new THREE.MeshBasicMaterial({ color: 0xF2A93C, transparent: true, opacity: 0.45, depthTest: false });
+        def.faces.forEach(function (f, fi) {
+          var ptCm = resolveSlotCm(def, { type: 'face', idx: fi });
+          var sp = cmToScene(ptCm, def);
+          var s = new THREE.Mesh(faceGeo, faceMat);
+          s.position.set(sp.x, sp.y, sp.z);
+          snapGuidesGroup.add(s);
+        });
+      }
+
+      // ---------- Popisky vrcholů a rozměrů ----------
+      var vertexLabelsEl = document.getElementById('vertexLabels');
+      var vertexLabelEls = [];
+
+      function rebuildVertexLabels() {
+        vertexLabelsEl.innerHTML = '';
+        vertexLabelEls = [];
+        var def = getShapeDef();
+        def.verticesCm.forEach(function (v) {
+          var el = document.createElement('span');
+          el.className = 'vlabel';
+          el.textContent = v.name;
+          vertexLabelsEl.appendChild(el);
+          vertexLabelEls.push(el);
+        });
+        updateVertexLabels();
+      }
+
+      function updateVertexLabels() {
+        var def = getShapeDef();
+        def.verticesCm.forEach(function (v, i) {
+          var el = vertexLabelEls[i];
+          if (!el) return;
+          var sp = projectToScreen(cmToScene(v, def));
+          el.style.left = sp.x + 'px';
+          el.style.top = sp.y + 'px';
+        });
+      }
+
+      var dimLabelsEl = document.getElementById('dimLabels');
+      var dimLabelEls = [];
+
+      function rebuildDimensions() {
+        dimLabelsEl.innerHTML = '';
+        dimLabelEls = [];
+        var def = getShapeDef();
+        // Zobrazíme kótu na hlavní přední hraně a boční hraně
+        var indicesToShow = currentShapeKey === 'jehlan' ? [0, 1] : [0, 1, 8];
+        indicesToShow.forEach(function (edgeIdx) {
+          var e = def.edges[edgeIdx];
+          var el = document.createElement('span');
+          el.className = 'dim-label';
+          var val = (e.dim === 'a') ? def.a : ((e.dim === 'b') ? def.b : def.v);
+          el.textContent = e.dim + '=' + fmt(val);
+          dimLabelsEl.appendChild(el);
+          dimLabelEls.push({ el: el, edgeIdx: edgeIdx });
+        });
+        updateDimensions();
+      }
+
+      function updateDimensions() {
+        var def = getShapeDef();
+        dimLabelEls.forEach(function (item) {
+          var e = def.edges[item.edgeIdx];
+          var midCm = lerp(def.verticesCm[e.v[0]], def.verticesCm[e.v[1]], 0.5);
+          var sp = projectToScreen(cmToScene(midCm, def));
+          item.el.style.left = sp.x + 'px';
+          item.el.style.top = sp.y + 'px';
+        });
+      }
+
+      // ============================================================================
+      // 5. UI, LOG KROKŮ A ŠABLONY ÚLOH
+      // ============================================================================
+      var mathLogEl = document.getElementById('mathLog');
+      var prevStepBtn = document.getElementById('prevStepBtn');
+      var nextStepBtn = document.getElementById('nextStepBtn');
+
+      function updateUI() {
+        var def = getShapeDef();
+        [0, 1, 2].forEach(function (i) {
+          var chip = document.getElementById('chip' + i);
+          if (slots[i]) {
+            var p = resolveSlotCm(def, slots[i]);
+            chip.textContent = (i + 1) + ': ' + p.label;
+            chip.classList.add('filled');
+          } else {
+            chip.textContent = (i + 1) + ': ?';
+            chip.classList.remove('filled');
+          }
+        });
+
+        mathLogEl.innerHTML = '';
+        if (stepEngine.steps.length === 0) {
+          var n = slots.filter(Boolean).length;
+          var msg = n === 0
+            ? 'Klikněte na vrchol, hranu nebo střed stěny a zvolte <b>1. bod</b> (počátek přímky).'
+            : (n === 1
+              ? 'Zvolte <b>2. bod</b> pro určení hlavní přímky.'
+              : 'Zvolte <b>3. bod</b> (pro určení druhé přímky a vzdálenosti bodu od přímky).');
+          mathLogEl.innerHTML = '<div class="step-card active">' + msg + '</div>';
+          prevStepBtn.disabled = true;
+          nextStepBtn.disabled = true;
+          return;
+        }
+
+        for (var k = 0; k <= stepEngine.currentIdx; k++) {
+          var st = stepEngine.steps[k];
+          var card = document.createElement('div');
+          card.className = 'step-card' + (k === stepEngine.currentIdx ? ' active' : '');
+          card.innerHTML = '<b>' + st.title + '</b><br>' + st.html;
+          mathLogEl.appendChild(card);
+        }
+        mathLogEl.scrollTop = mathLogEl.scrollHeight;
+
+        prevStepBtn.disabled = stepEngine.currentIdx <= 0;
+        nextStepBtn.disabled = stepEngine.currentIdx >= stepEngine.steps.length - 1;
+      }
+
+      prevStepBtn.addEventListener('click', function () {
+        if (stepEngine.currentIdx > 0) {
+          stepEngine.currentIdx--;
+          updateUI();
+          renderCurrentState();
+        }
+      });
+
+      nextStepBtn.addEventListener('click', function () {
+        if (stepEngine.currentIdx < stepEngine.steps.length - 1) {
+          stepEngine.currentIdx++;
+          updateUI();
+          renderCurrentState();
+        }
+      });
+
+      [0, 1, 2].forEach(function (i) {
+        document.getElementById('chip' + i).addEventListener('click', function () {
+          if (!slots[i]) return;
+          slots[i] = null;
+          stepEngine.steps = [];
+          stepEngine.currentIdx = -1;
+          updateUI();
+          renderCurrentState();
+        });
+      });
+
+      var sizeControlsEl = document.getElementById('sizeControls');
+      function renderSizeControls(key) {
+        var defs = DIM_DEFS[key];
+        sizeControlsEl.innerHTML = defs.map(function (d) {
+          var v = dimsState[key][d.key];
+          return '<div class="dim-field">' +
+            '<div class="dim-head"><span class="dim-name">' + d.label + '</span><span class="dim-value" data-readout="' + d.key + '">' + fmt(v) + ' cm</span></div>' +
+            '<input type="range" min="2" max="16" step="0.5" data-key="' + d.key + '" value="' + v + '">' +
+            '</div>';
+        }).join('');
+
+        Array.prototype.forEach.call(sizeControlsEl.querySelectorAll('input'), function (inp) {
+          inp.addEventListener('input', function () {
+            var v = parseFloat(inp.value);
+            if (isNaN(v) || v <= 0) return;
+            dimsState[key][inp.dataset.key] = v;
+            var readout = sizeControlsEl.querySelector('[data-readout="' + inp.dataset.key + '"]');
+            if (readout) readout.textContent = fmt(v) + ' cm';
+            refreshGeometryAndSteps();
+          });
+        });
+      }
+
+      function refreshGeometryAndSteps() {
+        rebuildSolidMesh();
+        rebuildVertexLabels();
+        rebuildDimensions();
+        rebuildSnapGuides();
+        if (slots.filter(Boolean).length === 3) {
+          buildCalculationSteps();
+        }
+        updateUI();
+        renderCurrentState();
+      }
+
+      // ŠABLONA 1: Jehlan a=6, b=8, v=10, P uprostřed CV, přímka AP, bod C
+      function loadPreset1() {
+        document.getElementById('preset1Btn').classList.add('active');
+        document.getElementById('preset2Btn').classList.remove('active');
+        currentShapeKey = 'jehlan';
+        dimsState.jehlan = { a: 6, b: 8, v: 10 };
+        document.querySelectorAll('.shape-btn').forEach(function (b) {
+          b.classList.toggle('active', b.dataset.shape === 'jehlan');
+        });
+        renderSizeControls('jehlan');
+        // A = vrchol 0, P = střed hrany CV (hrana č. 6), C = vrchol 2
+        slots = [
+          { type: 'vertex', idx: 0, label: 'A' },
+          { type: 'edge', idx: 6, t: 0.5, label: 'P' },
+          { type: 'vertex', idx: 2, label: 'C' }
+        ];
+        refreshGeometryAndSteps();
+      }
+
+      // ŠABLONA 2: Krychle a=10, P ve středu stěny CDGH, úhel AP a AC
+      function loadPreset2() {
+        document.getElementById('preset2Btn').classList.add('active');
+        document.getElementById('preset1Btn').classList.remove('active');
+        currentShapeKey = 'krychle';
+        dimsState.krychle = { a: 10 };
+        document.querySelectorAll('.shape-btn').forEach(function (b) {
+          b.classList.toggle('active', b.dataset.shape === 'krychle');
+        });
+        renderSizeControls('krychle');
+        // A = vrchol 0, P = střed stěny CDGH (stěna č. 4), C = vrchol 2
+        slots = [
+          { type: 'vertex', idx: 0, label: 'A' },
+          { type: 'face', idx: 4, label: 'P' },
+          { type: 'vertex', idx: 2, label: 'C' }
+        ];
+        refreshGeometryAndSteps();
+      }
+
+      document.getElementById('preset1Btn').addEventListener('click', loadPreset1);
+      document.getElementById('preset2Btn').addEventListener('click', loadPreset2);
+
+      document.querySelectorAll('.shape-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          currentShapeKey = btn.dataset.shape;
+          document.querySelectorAll('.shape-btn').forEach(function (b) {
+            b.classList.toggle('active', b.dataset.shape === currentShapeKey);
+          });
+          document.getElementById('preset1Btn').classList.remove('active');
+          document.getElementById('preset2Btn').classList.remove('active');
+          renderSizeControls(currentShapeKey);
+          slots = [null, null, null];
+          stepEngine.steps = [];
+          stepEngine.currentIdx = -1;
+          refreshGeometryAndSteps();
+        });
+      });
+
+      document.getElementById('resetBtn').addEventListener('click', function () {
+        document.getElementById('preset1Btn').classList.remove('active');
+        document.getElementById('preset2Btn').classList.remove('active');
+        slots = [null, null, null];
+        stepEngine.steps = [];
+        stepEngine.currentIdx = -1;
+        updateUI();
+        renderCurrentState();
+      });
+
+      // ============================================================================
+      // 6. VÝBĚR BODŮ MYŠÍ / DOTYKEM (Vrcholy, Středy stěn, Hrany)
+      // ============================================================================
+      var pointers = new Map();
+      var dragTotal = 0;
+      var singleStart = null;
+      var pinchStartDist = 0, pinchStartRadius = 0;
+
+      function projectToScreen(v3Scene) {
+        var p = new THREE.Vector3(v3Scene.x, v3Scene.y, v3Scene.z).project(camera);
+        var rect = canvas.getBoundingClientRect();
+        return {
+          x: (p.x * 0.5 + 0.5) * rect.width,
+          y: (-p.y * 0.5 + 0.5) * rect.height,
+          z: p.z
+        };
+      }
+
+      function closestOnSegment2D(px, py, ax, ay, bx, by) {
+        var dx = bx - ax, dy = by - ay;
+        var lenSq = dx * dx + dy * dy;
+        var t = lenSq > 1e-6 ? ((px - ax) * dx + (py - ay) * dy) / lenSq : 0;
+        return Math.max(0, Math.min(1, t));
+      }
+
+      function pickPointOnSolid(clientX, clientY) {
+        var rect = canvas.getBoundingClientRect();
+        var px = clientX - rect.left, py = clientY - rect.top;
+        var def = getShapeDef();
+
+        // 1. Priorita: Vrcholy tělesa
+        var bestVertex = null, bestVDist = 20;
+        def.verticesCm.forEach(function (v, idx) {
+          var sp = projectToScreen(cmToScene(v, def));
+          var d = Math.hypot(px - sp.x, py - sp.y);
+          if (d < bestVDist) {
+            bestVDist = d;
+            bestVertex = { type: 'vertex', idx: idx, label: v.name };
+          }
+        });
+        if (bestVertex) return bestVertex;
+
+        // 2. Priorita: Středy stěn
+        var bestFace = null, bestFDist = 18;
+        def.faces.forEach(function (f, idx) {
+          var ptCm = resolveSlotCm(def, { type: 'face', idx: idx });
+          var sp = projectToScreen(cmToScene(ptCm, def));
+          var d = Math.hypot(px - sp.x, py - sp.y);
+          if (d < bestFDist) {
+            bestFDist = d;
+            bestFace = { type: 'face', idx: idx, label: 'P' };
+          }
+        });
+        if (bestFace) return bestFace;
+
+        // 3. Priorita: Hrany (s přichytáváním na střed hrany t=0.5)
+        var bestEdge = null, bestEDist = 24;
+        def.edges.forEach(function (e, edgeIdx) {
+          var va = cmToScene(def.verticesCm[e.v[0]], def);
+          var vb = cmToScene(def.verticesCm[e.v[1]], def);
+          var sa = projectToScreen(va), sb = projectToScreen(vb);
+          var t = closestOnSegment2D(px, py, sa.x, sa.y, sb.x, sb.y);
+          var cx = sa.x + (sb.x - sa.x) * t, cy = sa.y + (sb.y - sa.y) * t;
+          var d = Math.hypot(px - cx, py - cy);
+          if (d < bestEDist) {
+            if (Math.abs(t - 0.5) < 0.08) t = 0.5;
+            bestEDist = d;
+            bestEdge = { type: 'edge', idx: edgeIdx, t: t, label: 'P' };
+          }
+        });
+        return bestEdge;
+      }
+
+      canvas.addEventListener('pointerdown', function (e) {
+        canvas.setPointerCapture(e.pointerId);
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pointers.size === 1) {
+          dragTotal = 0;
+          singleStart = { x: e.clientX, y: e.clientY, t: performance.now() };
+        } else if (pointers.size === 2) {
+          var vals = Array.from(pointers.values());
+          pinchStartDist = Math.hypot(vals[0].x - vals[1].x, vals[0].y - vals[1].y);
+          pinchStartRadius = camState.radius;
+        }
+      });
+
+      canvas.addEventListener('pointermove', function (e) {
+        if (pointers.size === 0) {
+          if (slots.indexOf(null) !== -1 && pickPointOnSolid(e.clientX, e.clientY)) {
+            canvas.style.cursor = 'crosshair';
+          } else {
+            canvas.style.cursor = 'default';
+          }
+          return;
+        }
+        if (!pointers.has(e.pointerId)) return;
+        var prev = pointers.get(e.pointerId);
+        var curr = { x: e.clientX, y: e.clientY };
+        pointers.set(e.pointerId, curr);
+
+        if (pointers.size === 2) {
+          var vals = Array.from(pointers.values());
+          var dist = Math.hypot(vals[0].x - vals[1].x, vals[0].y - vals[1].y);
+          if (pinchStartDist > 0) {
+            camState.radius = Math.min(MAX_R, Math.max(MIN_R, pinchStartRadius * (pinchStartDist / Math.max(dist, 1))));
+            updateCamera();
+          }
+          return;
+        }
+
+        if (pointers.size === 1) {
+          var dx = curr.x - prev.x, dy = curr.y - prev.y;
+          dragTotal += Math.abs(dx) + Math.abs(dy);
+          camState.theta -= dx * 0.008;
+          camState.phi = Math.min(Math.PI - 0.12, Math.max(0.12, camState.phi - dy * 0.008));
+          updateCamera();
+        }
+      });
+
+      function endPointer(e) {
+        var wasSingle = pointers.size === 1 && pointers.has(e.pointerId);
+        var start = singleStart;
+        pointers.delete(e.pointerId);
+        if (wasSingle && start && dragTotal < 8 && (performance.now() - start.t) < 700) {
+          var emptyIdx = slots.indexOf(null);
+          if (emptyIdx !== -1) {
+            var hit = pickPointOnSolid(start.x, start.y);
+            if (hit) {
+              slots[emptyIdx] = hit;
+              if (slots.filter(Boolean).length === 3) {
+                buildCalculationSteps();
+              }
+              updateUI();
+              renderCurrentState();
+            }
+          }
+        }
+      }
+      canvas.addEventListener('pointerup', endPointer);
+      canvas.addEventListener('pointercancel', endPointer);
+
+      canvas.addEventListener('wheel', function (e) {
+        e.preventDefault();
+        camState.radius = Math.min(MAX_R, Math.max(MIN_R, camState.radius + e.deltaY * 0.012));
+        updateCamera();
+      }, { passive: false });
+
+      document.getElementById('zoomIn').addEventListener('click', function () {
+        camState.radius = Math.max(MIN_R, camState.radius - 0.8);
+        updateCamera();
+      });
+      document.getElementById('zoomOut').addEventListener('click', function () {
+        camState.radius = Math.min(MAX_R, camState.radius + 0.8);
+        updateCamera();
+      });
+
+      // ---------- Smyčka vykreslování ----------
+      function animate() {
+        requestAnimationFrame(animate);
+        updateVertexLabels();
+        updateDimensions();
+        updateConstructLabels();
+        renderer.render(scene, camera);
+      }
+
+      resize();
+      updateCamera();
+      loadPreset1();
+      animate();
+    })();
+  </script>
+</body>
+
+</html>
