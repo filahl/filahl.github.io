@@ -2,133 +2,491 @@
 <html lang="cs">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Error 404</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+  <title>404 - Stránka nenalezena</title>
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background: #000 url('https://media1.tenor.com/m/hzKJ5w4qA-AAAAAC/yellow-emoji-no-no-emotiguy.gif') no-repeat center center fixed;
-      background-size: 100% 100%; 
-      color: #ffffff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      text-align: center;
-      overflow:hidden;
+    :root {
+      color-scheme: light dark;
+      --fg: #0a0a0a;
+      --muted: #737373;
+      --bg: #ffffff;
+      --accent: #6366f1;
+      --accent-2: #a855f7;
+      --grid-dot: color-mix(in oklab, #0a0a0a 12%, transparent);
     }
-    
-    .container {
-      background-color: rgba(18, 18, 18, 0.8);
-      padding: 40px;
-      border-radius: 10px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      max-width: 90%;
-      margin: 20px;
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #fafafa;
+        --muted: #737373;
+        --bg: #0a0a0a;
+        --grid-dot: color-mix(in oklab, #fafafa 12%, transparent);
+      }
     }
 
-    h1 {
-      font-size: 6rem;
-      margin: 0;
-      text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+
+    body {
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 2rem;
+      background: transparent;
+      color: var(--fg);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+      position: relative;
+      transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+      isolation: isolate;
+    }
+    body.leaving { opacity: 0; }
+
+    /* ── Canvas flow field ── */
+    .field {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      pointer-events: none;
+      display: block;
+    }
+
+    /* ── Dot grid nad canvasem ── */
+    .grid {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background-image: radial-gradient(circle at 1px 1px, var(--grid-dot) 1px, transparent 0);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(ellipse 65% 55% at 50% 45%, black 15%, transparent 75%);
+      -webkit-mask-image: radial-gradient(ellipse 65% 55% at 50% 45%, black 15%, transparent 75%);
+      opacity: 0;
+      animation: gridIn 1.4s 0.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @keyframes gridIn { to { opacity: 1; } }
+
+    /* ── Custom cursor ── */
+    .cur-dot, .cur-ring {
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      border-radius: 50%;
+      mix-blend-mode: difference;
+      will-change: transform;
+    }
+    .cur-dot {
+      width: 6px; height: 6px;
+      background: #fff;
+      transform: translate(-50%, -50%);
+    }
+    .cur-ring {
+      width: 32px; height: 32px;
+      border: 1px solid #fff;
+      transform: translate(-50%, -50%);
+      transition: width 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+                  height 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    body.cur-hover .cur-ring { width: 52px; height: 52px; }
+    @media (hover: none) {
+      .cur-dot, .cur-ring { display: none; }
+    }
+    @media (hover: hover) {
+      body, a { cursor: none; }
+    }
+
+    /* ── Obsah ── */
+    main {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1.5rem;
+      max-width: 22rem;
+      width: 100%;
+    }
+
+    .tilt {
+      perspective: 1000px;
+      transform-style: preserve-3d;
+      transition: transform 0.15s linear;
+    }
+
+    .code {
+      display: inline-flex;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: clamp(4rem, 14vw, 6rem);
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: -0.05em;
+      font-variant-numeric: tabular-nums;
+      user-select: none;
+      cursor: none;
+      position: relative;
+    }
+    .code span {
+      display: inline-block;
+      transform-origin: 50% 100%;
+      animation: charIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .code span:nth-child(1) { animation-delay: 0s; }
+    .code span:nth-child(2) { animation-delay: 0.08s; }
+    .code span:nth-child(3) { animation-delay: 0.16s; }
+    @keyframes charIn {
+      0%   { opacity: 0; transform: translateY(35%) rotateX(-95deg); filter: blur(10px); }
+      60%  { filter: blur(0); }
+      100% { opacity: 1; transform: translateY(0) rotateX(0); filter: blur(0); }
     }
 
     p {
-      font-size: 1.5rem;
-      color: #bbbbbb;
-      margin: 20px 0;
-    }
-
-    a {
-      display: inline-block;
-      margin-top: 20px;
-      color: #e0363a;
-      text-decoration: none;
       font-size: 1rem;
-      border: 1px solid #e0363a;
-      padding: 12px 24px;
-      border-radius: 5px;
-      transition: all 0.3s ease;
-      font-weight: bold;
+      line-height: 1.6;
+      color: var(--muted);
+      animation: revealText 1s 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+      font-variant-numeric: tabular-nums;
+    }
+    @keyframes revealText {
+      from { clip-path: inset(0 100% 0 0); opacity: 0; transform: translateY(4px); }
+      to   { clip-path: inset(0 0 0 0); opacity: 1; transform: translateY(0); }
     }
 
-    a:hover {
-      background-color: #e0363a;
-      color: white;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(224, 54, 58, 0.3);
+    .link {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--fg);
+      text-decoration: none;
+      padding-bottom: 3px;
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      animation: linkIn 0.8s 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+      will-change: transform;
+    }
+    @keyframes linkIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .link::after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0.875rem; bottom: 0;
+      height: 1px;
+      background: var(--muted);
+      transform-origin: left center;
+      transform: scaleX(0.3);
+      transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease;
+    }
+    .link:hover::after { transform: scaleX(1); background: var(--fg); }
+    .link svg {
+      width: 0.875rem; height: 0.875rem;
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .link:hover svg { transform: translateX(5px); }
+    .link:focus-visible { outline: 2px solid var(--fg); outline-offset: 4px; border-radius: 2px; }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
     }
 
-    /* Media queries pro mobilní zařízení */
-    @media (max-width: 768px) {
-      .container {
-        padding: 30px;
+    /* ── Reduced motion ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
       }
-      
-      h1 {
-        font-size: 4rem;
-      }
-      
-      p {
-        font-size: 1.2rem;
-      }
-    }
-    
-    @media (max-width: 480px) {
-      .container {
-        padding: 20px;
-      }
-      
-      h1 {
-        font-size: 3rem;
-      }
-      
-      p {
-        font-size: 1rem;
-      }
-      
-      a {
-        padding: 10px 20px;
-        font-size: 0.9rem;
-      }
+      .cur-dot, .cur-ring { display: none !important; }
+      body, a, .code { cursor: auto !important; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>404</h1>
-    <p>Stránka nenalezena :(</p>
-    <a href="/">Zpět na hlavní stránku</a>
-  </div>
+  <canvas class="field" aria-hidden="true"></canvas>
+  <div class="grid" aria-hidden="true"></div>
+  <div class="cur-ring" aria-hidden="true"></div>
+  <div class="cur-dot" aria-hidden="true"></div>
 
-  <!-- Audio prvek pro ICQ zvuk -->
-  <audio id="icqSound" autoplay loop>
-    <source src="https://www.myinstants.com/media/sounds/icq-uh-oh.mp3" type="audio/mpeg">
-  </audio>
+  <main>
+    <div class="tilt">
+      <span class="code" aria-hidden="true">
+        <span>4</span><span>0</span><span>4</span>
+      </span>
+    </div>
+    <h1 class="sr-only">Stránka nenalezena</h1>
+    <p data-scramble>Tahle stránka neexistuje nebo byla přesunuta.</p>
+    <a href="/" class="link">
+      Zpět domů
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+    </a>
+  </main>
 
   <script>
-    // Funkce pro přehrání zvuku po interakci uživatele
-    function enableAudio() {
-      const audio = document.getElementById('icqSound');
-      audio.volume = 0.3; // Nastavení nižší hlasitosti
-      audio.play().catch(e => console.log('Autoplay prevented, waiting for interaction'));
-    }
-    
-    // Pokus o přehrání při načtení
-    document.addEventListener('DOMContentLoaded', enableAudio);
-    
-    // Přehrát při jakékoli interakci uživatele
-    document.addEventListener('click', function() {
-      enableAudio();
-    });
-    
-    // Přehrát při dotyku (pro mobily)
-    document.addEventListener('touchstart', function() {
-      enableAudio();
-    }, { once: true });
+    (() => {
+      const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const isTouch = matchMedia('(hover: none)').matches;
+
+      /* ═══════ 1. CANVAS FLOW FIELD ═══════ */
+      const canvas = document.querySelector('.field');
+      const ctx = canvas.getContext('2d', { alpha: false });
+      const darkMQ = matchMedia('(prefers-color-scheme: dark)');
+
+      let W = 0, H = 0, dpr = 1;
+      let trailColor = '';
+      const mouse = { x: -9999, y: -9999 };
+
+      function updateTheme() {
+        const dark = darkMQ.matches;
+        const solid = dark ? '#0a0a0a' : '#ffffff';
+        trailColor = dark ? 'rgba(10,10,10,0.16)' : 'rgba(255,255,255,0.2)';
+        ctx.fillStyle = solid;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      function resize() {
+        dpr = Math.min(devicePixelRatio || 1, 2);
+        W = innerWidth;
+        H = innerHeight;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        updateTheme();
+      }
+
+      class Particle {
+        constructor() { this.reset(true); }
+        reset(init = false) {
+          this.x = Math.random() * W;
+          this.y = Math.random() * H;
+          this.vx = 0;
+          this.vy = 0;
+          this.size = 0.6 + Math.random() * 1.4;
+          this.hue = Math.random() < 0.5 ? 240 : 275;
+          if (init) {
+            this.age = Math.random() * 1000;
+          } else {
+            this.age = 0;
+          }
+        }
+        update(t) {
+          const a =
+            Math.sin(this.x * 0.0035 + t * 0.00018) * Math.PI +
+            Math.cos(this.y * 0.0035 + t * 0.00015) * Math.PI;
+          this.vx += Math.cos(a) * 0.12;
+          this.vy += Math.sin(a) * 0.12;
+
+          const dx = this.x - mouse.x;
+          const dy = this.y - mouse.y;
+          const d2 = dx * dx + dy * dy;
+          const R = 160;
+          if (d2 < R * R) {
+            const d = Math.sqrt(d2) || 1;
+            const f = (R - d) / R * 0.9;
+            this.vx += (dx / d) * f;
+            this.vy += (dy / d) * f;
+          }
+
+          this.vx *= 0.93;
+          this.vy *= 0.93;
+
+          const sp = Math.hypot(this.vx, this.vy);
+          if (sp > 2.4) {
+            this.vx = this.vx / sp * 2.4;
+            this.vy = this.vy / sp * 2.4;
+          }
+
+          this.x += this.vx;
+          this.y += this.vy;
+          this.age++;
+
+          if (this.x < -10) this.x = W + 10;
+          if (this.x > W + 10) this.x = -10;
+          if (this.y < -10) this.y = H + 10;
+          if (this.y > H + 10) this.y = -10;
+        }
+        draw() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, 6.2832);
+          ctx.fillStyle = `hsla(${this.hue}, 90%, 65%, 0.85)`;
+          ctx.fill();
+        }
+      }
+
+      const particles = [];
+      const COUNT = isTouch ? 45 : 110;
+
+      class Burst {
+        constructor(x, y) {
+          this.x = x;
+          this.y = y;
+          const a = Math.random() * Math.PI * 2;
+          const s = 1.5 + Math.random() * 5;
+          this.vx = Math.cos(a) * s;
+          this.vy = Math.sin(a) * s;
+          this.size = 1 + Math.random() * 2.2;
+          this.life = 1;
+          this.hue = Math.random() < 0.5 ? 240 : 285;
+        }
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+          this.vx *= 0.95;
+          this.vy *= 0.95;
+          this.life -= 0.016;
+          return this.life > 0;
+        }
+        draw() {
+          ctx.globalAlpha = this.life;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, 6.2832);
+          ctx.fillStyle = `hsl(${this.hue}, 90%, 62%)`;
+          ctx.fill();
+        }
+      }
+
+      const bursts = [];
+
+      let rafId = null;
+      function loop(t) {
+        ctx.fillStyle = trailColor;
+        ctx.fillRect(0, 0, W, H);
+        for (const p of particles) { p.update(t); p.draw(); }
+        for (let i = bursts.length - 1; i >= 0; i--) {
+          if (!bursts[i].update()) {
+            bursts.splice(i, 1);
+          } else {
+            bursts[i].draw();
+          }
+        }
+        ctx.globalAlpha = 1;
+        rafId = requestAnimationFrame(loop);
+      }
+
+      function initCanvas() {
+        resize();
+        for (let i = 0; i < COUNT; i++) particles.push(new Particle());
+        if (!reduceMotion) {
+          rafId = requestAnimationFrame(loop);
+        } else {
+          // statický snímek
+          ctx.fillStyle = trailColor;
+          ctx.fillRect(0, 0, W, H);
+          for (const p of particles) p.draw();
+        }
+      }
+
+      addEventListener('resize', resize);
+      darkMQ.addEventListener('change', updateTheme);
+      initCanvas();
+
+      /* ═══════ 2. MOUSE TRACKING ═══════ */
+      let tx = -9999, ty = -9999;
+      addEventListener('pointermove', (e) => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+        tx = e.clientX;
+        ty = e.clientY;
+      }, { passive: true });
+      addEventListener('pointerleave', () => {
+        mouse.x = -9999;
+        mouse.y = -9999;
+      });
+
+      /* ═══════ 3. CUSTOM CURSOR ═══════ */
+      if (!isTouch && !reduceMotion) {
+        const dot = document.querySelector('.cur-dot');
+        const ring = document.querySelector('.cur-ring');
+        let rx = 0, ry = 0;
+        function cursorTick() {
+          rx += (tx - rx) * 0.18;
+          ry += (ty - ry) * 0.18;
+          dot.style.transform = `translate(${tx}px, ${ty}px) translate(-50%, -50%)`;
+          ring.style.transform = `translate(${rx}px, ${ry}px) translate(-50%, -50%)`;
+          requestAnimationFrame(cursorTick);
+        }
+        cursorTick();
+      }
+
+      /* ═══════ 4. TILT NA 404 ═══════ */
+      const tilt = document.querySelector('.tilt');
+      if (!reduceMotion) {
+        addEventListener('pointermove', (e) => {
+          const nx = e.clientX / innerWidth - 0.5;
+          const ny = e.clientY / innerHeight - 0.5;
+          tilt.style.transform =
+            `perspective(1000px) rotateY(${nx * 12}deg) rotateX(${-ny * 12}deg)`;
+        }, { passive: true });
+      }
+
+      /* ═══════ 5. MAGNETICKÝ LINK + PAGE TRANSITION ═══════ */
+      const link = document.querySelector('.link');
+      if (!reduceMotion && !isTouch) {
+        link.addEventListener('mousemove', (e) => {
+          const r = link.getBoundingClientRect();
+          const x = e.clientX - (r.left + r.width / 2);
+          const y = e.clientY - (r.top + r.height / 2);
+          link.style.transform = `translate(${x * 0.25}px, ${y * 0.25}px)`;
+        });
+        link.addEventListener('mouseleave', () => { link.style.transform = ''; });
+      }
+
+      link.addEventListener('click', (e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+        if (reduceMotion) return;
+        e.preventDefault();
+        document.body.classList.add('leaving');
+        setTimeout(() => { location.href = link.href; }, 420);
+      });
+
+      /* ═══════ 6. HOVER STATE PRO CURSOR ═══════ */
+      if (!isTouch && !reduceMotion) {
+        document.querySelectorAll('a, button, .code').forEach(el => {
+          el.addEventListener('mouseenter', () => document.body.classList.add('cur-hover'));
+          el.addEventListener('mouseleave', () => document.body.classList.remove('cur-hover'));
+        });
+      }
+
+      /* ═══════ 7. BURST NA KLIK 404 ═══════ */
+      const code = document.querySelector('.code');
+      code.addEventListener('click', (e) => {
+        if (reduceMotion) return;
+        for (let i = 0; i < 30; i++) bursts.push(new Burst(e.clientX, e.clientY));
+      });
+
+      /* ═══════ 8. TEXT SCRAMBLE ═══════ */
+      const para = document.querySelector('[data-scramble]');
+      if (!reduceMotion) {
+        const finalText = para.textContent;
+        const chars = '!<>-_\\/[]{}—=+*^?#______0123456789ABCDEFXYZ';
+        const DURATION = 900;
+        const start = performance.now();
+        (function frame(now) {
+          const t = Math.min((now - start) / DURATION, 1);
+          const revealed = Math.floor(t * finalText.length);
+          let out = finalText.slice(0, revealed);
+          for (let i = revealed; i < finalText.length; i++) {
+            out += finalText[i] === ' ' ? ' ' : chars[(Math.random() * chars.length) | 0];
+          }
+          para.textContent = out;
+          if (t < 1) requestAnimationFrame(frame);
+          else para.textContent = finalText;
+        })(start);
+      }
+    })();
   </script>
 </body>
 </html>
