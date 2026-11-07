@@ -2646,7 +2646,7 @@
           Math.max(stageRect.width, stageRect.height) * 0.65
         );
 
-        document.getElementById('result-badge').textContent = 'KONEC HRY';
+        document.getElementById('result-badge').textContent = 'KONEC!';
         document.getElementById('result-summary').textContent = `Skóre ${state.score} • Max ${state.maxTile}`;
         document.getElementById('btn-keep-playing').style.display = 'none';
         resultBannerEl.classList.add('visible');
@@ -3518,7 +3518,7 @@
         document.getElementById('btn-keep-playing').style.display = 'inline-flex';
         resultBannerEl.classList.add('visible');
       } else if (state.status === 'lost') {
-        document.getElementById('result-badge').textContent = 'KONEC HRY';
+        document.getElementById('result-badge').textContent = 'KONEC!';
         document.getElementById('result-summary').textContent = `Skóre ${state.score} • Max ${state.maxTile}`;
         document.getElementById('btn-keep-playing').style.display = 'none';
         resultBannerEl.classList.add('visible');
