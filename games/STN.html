@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#14121a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Přežij noc</title>
+<style>
+:root{--bg:#f1ede4;--grid:#d6cfbf;--fg:#1d1b18;--panel:#fffdf8;--mut:#6b655b;--acc:#0aa37f;--line:#d9d2c3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14121a;--grid:#2a2635;--fg:#f2eee6;--panel:#1f1c28;--mut:#a29cb0;--acc:#06d6a0;--line:#37324a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14121a;--grid:#2a2635;--fg:#f2eee6;--panel:#1f1c28;--mut:#a29cb0;--acc:#06d6a0;--line:#37324a;color-scheme:dark}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-user-select:none;user-select:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none;display:block}
+#hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 0;pointer-events:none;display:none}
+.bar{height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin-bottom:5px}
+.bar i{display:block;height:100%;width:100%;background:#ef476f;transition:width .1s}
+.bar.xp{height:6px}.bar.xp i{background:#ffb703}
+#st{font-size:14px;font-weight:600;display:flex;justify-content:space-between;color:var(--fg)}
+#ov{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:safe center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 20px) 20px calc(env(safe-area-inset-bottom,0px) + 20px);overflow:auto;background:color-mix(in srgb,var(--bg) 88%,transparent)}
+h1{font-size:38px;margin:0;letter-spacing:-1px}h2{font-size:15px;margin:10px 0 0;color:var(--mut);text-transform:uppercase;letter-spacing:1px}
+.m{color:var(--mut);margin:0;text-align:center;font-size:14px}
+button{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px;width:min(340px,100%);text-align:left;cursor:pointer}
+button:active{transform:scale(.98)}button:disabled{opacity:.45}
+button.big{background:var(--acc);color:#04130e;font-weight:700;font-size:20px;text-align:center;border:0;padding:16px}
+small{color:var(--mut)}
+.bi{vertical-align:-.15em}
+#pb{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 40px);width:44px;height:44px;padding:0;display:none;align-items:center;justify-content:center;border-radius:50%}
+#bossbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 14px);width:min(320px,80%);display:none;pointer-events:none;color:#ff6b00;font-weight:800;font-size:13px;text-align:center;letter-spacing:2px}
+#bossbar .bar{height:12px;margin:3px 0 0;border:1px solid rgba(255,255,255,.5)}#bh{background:#ff6b00!important}
+#toast{position:fixed;left:0;right:0;top:30%;text-align:center;font-size:26px;font-weight:800;color:#ff6b00;text-shadow:0 2px 8px rgba(0,0,0,.6);opacity:0;transition:opacity .4s;pointer-events:none}
+*{-webkit-tap-highlight-color:transparent}
+html,body{overscroll-behavior:none;touch-action:manipulation}
+button{display:flex;align-items:center;justify-content:center;gap:8px;text-align:center;min-height:48px;font-size:16px}
+.big{font-size:20px}
+h1,h2,.m{text-align:center}
+#ov{text-align:center;gap:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:min(340px,100%)}
+.grid button{width:100%;flex-direction:column;gap:2px;padding:10px 6px}
+.card{flex-direction:column;gap:3px}
+small{text-align:center}
+.tgl{justify-content:space-between}
+.stat{display:flex;gap:18px;font-size:18px;font-weight:700;justify-content:center}.stat span{display:flex;align-items:center;gap:6px}
+.bi{flex:none}
+#hud{padding:calc(env(safe-area-inset-top,0px) + 10px) calc(env(safe-area-inset-right,0px) + 70px) 0 calc(env(safe-area-inset-left,0px) + 14px)}
+#pb{top:calc(env(safe-area-inset-top,0px) + 14px);right:calc(env(safe-area-inset-right,0px) + 12px)}
+#st{align-items:center}
+#db{position:fixed;right:calc(env(safe-area-inset-right,0px) + 16px);bottom:calc(env(safe-area-inset-bottom,0px) + 56px);width:68px;height:68px;min-height:0;padding:0;border-radius:50%;display:none;justify-content:center;background:conic-gradient(var(--acc) var(--c,360deg),var(--panel) 0);border:2px solid var(--line);touch-action:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"><div class="bar"><i id="hp"></i></div><div class="bar xp"><i id="xp" style="width:0"></i></div><div id="st"><span id="s1"></span><span id="s2"></span></div></div>
+<button id="pb" onclick="pause()" aria-label="Pauza"></button><div id="bossbar">BOSS<div class="bar"><i id="bh"></i></div></div><div id="toast"></div>
+<button id="db" onpointerdown="dash()" aria-label="Úhyb"></button>
+<div id="ov"></div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),ov=document.getElementById('ov'),hud=document.getElementById('hud');
+let W,H,C={};
+function rs(){const D=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*D;cv.height=H*D;ctx.setTransform(D,0,0,D,0,0)}
+function theme(){const s=getComputedStyle(document.documentElement);C={bg:s.getPropertyValue('--bg').trim(),grid:s.getPropertyValue('--grid').trim()}}
+addEventListener('resize',rs);matchMedia('(prefers-color-scheme:dark)').addEventListener('change',theme);rs();theme();
+let S={coins:0,best:0,up:{hp:0,dmg:0,spd:0,mag:0}};
+try{const s=localStorage.getItem('prezijnoc1');if(s)S=Object.assign(S,JSON.parse(s))}catch(e){}
+function save(){try{localStorage.setItem('prezijnoc1',JSON.stringify(S))}catch(e){}}
+const UPG=[
+{n:'Rychlá střelba',d:'+20 % rychlost střelby',f:p=>p.rate*=.8},
+{n:'Síla',d:'+25 % poškození',f:p=>p.dmg*=1.25},
+{n:'Vícenásobná střela',d:'+1 projektil',f:p=>p.n++},
+{n:'Průraz',d:'Střely prorazí +1 nepřítele',f:p=>p.pierce++},
+{n:'Rotující čepele',d:'+1 čepel kolem tebe',f:p=>p.orb++},
+{n:'Magnet',d:'Větší dosah sběru',f:p=>p.mag+=50},
+{n:'Rychlé nohy',d:'+12 % rychlost pohybu',f:p=>p.sp*=1.12},
+{n:'Regenerace',d:'+1,5 HP za sekundu',f:p=>p.regen+=1.5},
+{n:'Vitalita',d:'+30 max HP a vyléčení',f:p=>{p.mh+=30;p.hp=Math.min(p.mh,p.hp+30)}},
+{n:'Dalekohled',d:'+20 % dosah zaměřování',f:p=>p.range*=1.2}];
+{const ics=['fast-forward-fill','lightning-charge-fill','layers-fill','arrow-bar-right','arrow-repeat','magnet-fill','speedometer2','heart-pulse-fill','heart-fill','binoculars-fill'],mx=[8,10,4,4,6,5,5,5,6,4];UPG.forEach((u,i)=>{u.ic=ics[i];u.max=mx[i]})}
+UPG.push(
+{n:'Kritický zásah',ic:'bullseye',d:'+8 % šance na krit (2× poškození)',f:p=>p.crit+=.08,max:6},
+{n:'Smrtící krit',ic:'crosshair',d:'+40 % poškození kritů',f:p=>p.critd+=.4,max:5},
+{n:'Odraz',ic:'arrow-left-right',d:'Zásahy odhazují nepřátele',f:p=>p.kb+=3,max:4},
+{n:'Nova',ic:'broadcast',d:'Pravidelná vlna poškození kolem tebe',f:p=>p.nova++,max:5},
+{n:'Blesk',ic:'lightning-fill',d:'Blesk udeří o 1 nepřítele víc, častěji',f:p=>p.zap++,max:5},
+{n:'Aura žáru',ic:'fire',d:'Neustále zraňuje nepřátele v okolí',f:p=>p.aura++,max:5},
+{n:'Brnění',ic:'shield-fill',d:'−8 % přijatého poškození',f:p=>p.armor++,max:5},
+{n:'Upíří dotek',ic:'droplet-fill',d:'Každé zabití léčí 0,5 HP',f:p=>p.ls++,max:4},
+{n:'Moudrost',ic:'book-fill',d:'+20 % zkušeností',f:p=>p.xpm+=.2,max:5},
+{n:'Štěstí',ic:'flower1',d:'Víc mincí z nepřátel',f:p=>p.luck++,max:3},
+{n:'Berserk',ic:'exclamation-diamond-fill',d:'+40 % poškození pod 50 % HP',f:p=>p.bers=1,max:1},
+{n:'Druhá šance',ic:'arrow-counterclockwise',d:'Jednou po smrti obživneš a smetneš okolí',f:p=>p.rev=1,max:1},
+{n:'Mráz',ic:'snow',d:'Zásahy zpomalují nepřátele',f:p=>p.slow++,max:3},
+{n:'Velké čepele',ic:'arrows-angle-expand',d:'Čepele jsou větší a mají delší dosah',f:p=>{p.orbr+=12;p.orbs+=4},max:3},
+{n:'Štít',ic:'shield-plus',d:'Pohltí zásah, pak se dobíjí',f:p=>{p.sh++;p.shT=0},max:4},
+{n:'Výbušné střely',ic:'stars',d:'Střely při zásahu explodují',f:p=>p.boom++,max:4},
+{n:'Rychlý dash',ic:'chevron-double-right',d:'Úhyb se dobíjí o 20 % rychleji',f:p=>p.dcd*=.8,max:4});
+let g=null,run=false,last=0,keys={},joy=null;
+const ICONS={"chevron-double-right":"<path fill-rule=\"evenodd\" d=\"M3.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L9.293 8 3.646 2.354a.5.5 0 0 1 0-.708\"/> <path fill-rule=\"evenodd\" d=\"M7.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L13.293 8 7.646 2.354a.5.5 0 0 1 0-.708\"/>","fast-forward-fill": "<path d=\"M7.596 7.304a.802.802 0 0 1 0 1.392l-6.363 3.692C.713 12.69 0 12.345 0 11.692V4.308c0-.653.713-.998 1.233-.696z\"/> <path d=\"M15.596 7.304a.802.802 0 0 1 0 1.392l-6.363 3.692C8.713 12.69 8 12.345 8 11.692V4.308c0-.653.713-.998 1.233-.696z\"/>", "lightning-charge-fill": "<path d=\"M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z\"/>", "layers-fill": "<path d=\"M7.765 1.559a.5.5 0 0 1 .47 0l7.5 4a.5.5 0 0 1 0 .882l-7.5 4a.5.5 0 0 1-.47 0l-7.5-4a.5.5 0 0 1 0-.882z\"/> <path d=\"m2.125 8.567-1.86.992a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882l-1.86-.992-5.17 2.756a1.5 1.5 0 0 1-1.41 0z\"/>", "arrow-bar-right": "<path fill-rule=\"evenodd\" d=\"M6 8a.5.5 0 0 0 .5.5h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L12.293 7.5H6.5A.5.5 0 0 0 6 8m-2.5 7a.5.5 0 0 1-.5-.5v-13a.5.5 0 0 1 1 0v13a.5.5 0 0 1-.5.5\"/>", "arrow-repeat": "<path d=\"M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41m-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9\"/> <path fill-rule=\"evenodd\" d=\"M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5 5 0 0 0 8 3M3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9z\"/>", "magnet-fill": "<path d=\"M15 12h-4v3h4zM5 12H1v3h4zM0 8a8 8 0 1 1 16 0v8h-6V8a2 2 0 1 0-4 0v8H0z\"/>", "speedometer2": "<path d=\"M8 4a.5.5 0 0 1 .5.5V6a.5.5 0 0 1-1 0V4.5A.5.5 0 0 1 8 4M3.732 5.732a.5.5 0 0 1 .707 0l.915.914a.5.5 0 1 1-.708.708l-.914-.915a.5.5 0 0 1 0-.707M2 10a.5.5 0 0 1 .5-.5h1.586a.5.5 0 0 1 0 1H2.5A.5.5 0 0 1 2 10m9.5 0a.5.5 0 0 1 .5-.5h1.5a.5.5 0 0 1 0 1H12a.5.5 0 0 1-.5-.5m.754-4.246a.39.39 0 0 0-.527-.02L7.547 9.31a.91.91 0 1 0 1.302 1.258l3.434-4.297a.39.39 0 0 0-.029-.518z\"/> <path fill-rule=\"evenodd\" d=\"M0 10a8 8 0 1 1 15.547 2.661c-.442 1.253-1.845 1.602-2.932 1.25C11.309 13.488 9.475 13 8 13c-1.474 0-3.31.488-4.615.911-1.087.352-2.49.003-2.932-1.25A8 8 0 0 1 0 10m8-7a7 7 0 0 0-6.603 9.329c.203.575.923.876 1.68.63C4.397 12.533 6.358 12 8 12s3.604.532 4.923.96c.757.245 1.477-.056 1.68-.631A7 7 0 0 0 8 3\"/>", "heart-pulse-fill": "<path d=\"M1.475 9C2.702 10.84 4.779 12.871 8 15c3.221-2.129 5.298-4.16 6.525-6H12a.5.5 0 0 1-.464-.314l-1.457-3.642-1.598 5.593a.5.5 0 0 1-.945.049L5.889 6.568l-1.473 2.21A.5.5 0 0 1 4 9z\"/> <path d=\"M.88 8C-2.427 1.68 4.41-2 7.823 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C11.59-2 18.426 1.68 15.12 8h-2.783l-1.874-4.686a.5.5 0 0 0-.945.049L7.921 8.956 6.464 5.314a.5.5 0 0 0-.88-.091L3.732 8z\"/>", "heart-fill": "<path fill-rule=\"evenodd\" d=\"M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314\"/>", "binoculars-fill": "<path d=\"M4.5 1A1.5 1.5 0 0 0 3 2.5V3h4v-.5A1.5 1.5 0 0 0 5.5 1zM7 4v1h2V4h4v.882a.5.5 0 0 0 .276.447l.895.447A1.5 1.5 0 0 1 15 7.118V13H9v-1.5a.5.5 0 0 1 .146-.354l.854-.853V9.5a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5v.793l.854.853A.5.5 0 0 1 7 11.5V13H1V7.118a1.5 1.5 0 0 1 .83-1.342l.894-.447A.5.5 0 0 0 3 4.882V4zM1 14v.5A1.5 1.5 0 0 0 2.5 16h3A1.5 1.5 0 0 0 7 14.5V14zm8 0v.5a1.5 1.5 0 0 0 1.5 1.5h3a1.5 1.5 0 0 0 1.5-1.5V14zm4-11H9v-.5A1.5 1.5 0 0 1 10.5 1h1A1.5 1.5 0 0 1 13 2.5z\"/>", "bullseye": "<path d=\"M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16\"/> <path d=\"M8 13A5 5 0 1 1 8 3a5 5 0 0 1 0 10m0 1A6 6 0 1 0 8 2a6 6 0 0 0 0 12\"/> <path d=\"M8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6m0 1a4 4 0 1 0 0-8 4 4 0 0 0 0 8\"/> <path d=\"M9.5 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0\"/>", "crosshair": "<path d=\"M8.5.5a.5.5 0 0 0-1 0v.518A7 7 0 0 0 1.018 7.5H.5a.5.5 0 0 0 0 1h.518A7 7 0 0 0 7.5 14.982v.518a.5.5 0 0 0 1 0v-.518A7 7 0 0 0 14.982 8.5h.518a.5.5 0 0 0 0-1h-.518A7 7 0 0 0 8.5 1.018zm-6.48 7A6 6 0 0 1 7.5 2.02v.48a.5.5 0 0 0 1 0v-.48a6 6 0 0 1 5.48 5.48h-.48a.5.5 0 0 0 0 1h.48a6 6 0 0 1-5.48 5.48v-.48a.5.5 0 0 0-1 0v.48A6 6 0 0 1 2.02 8.5h.48a.5.5 0 0 0 0-1zM8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4\"/>", "arrow-left-right": "<path fill-rule=\"evenodd\" d=\"M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5m14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5\"/>", "broadcast": "<path d=\"M3.05 3.05a7 7 0 0 0 0 9.9.5.5 0 0 1-.707.707 8 8 0 0 1 0-11.314.5.5 0 0 1 .707.707m2.122 2.122a4 4 0 0 0 0 5.656.5.5 0 1 1-.708.708 5 5 0 0 1 0-7.072.5.5 0 0 1 .708.708m5.656-.708a.5.5 0 0 1 .708 0 5 5 0 0 1 0 7.072.5.5 0 1 1-.708-.708 4 4 0 0 0 0-5.656.5.5 0 0 1 0-.708m2.122-2.12a.5.5 0 0 1 .707 0 8 8 0 0 1 0 11.313.5.5 0 0 1-.707-.707 7 7 0 0 0 0-9.9.5.5 0 0 1 0-.707zM10 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0\"/>", "lightning-fill": "<path d=\"M5.52.359A.5.5 0 0 1 6 0h4a.5.5 0 0 1 .474.658L8.694 6H12.5a.5.5 0 0 1 .395.807l-7 9a.5.5 0 0 1-.873-.454L6.823 9.5H3.5a.5.5 0 0 1-.48-.641z\"/>", "fire": "<path d=\"M8 16c3.314 0 6-2 6-5.5 0-1.5-.5-4-2.5-6 .25 1.5-1.25 2-1.25 2C11 4 9 .5 6 0c.357 2 .5 4-2 6-1.25 1-2 2.729-2 4.5C2 14 4.686 16 8 16m0-1c-1.657 0-3-1-3-2.75 0-.75.25-2 1.25-3C6.125 10 7 10.5 7 10.5c-.375-1.25.5-3.25 2-3.5-.179 1-.25 2 1 3 .625.5 1 1.364 1 2.25C11 14 9.657 15 8 15\"/>", "shield-fill": "<path d=\"M5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 63 63 0 0 1 5.072.56\"/>", "droplet-fill": "<path d=\"M8 16a6 6 0 0 0 6-6c0-1.655-1.122-2.904-2.432-4.362C10.254 4.176 8.75 2.503 8 0c0 0-6 5.686-6 10a6 6 0 0 0 6 6M6.646 4.646l.708.708c-.29.29-1.128 1.311-1.907 2.87l-.894-.448c.82-1.641 1.717-2.753 2.093-3.13\"/>", "book-fill": "<path d=\"M8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783\"/>", "flower1": "<path d=\"M6.174 1.184a2 2 0 0 1 3.652 0A2 2 0 0 1 12.99 3.01a2 2 0 0 1 1.826 3.164 2 2 0 0 1 0 3.652 2 2 0 0 1-1.826 3.164 2 2 0 0 1-3.164 1.826 2 2 0 0 1-3.652 0A2 2 0 0 1 3.01 12.99a2 2 0 0 1-1.826-3.164 2 2 0 0 1 0-3.652A2 2 0 0 1 3.01 3.01a2 2 0 0 1 3.164-1.826M8 1a1 1 0 0 0-.998 1.03l.01.091q.017.116.054.296c.049.241.122.542.213.887.182.688.428 1.513.676 2.314L8 5.762l.045-.144c.248-.8.494-1.626.676-2.314.091-.345.164-.646.213-.887a5 5 0 0 0 .064-.386L9 2a1 1 0 0 0-1-1M2 9l.03-.002.091-.01a5 5 0 0 0 .296-.054c.241-.049.542-.122.887-.213a61 61 0 0 0 2.314-.676L5.762 8l-.144-.045a61 61 0 0 0-2.314-.676 17 17 0 0 0-.887-.213 5 5 0 0 0-.386-.064L2 7a1 1 0 1 0 0 2m7 5-.002-.03a5 5 0 0 0-.064-.386 16 16 0 0 0-.213-.888 61 61 0 0 0-.676-2.314L8 10.238l-.045.144c-.248.8-.494 1.626-.676 2.314-.091.345-.164.646-.213.887a5 5 0 0 0-.064.386L7 14a1 1 0 1 0 2 0m-5.696-2.134.025-.017a5 5 0 0 0 .303-.248c.184-.164.408-.377.661-.629A61 61 0 0 0 5.96 9.23l.103-.111-.147.033a61 61 0 0 0-2.343.572c-.344.093-.64.18-.874.258a5 5 0 0 0-.367.138l-.027.014a1 1 0 1 0 1 1.732zM4.5 14.062a1 1 0 0 0 1.366-.366l.014-.027q.014-.03.036-.084a5 5 0 0 0 .102-.283c.078-.233.165-.53.258-.874a61 61 0 0 0 .572-2.343l.033-.147-.11.102a61 61 0 0 0-1.743 1.667 17 17 0 0 0-.629.66 5 5 0 0 0-.248.304l-.017.025a1 1 0 0 0 .366 1.366m9.196-8.196a1 1 0 0 0-1-1.732l-.025.017a5 5 0 0 0-.303.248 17 17 0 0 0-.661.629A61 61 0 0 0 10.04 6.77l-.102.111.147-.033a61 61 0 0 0 2.342-.572c.345-.093.642-.18.875-.258a5 5 0 0 0 .367-.138zM11.5 1.938a1 1 0 0 0-1.366.366l-.014.027q-.014.03-.036.084a5 5 0 0 0-.102.283c-.078.233-.165.53-.258.875a61 61 0 0 0-.572 2.342l-.033.147.11-.102a61 61 0 0 0 1.743-1.667c.252-.253.465-.477.629-.66a5 5 0 0 0 .248-.304l.017-.025a1 1 0 0 0-.366-1.366M14 9a1 1 0 0 0 0-2l-.03.002a5 5 0 0 0-.386.064c-.242.049-.543.122-.888.213-.688.182-1.513.428-2.314.676L10.238 8l.144.045c.8.248 1.626.494 2.314.676.345.091.646.164.887.213a5 5 0 0 0 .386.064zM1.938 4.5a1 1 0 0 0 .393 1.38l.084.035q.108.045.283.103c.233.078.53.165.874.258a61 61 0 0 0 2.343.572l.147.033-.103-.111a61 61 0 0 0-1.666-1.742 17 17 0 0 0-.66-.629 5 5 0 0 0-.304-.248l-.025-.017a1 1 0 0 0-1.366.366m2.196-1.196.017.025a5 5 0 0 0 .248.303c.164.184.377.408.629.661A61 61 0 0 0 6.77 5.96l.111.102-.033-.147a61 61 0 0 0-.572-2.342c-.093-.345-.18-.642-.258-.875a5 5 0 0 0-.138-.367l-.014-.027a1 1 0 1 0-1.732 1m9.928 8.196a1 1 0 0 0-.366-1.366l-.027-.014a5 5 0 0 0-.367-.138c-.233-.078-.53-.165-.875-.258a61 61 0 0 0-2.342-.572l-.147-.033.102.111a61 61 0 0 0 1.667 1.742c.253.252.477.465.66.629a5 5 0 0 0 .304.248l.025.017a1 1 0 0 0 1.366-.366m-3.928 2.196a1 1 0 0 0 1.732-1l-.017-.025a5 5 0 0 0-.248-.303 17 17 0 0 0-.629-.661A61 61 0 0 0 9.23 10.04l-.111-.102.033.147a61 61 0 0 0 .572 2.342c.093.345.18.642.258.875a5 5 0 0 0 .138.367zM8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3\"/>", "exclamation-diamond-fill": "<path d=\"M9.05.435c-.58-.58-1.52-.58-2.1 0L.436 6.95c-.58.58-.58 1.519 0 2.098l6.516 6.516c.58.58 1.519.58 2.098 0l6.516-6.516c.58-.58.58-1.519 0-2.098zM8 4c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995A.905.905 0 0 1 8 4m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2\"/>", "arrow-counterclockwise": "<path fill-rule=\"evenodd\" d=\"M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z\"/> <path d=\"M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466\"/>", "snow": "<path d=\"M8 16a.5.5 0 0 1-.5-.5v-1.293l-.646.647a.5.5 0 0 1-.707-.708L7.5 12.793V8.866l-3.4 1.963-.496 1.85a.5.5 0 1 1-.966-.26l.237-.882-1.12.646a.5.5 0 0 1-.5-.866l1.12-.646-.884-.237a.5.5 0 1 1 .26-.966l1.848.495L7 8 3.6 6.037l-1.85.495a.5.5 0 0 1-.258-.966l.883-.237-1.12-.646a.5.5 0 1 1 .5-.866l1.12.646-.237-.883a.5.5 0 1 1 .966-.258l.495 1.849L7.5 7.134V3.207L6.147 1.854a.5.5 0 1 1 .707-.708l.646.647V.5a.5.5 0 1 1 1 0v1.293l.647-.647a.5.5 0 1 1 .707.708L8.5 3.207v3.927l3.4-1.963.496-1.85a.5.5 0 1 1 .966.26l-.236.882 1.12-.646a.5.5 0 0 1 .5.866l-1.12.646.883.237a.5.5 0 1 1-.26.966l-1.848-.495L9 8l3.4 1.963 1.849-.495a.5.5 0 0 1 .259.966l-.883.237 1.12.646a.5.5 0 0 1-.5.866l-1.12-.646.236.883a.5.5 0 1 1-.966.258l-.495-1.849-3.4-1.963v3.927l1.353 1.353a.5.5 0 0 1-.707.708l-.647-.647V15.5a.5.5 0 0 1-.5.5z\"/>", "arrows-angle-expand": "<path fill-rule=\"evenodd\" d=\"M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707m4.344-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707\"/>", "shield-plus": "<path d=\"M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 63 63 0 0 1 5.072.56\"/> <path d=\"M8 4.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V9a.5.5 0 0 1-1 0V7.5H6a.5.5 0 0 1 0-1h1.5V5a.5.5 0 0 1 .5-.5\"/>", "stars": "<path d=\"M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.73 1.73 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.73 1.73 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.73 1.73 0 0 0 3.407 2.31zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z\"/>", "pause-fill": "<path d=\"M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5\"/>", "play-fill": "<path d=\"m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393\"/>", "coin": "<path d=\"M5.5 9.511c.076.954.83 1.697 2.182 1.785V12h.6v-.709c1.4-.098 2.218-.846 2.218-1.932 0-.987-.626-1.496-1.745-1.76l-.473-.112V5.57c.6.068.982.396 1.074.85h1.052c-.076-.919-.864-1.638-2.126-1.716V4h-.6v.719c-1.195.117-2.01.836-2.01 1.853 0 .9.606 1.472 1.613 1.707l.397.098v2.034c-.615-.093-1.022-.43-1.114-.9zm2.177-2.166c-.59-.137-.91-.416-.91-.836 0-.47.345-.822.915-.925v1.76h-.005zm.692 1.193c.717.166 1.048.435 1.048.91 0 .542-.412.914-1.135.982V8.518z\"/> <path d=\"M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16\"/> <path d=\"M8 13.5a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11m0 .5A6 6 0 1 0 8 2a6 6 0 0 0 0 12\"/>", "stopwatch-fill": "<path d=\"M6.5 0a.5.5 0 0 0 0 1H7v1.07A7.001 7.001 0 0 0 8 16a7 7 0 0 0 5.29-11.584l.013-.012.354-.354.353.354a.5.5 0 1 0 .707-.707l-1.414-1.415a.5.5 0 1 0-.707.707l.354.354-.354.354-.012.012A6.97 6.97 0 0 0 9 2.071V1h.5a.5.5 0 0 0 0-1zm2 5.6V9a.5.5 0 0 1-.5.5H4.5a.5.5 0 0 1 0-1h3V5.6a.5.5 0 1 1 1 0\"/>", "bug-fill": "<path d=\"M4.978.855a.5.5 0 1 0-.956.29l.41 1.352A5 5 0 0 0 3 6h10a5 5 0 0 0-1.432-3.503l.41-1.352a.5.5 0 1 0-.956-.29l-.291.956A5 5 0 0 0 8 1a5 5 0 0 0-2.731.811l-.29-.956z\"/> <path d=\"M13 6v1H8.5v8.975A5 5 0 0 0 13 11h.5a.5.5 0 0 1 .5.5v.5a.5.5 0 1 0 1 0v-.5a1.5 1.5 0 0 0-1.5-1.5H13V9h1.5a.5.5 0 0 0 0-1H13V7h.5A1.5 1.5 0 0 0 15 5.5V5a.5.5 0 0 0-1 0v.5a.5.5 0 0 1-.5.5zm-5.5 9.975V7H3V6h-.5a.5.5 0 0 1-.5-.5V5a.5.5 0 0 0-1 0v.5A1.5 1.5 0 0 0 2.5 7H3v1H1.5a.5.5 0 0 0 0 1H3v1h-.5A1.5 1.5 0 0 0 1 11.5v.5a.5.5 0 1 0 1 0v-.5a.5.5 0 0 1 .5-.5H3a5 5 0 0 0 4.5 4.975\"/>", "gear-fill": "<path d=\"M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z\"/>", "x-lg": "<path d=\"M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z\"/>", "trophy-fill": "<path d=\"M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5q0 .807-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33 33 0 0 1 2.5.5m.099 2.54a2 2 0 0 0 .72 3.935c-.333-1.05-.588-2.346-.72-3.935m10.083 3.935a2 2 0 0 0 .72-3.935c-.133 1.59-.388 2.885-.72 3.935\"/>", "star-fill": "<path d=\"M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z\"/>", "exclamation-triangle-fill": "<path d=\"M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2\"/>", "toggle-on": "<path d=\"M5 3a5 5 0 0 0 0 10h6a5 5 0 0 0 0-10zm6 9a4 4 0 1 1 0-8 4 4 0 0 1 0 8\"/>", "toggle-off": "<path d=\"M11 4a4 4 0 0 1 0 8H8a5 5 0 0 0 2-4 5 5 0 0 0-2-4zm-6 8a4 4 0 1 1 0-8 4 4 0 0 1 0 8M0 8a5 5 0 0 0 5 5h6a5 5 0 0 0 0-10H5a5 5 0 0 0-5 5\"/>"};
+const $=id=>document.getElementById(id);
+const ic=(n,z=16)=>`<svg class="bi" viewBox="0 0 16 16" width="${z}" height="${z}" fill="currentColor">${ICONS[n]}</svg>`;
+S.opt=Object.assign({dn:1,hb:1,ind:1,vib:1,snd:0},S.opt);S.up=Object.assign({hp:0,dmg:0,spd:0,mag:0,rr:0,arm:0},S.up);
+$('pb').innerHTML=ic('pause-fill',22);$('db').innerHTML=ic('chevron-double-right',30);
+function toast(t){const o=$('toast');o.innerHTML=ic('exclamation-triangle-fill',28)+' '+t;o.style.opacity=1;setTimeout(()=>o.style.opacity=0,2200)}
+let AC=null;
+function sfx(f,d=.1,ty='square'){if(!S.opt.snd)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();const o=AC.createOscillator(),v=AC.createGain(),t=AC.currentTime;o.type=ty;o.frequency.value=f;v.gain.setValueAtTime(.05,t);v.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(v);v.connect(AC.destination);o.start();o.stop(t+d)}catch(e){}}
+const OPT=[['dn','Čísla poškození'],['hb','Lišty životů'],['ind','Šipky k bossům'],['vib','Vibrace'],['snd','Zvuky']];
+function opts(i){show(`<h1>Možnosti</h1>`+OPT.map(([k,n])=>`<button class="tgl" onclick="tg('${k}',${i})"><span>${n}</span>${ic(S.opt[k]?'toggle-on':'toggle-off',28)}</button>`).join('')+`<button class="big" onclick="${i?'pm()':'menu()'}">Zpět</button>`)}
+function tg(k,i){S.opt[k]=S.opt[k]?0:1;save();opts(i);sfx(600,.08)}
+function pm(){show(`<h1>Pauza</h1><button class="big" onclick="resume()">${ic('play-fill',22)} Pokračovat</button><button onclick="opts(1)">${ic('gear-fill')} Možnosti</button><button onclick="die()">${ic('x-lg')} Ukončit run</button>`)}
+function dash(){if(!run||!g)return;const p=g.p;if(p.dc>0)return;p.dc=p.dcd;p.dt=.17;p.da=joy&&(joy.dx||joy.dy)?Math.atan2(joy.dy,joy.dx):(p.fa||0);p.inv=Math.max(p.inv,.3);sfx(300,.1,'triangle');if(S.opt.vib&&navigator.vibrate)navigator.vibrate(15);for(let i=0;i<10;i++)g.fx.push({x:p.x,y:p.y,vx:(Math.random()-.5)*120,vy:(Math.random()-.5)*120,l:.35})}
+function pause(){if(!run||!g)return;run=false;joy=null;pm()}
+function resume(){hide();run=true;last=performance.now()}
+const fmt=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');
+function show(h){ov.innerHTML=h;ov.style.display='flex'}
+function hide(){ov.style.display='none'}
+function menu(){hud.style.display='none';$('pb').style.display='none';$('db').style.display='none';g=null;
+const U=[['hp','Odolnost','+20 HP'],['dmg','Síla','+15 % poškození'],['spd','Rychlost','+10 rychlost'],['mag','Magnet','+15 dosah sběru'],['rr','Přehození','+1 za run'],['arm','Brnění','−4 % poškození']];
+show(`<h1>Přežij noc</h1><p class="m">${ic('trophy-fill')} ${fmt(S.best)} &nbsp; ${ic('coin')} ${S.coins}</p><button class="big" onclick="play()">${ic('play-fill',22)} Hrát</button><h2>Trvalá vylepšení</h2><div class="grid">`+U.map(([k,n,d])=>{const l=S.up[k]||0,c=20+l*25,mx=l>=10;return `<button onclick="buy('${k}')" ${mx?'disabled':''}><b>${n}</b><small>${l}/10 · ${d}</small><small>${mx?'MAX':ic('coin',13)+' '+c}</small></button>`}).join('')+`</div><button onclick="opts(0)">${ic('gear-fill')} Možnosti</button><p class="m">Táhni prstem pro pohyb. Střílíš automaticky.<br>Tlačítko vpravo dole je úhyb a při něm jsi nezranitelný.<br>Sbírej krystaly a vybírej vylepšení.</p>`)}
+function buy(k){const l=S.up[k],c=20+l*25;if(S.coins>=c&&l<10){S.coins-=c;S.up[k]++;save();menu()}}
+function play(){const u=S.up;
+g={eb:[],sk:0,hl:[],rr:2+(S.up.rr||0),free:0,pend:0,uc:{},rg:[],zp:[],dm:[],t:0,kills:0,lvl:1,xp:0,need:5,sp:0,nb:60,coins:0,en:[],bl:[],gm:[],fx:[],opts:[],
+p:{x:0,y:0,hp:100+u.hp*20,mh:100+u.hp*20,sp:150+u.spd*10,dmg:10*(1+u.dmg*.15),cd:0,rate:.7,n:1,pierce:0,mag:60+u.mag*15,orb:0,regen:0,inv:0,ang:0,range:260,crit:.05,critd:2,kb:0,nova:0,novaT:3,zap:0,zapT:2,aura:0,armor:0,ls:0,xpm:1,luck:0,bers:0,rev:0,slow:0,orbr:62,orbs:9,sh:0,shT:0,boom:0,dt:0,dc:0,da:0,dcd:3.2}};
+g.p.armor=(S.up.arm||0)*.5;hide();hud.style.display='block';$('pb').style.display='flex';$('db').style.display='flex';run=true;last=performance.now()}
+function levelUp(f){g.free=f;run=false;joy=null;sfx(520,.15);const a=[...UPG.keys()].filter(i=>(g.uc[i]||0)<UPG[i].max).sort(()=>Math.random()-.5).slice(0,f?4:3);g.opts=a;if(!a.length){run=true;last=performance.now();return}
+show(`<h1>${f?'Odměna za bosse':'Level '+g.lvl}</h1><p class="m">Vyber si vylepšení</p>`+a.map((k,i)=>`<button class="card" onclick="pick(${i})">${ic(UPG[k].ic,28)}<b>${UPG[k].n}</b><small>${UPG[k].d}</small><small>Úroveň ${(g.uc[k]||0)+1} z ${UPG[k].max}</small></button>`).join('')+(g.rr>0?`<button onclick="reroll()">${ic('arrow-repeat')} Přehodit nabídku (${g.rr})</button>`:''))}
+function reroll(){g.rr--;levelUp(g.free)}
+function pick(i){sfx(780,.1);const k=g.opts[i];g.uc[k]=(g.uc[k]||0)+1;UPG[k].f(g.p);hide();run=true;last=performance.now()}
+function die(){run=false;joy=null;sfx(90,.6,'sawtooth');const e=g.coins+Math.floor(g.t/6)+Math.floor(g.kills/10);S.coins+=e;const nb=g.t>S.best;if(nb)S.best=g.t;save();
+show(`<h1>${nb?'Nový rekord!':'Konec'}</h1><div class="stat"><span>${ic('stopwatch-fill')} ${fmt(g.t)}</span><span>${ic('star-fill')} ${g.lvl}</span><span>${ic('bug-fill')} ${g.kills}</span></div><p class="m">Získáno ${ic('coin')} ${e}</p><button class="big" onclick="play()">${ic('arrow-repeat',20)} Znovu</button><button onclick="menu()">Menu a vylepšení</button>`)}
+function spawn(boss){const t=g.t,r=Math.random(),a=Math.random()*6.283,d=Math.max(W,H)*.65,s=1+t/100;
+let T={r:11,hp:20,sp:55,dmg:8,c:'#ef476f',xp:1,k:'c'};
+if(boss)T={r:34,hp:700,sp:45,dmg:25,c:'#ff6b00',xp:25,b:1,k:'b'};
+else if(t>15&&r<.2){for(let i=0;i<5;i++)g.en.push({x:g.p.x+Math.cos(a)*d+(Math.random()-.5)*60,y:g.p.y+Math.sin(a)*d+(Math.random()-.5)*60,hp:6*s,r:6,sp:80,dmg:4,c:'#7bdc65',xp:.5,k:'c',oc:0,sl:0});return}
+else if(t>25&&r<.35)T={r:10,hp:12,sp:120,dmg:6,c:'#ffd166',xp:1,k:'t'};
+else if(t>40&&r<.5)T={r:15,hp:35,sp:60,dmg:8,c:'#ff7ac6',xp:2,k:'d',sp2:1};
+else if(t>60&&r<.58)T={r:12,hp:28,sp:52,dmg:6,c:'#2ec4b6',xp:2,k:'h',rg:1};
+else if(t>50&&r<.65)T={r:20,hp:90,sp:38,dmg:16,c:'#9b5de5',xp:4,k:'s'};
+const el=!boss&&t>70&&Math.random()<.08;g.en.push({x:g.p.x+Math.cos(a)*d,y:g.p.y+Math.sin(a)*d,hp:T.hp*s*(el?3:1),r:T.r*(el?1.4:1),sp:T.sp*(1+Math.min(t/400,.5)),dmg:T.dmg*(el?1.3:1),c:T.c,xp:T.xp*(el?3:1),b:T.b,k:T.k,el,sp2:T.sp2,rg:T.rg,ft:1+Math.random()*2,oc:0,sl:0})}
+function hit(e,d,nc){const p=g.p;if(!e.mh)e.mh=e.hp;if(p.bers&&p.hp<p.mh/2)d*=1.4;let c=0;if(!nc&&Math.random()<p.crit){d*=p.critd;c=1}e.hp-=d;e.fl=.08;
+if(!nc){if(p.slow)e.sl=1.2;if(p.kb){const dx=e.x-p.x,dy=e.y-p.y,l=Math.hypot(dx,dy)||1,k=p.kb*(e.b?.3:1);e.x+=dx/l*k;e.y+=dy/l*k}}
+if((c||e.r>=15)&&g.dm.length<25)g.dm.push({x:e.x,y:e.y-e.r,v:Math.round(d),c,l:.6});
+if(g.fx.length<80)g.fx.push({x:e.x,y:e.y,vx:(Math.random()-.5)*160,vy:(Math.random()-.5)*160,l:.3})}
+function upd(dt){const p=g.p;g.t+=dt;let vx=0,vy=0;
+if(joy){vx=joy.dx;vy=joy.dy}else{vx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);vy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);const l=Math.hypot(vx,vy);if(l>1){vx/=l;vy/=l}}
+p.dc-=dt;g.sk-=dt;if(vx||vy)p.fa=Math.atan2(vy,vx);if(p.dt>0){p.dt-=dt;p.x+=Math.cos(p.da)*620*dt;p.y+=Math.sin(p.da)*620*dt}else{p.x+=vx*p.sp*dt;p.y+=vy*p.sp*dt}p.inv-=dt;p.shT-=dt;p.hp=Math.min(p.mh,p.hp+p.regen*dt);
+g.sp-=dt;if(g.sp<=0){g.sp=Math.max(.15,.8-g.t/200);const k=1+Math.floor(g.t/40);for(let i=0;i<k&&g.en.length<160;i++)spawn()}
+if(g.t>=g.nb){g.nb+=60;spawn(1);g.sk=.5;toast('Boss se blíží!');sfx(110,.5,'sawtooth')}
+for(const e of g.en){e.oc-=dt;e.fl-=dt;e.sl-=dt;const dx=p.x-e.x,dy=p.y-e.y,d=Math.hypot(dx,dy)||1,sm=e.sl>0?Math.max(.3,1-p.slow*.15):1;e.a=Math.atan2(dy,dx);if(!(e.rg&&d<230)){e.x+=dx/d*e.sp*sm*dt;e.y+=dy/d*e.sp*sm*dt}if(e.rg){e.ft-=dt;if(e.ft<=0&&d<420){e.ft=2.4;g.eb.push({x:e.x,y:e.y,vx:dx/d*170,vy:dy/d*170,l:4})}}
+if(p.aura&&d<45+p.aura*15){if(!e.mh)e.mh=e.hp;e.hp-=(3+p.dmg*.25)*p.aura*dt}
+if(d<e.r+12&&p.inv<=0){if(p.sh&&p.shT<=0)p.shT=Math.max(4,16-p.sh*3);else{p.hp-=e.dmg*Math.max(.2,1-p.armor*.08);g.sk=.2;sfx(150,.08,'sawtooth');if(S.opt.vib&&navigator.vibrate)navigator.vibrate(30)}p.inv=.6}}
+{const E=g.en;for(let i=0;i<E.length;i++){const a=E[i];for(let j=i+1;j<E.length;j++){const b=E[j],dx=b.x-a.x,dy=b.y-a.y,m=a.r+b.r-2;if(dx>m||dx<-m||dy>m||dy<-m)continue;const d=Math.hypot(dx,dy)||.1;if(d<m){const f=(m-d)*.25/d;if(!a.b){a.x-=dx*f;a.y-=dy*f}if(!b.b){b.x+=dx*f;b.y+=dy*f}}}}}
+g.eb=g.eb.filter(b=>{b.x+=b.vx*dt;b.y+=b.vy*dt;b.l-=dt;if((b.x-p.x)**2+(b.y-p.y)**2<196){if(p.inv<=0){if(p.sh&&p.shT<=0)p.shT=Math.max(4,16-p.sh*3);else{p.hp-=8*Math.max(.2,1-p.armor*.08);g.sk=.2;sfx(150,.08,'sawtooth');if(S.opt.vib&&navigator.vibrate)navigator.vibrate(30)}p.inv=.6}return false}return b.l>0});
+p.cd-=dt;
+if(p.cd<=0){let b=null,bd=p.range*p.range;for(const e of g.en){const d=(e.x-p.x)**2+(e.y-p.y)**2;if(d<bd){bd=d;b=e}}
+if(b){p.cd=p.rate;const a=Math.atan2(b.y-p.y,b.x-p.x);p.fa=a;for(let i=0;i<p.n;i++){const o=(i-(p.n-1)/2)*.18;g.bl.push({x:p.x,y:p.y,vx:Math.cos(a+o)*520,vy:Math.sin(a+o)*520,l:.9,pr:p.pierce,h:[]})}}}
+for(const b of g.bl){b.x+=b.vx*dt;b.y+=b.vy*dt;b.l-=dt;
+for(const e of g.en){if(e.hp<=0||b.h.includes(e))continue;if((e.x-b.x)**2+(e.y-b.y)**2<(e.r+5)**2){hit(e,p.dmg);if(p.boom){const R=36+p.boom*8;for(const o of g.en)if(o!==e&&(o.x-e.x)**2+(o.y-e.y)**2<R*R)hit(o,p.dmg*.35*p.boom,1);if(g.rg.length<12)g.rg.push({x:e.x,y:e.y,r:0,R,l:.35})}b.h.push(e);if(b.pr--<=0){b.l=0;break}}}}
+g.bl=g.bl.filter(b=>b.l>0);
+p.ang+=3.2*dt;
+for(let i=0;i<p.orb;i++){const a=p.ang+i*6.283/p.orb,bx=p.x+Math.cos(a)*p.orbr,by=p.y+Math.sin(a)*p.orbr;
+for(const e of g.en)if(e.oc<=0&&(e.x-bx)**2+(e.y-by)**2<(e.r+p.orbs)**2){hit(e,p.dmg*.8);e.oc=.35}}
+if(p.nova){p.novaT-=dt;if(p.novaT<=0){p.novaT=5-p.nova*.5;const R=110+p.nova*15;g.rg.push({x:p.x,y:p.y,r:0,R,l:.35});for(const e of g.en)if((e.x-p.x)**2+(e.y-p.y)**2<(R+e.r)**2)hit(e,p.dmg*(1.5+p.nova*.5),1)}}
+if(p.zap){p.zapT-=dt;if(p.zapT<=0){p.zapT=2.4-p.zap*.2;const c=g.en.filter(e=>(e.x-p.x)**2+(e.y-p.y)**2<360000).sort(()=>Math.random()-.5).slice(0,1+p.zap);for(const e of c){hit(e,p.dmg*2.2,1);g.zp.push({x1:p.x,y1:p.y,x2:e.x,y2:e.y,l:.15})}}}
+for(const e of g.en)if(e.hp<=0){g.kills++;if(e.el||Math.random()<.012)g.hl.push({x:e.x,y:e.y});g.gm.push({x:e.x,y:e.y,v:e.xp*p.xpm,k:e.xp<1.5?0:e.xp<5?1:2});p.hp=Math.min(p.mh,p.hp+p.ls*.5);if(e.b){g.coins+=10;g.pend=1}else if(e.el)g.coins+=3;else if(Math.random()<.05+p.luck*.04)g.coins++;if(e.sp2)for(let i=0;i<2;i++)g.en.push({x:e.x+(i?9:-9),y:e.y,hp:8*(1+g.t/100),r:7,sp:95,dmg:5,c:'#ff7ac6',xp:.5,k:'c',oc:0,sl:0})}
+g.en=g.en.filter(e=>e.hp>0);
+for(const m of g.gm){const dx=p.x-m.x,dy=p.y-m.y,d=Math.hypot(dx,dy)||1;if(d<p.mag){m.x+=dx/d*340*dt;m.y+=dy/d*340*dt}if(d<14){m.t=1;g.xp+=m.v}}
+g.gm=g.gm.filter(m=>!m.t);g.hl=g.hl.filter(h=>{if((h.x-p.x)**2+(h.y-p.y)**2<324){p.hp=Math.min(p.mh,p.hp+p.mh*.2);sfx(660,.08);return false}return true});
+for(const f of g.fx){f.x+=f.vx*dt;f.y+=f.vy*dt;f.l-=dt}g.fx=g.fx.filter(f=>f.l>0);
+for(const o of g.rg){o.l-=dt;o.r=o.R*(1-o.l/.35)}g.rg=g.rg.filter(o=>o.l>0);for(const z of g.zp)z.l-=dt;g.zp=g.zp.filter(z=>z.l>0);for(const m of g.dm){m.y-=40*dt;m.l-=dt}g.dm=g.dm.filter(m=>m.l>0);
+if(p.hp<=0){if(p.rev){p.rev=0;p.hp=p.mh*.5;p.inv=2;g.en.forEach(e=>{if(!e.b)e.hp=0})}else{die();return}}
+if(g.pend){g.pend=0;levelUp(1);return}
+if(g.xp>=g.need){g.xp-=g.need;g.lvl++;g.need=Math.round(g.need*1.35+3);levelUp()}
+document.getElementById('hp').style.width=Math.max(0,p.hp/p.mh*100)+'%';
+document.getElementById('xp').style.width=g.xp/g.need*100+'%';
+{const a=ic('stopwatch-fill',14)+' '+fmt(g.t)+' &nbsp; '+ic('star-fill',14)+' '+g.lvl,b=ic('bug-fill',14)+' '+g.kills+' &nbsp; '+ic('coin',14)+' '+g.coins;if(a!==g.ha){g.ha=a;$('s1').innerHTML=a}if(b!==g.hb){g.hb=b;$('s2').innerHTML=b}}
+$('db').style.setProperty('--c',(p.dc>0?(1-p.dc/p.dcd)*360:360)+'deg');const bs=g.en.find(e=>e.b);$('bossbar').style.display=bs?'block':'none';if(bs)$('bh').style.width=Math.max(0,bs.hp/(bs.mh||bs.hp)*100)+'%'}
+function circ(x,y,r,c){ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,y,r,0,6.283);ctx.fill()}
+function shape(e){const x=e.x,y=e.y,r=e.r;ctx.fillStyle=e.fl>0?'#fff':e.c;ctx.beginPath();
+if(e.k==='t'){const a=e.a||0;ctx.moveTo(x+Math.cos(a)*r*1.4,y+Math.sin(a)*r*1.4);ctx.lineTo(x+Math.cos(a+2.5)*r,y+Math.sin(a+2.5)*r);ctx.lineTo(x+Math.cos(a-2.5)*r,y+Math.sin(a-2.5)*r);ctx.closePath()}
+else if(e.k==='s')ctx.rect(x-r,y-r,r*2,r*2);
+else if(e.k==='d'){ctx.moveTo(x,y-r*1.25);ctx.lineTo(x+r,y);ctx.lineTo(x,y+r*1.25);ctx.lineTo(x-r,y);ctx.closePath()}
+else if(e.k==='b'){for(let i=0;i<8;i++){const a=i*.785,rr=i%2?r*.75:r*1.15;ctx[i?'lineTo':'moveTo'](x+Math.cos(a)*rr,y+Math.sin(a)*rr)}ctx.closePath()}
+else if(e.k==='h'){for(let i=0;i<6;i++){const a=i*1.047;ctx[i?'lineTo':'moveTo'](x+Math.cos(a)*r*1.15,y+Math.sin(a)*r*1.15)}ctx.closePath()}
+else ctx.arc(x,y,r,0,6.283);
+if(e.b){ctx.shadowColor='#ff6b00';ctx.shadowBlur=26}ctx.fill();ctx.shadowBlur=0;ctx.lineWidth=e.b?4:e.el?3:1.5;ctx.strokeStyle=e.b?'#fff':e.el?'#ffd700':'rgba(0,0,0,.55)';ctx.stroke();if(e.b){ctx.strokeStyle='rgba(255,107,0,.7)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,r*1.5+Math.sin(g.t*6)*5,0,6.283);ctx.stroke()}}
+function drawP(p){const a=p.fa||0,x=p.x,y=p.y,c=Math.cos(a),n=Math.sin(a);
+ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(x,y+12,13,5,0,0,6.283);ctx.fill();
+ctx.strokeStyle='#fff';ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x+c*8,y+n*8);ctx.lineTo(x+c*20,y+n*20);ctx.stroke();
+ctx.strokeStyle='#333';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(x+c*9,y+n*9);ctx.lineTo(x+c*19,y+n*19);ctx.stroke();
+ctx.shadowColor='#06d6a0';ctx.shadowBlur=18;ctx.fillStyle='#06d6a0';ctx.beginPath();ctx.arc(x,y,14,0,6.283);ctx.fill();ctx.shadowBlur=0;
+ctx.lineWidth=5;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.stroke();ctx.lineWidth=2.5;ctx.strokeStyle='#fff';ctx.stroke();
+ctx.fillStyle='#b9ffe9';ctx.beginPath();ctx.arc(x-3,y-4,6,0,6.283);ctx.fill();
+ctx.fillStyle='#06d6a0';ctx.beginPath();ctx.arc(x,y,12,0,6.283);ctx.fill();
+for(const q of[-1,1]){const ex=x+c*5-n*q*4.5,ey=y+n*5+c*q*4.5;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(ex,ey,3.6,0,6.283);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(ex+c*1.5,ey+n*1.5,1.9,0,6.283);ctx.fill()}}
+function gem(m){const k=m.k||0,r=[5,7,10][k]*(1+.12*Math.sin(g.t*6+m.x)),c=['#ffe14d','#ffb703','#fb5607'][k];ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(m.x,m.y-r*1.3);ctx.lineTo(m.x+r*.8,m.y);ctx.lineTo(m.x,m.y+r*1.3);ctx.lineTo(m.x-r*.8,m.y);ctx.closePath();ctx.fill();ctx.lineWidth=1.5;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.stroke();ctx.fillStyle='rgba(255,255,255,.75)';ctx.fillRect(m.x-r*.3,m.y-r*.8,r*.25,r*.55)}
+function bars(){const few=g.en.length<45;ctx.textAlign='center';for(const e of g.en){if(!e.mh||e.hp>=e.mh||!(few||e.r>=15))continue;const w=Math.max(18,e.r*2),y=e.y-e.r-(e.k==='b'?14:8);ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(e.x-w/2-1,y-1,w+2,5);ctx.fillStyle=e.b?'#ffd166':'#ff4d6d';ctx.fillRect(e.x-w/2,y,w*Math.max(0,e.hp/e.mh),3);if(e.b){ctx.fillStyle='#fff';ctx.font='bold 11px system-ui';ctx.fillText(Math.ceil(e.hp),e.x,y-3)}}}
+function nums(){ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.7)';for(const m of g.dm){ctx.globalAlpha=Math.min(1,m.l*3);ctx.font=(m.c?'bold 17px':'bold 12px')+' system-ui';ctx.fillStyle=m.c?'#ffd166':'#fff';ctx.strokeText(m.v,m.x,m.y);ctx.fillText(m.v,m.x,m.y)}ctx.globalAlpha=1}
+function draw(){ctx.fillStyle=C.bg;ctx.fillRect(0,0,W,H);if(!g)return;
+const p=g.p,cx=p.x-W/2,cy=p.y-H/2,s=64,ox=((-cx)%s+s)%s,oy=((-cy)%s+s)%s;
+ctx.fillStyle=C.grid;for(let x=ox;x<W;x+=s)for(let y=oy;y<H;y+=s)ctx.fillRect(x,y,2,2);
+ctx.save();ctx.translate(-cx+(g.sk>0?(Math.random()-.5)*g.sk*30:0),-cy+(g.sk>0?(Math.random()-.5)*g.sk*30:0));
+if(p.aura){ctx.fillStyle='rgba(255,100,60,.14)';ctx.beginPath();ctx.arc(p.x,p.y,45+p.aura*15,0,6.283);ctx.fill()}
+for(const m of g.gm)gem(m);for(const b of g.eb){circ(b.x,b.y,6,'#fff');circ(b.x,b.y,4,'#2ec4b6')}for(const h of g.hl){circ(h.x,h.y,9,'#ff4d6d');ctx.fillStyle='#fff';ctx.fillRect(h.x-1.5,h.y-5,3,10);ctx.fillRect(h.x-5,h.y-1.5,10,3)}
+for(const e of g.en)shape(e);
+for(const b of g.bl)circ(b.x,b.y,4,'#fff');
+for(let i=0;i<p.orb;i++){const a=p.ang+i*6.283/p.orb;circ(p.x+Math.cos(a)*p.orbr,p.y+Math.sin(a)*p.orbr,p.orbs,'#4cc9f0')}
+if(p.inv<=0||Math.floor(g.t*20)%2)drawP(p);if(p.sh&&p.shT<=0){ctx.strokeStyle='#4cc9f0';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,18,0,6.283);ctx.stroke()}
+for(const f of g.fx)circ(f.x,f.y,2.5,'#fff');
+for(const o of g.rg){ctx.strokeStyle='rgba(255,140,60,'+Math.min(1,o.l*3)+')';ctx.lineWidth=5;ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,6.283);ctx.stroke()}
+for(const z of g.zp){ctx.strokeStyle='#9ef0ff';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(z.x1,z.y1);ctx.lineTo((z.x1+z.x2)/2+(Math.random()-.5)*30,(z.y1+z.y2)/2+(Math.random()-.5)*30);ctx.lineTo(z.x2,z.y2);ctx.stroke()}
+if(S.opt.hb)bars();if(S.opt.dn)nums();
+ctx.restore();
+if(S.opt.ind)for(const e of g.en){if(!e.b)continue;const sx=e.x-cx,sy=e.y-cy;if(sx>-20&&sx<W+20&&sy>-20&&sy<H+20)continue;const a=Math.atan2(sy-H/2,sx-W/2),ex=Math.max(30,Math.min(W-30,sx)),ey=Math.max(90,Math.min(H-60,sy));ctx.save();ctx.translate(ex,ey);ctx.rotate(a);ctx.fillStyle='#ff6b00';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(-8,-10);ctx.lineTo(-8,10);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}
+if(p.hp<p.mh*.3){const gr=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.7);gr.addColorStop(0,'rgba(255,0,60,0)');gr.addColorStop(1,'rgba(255,0,60,'+(.25+.15*Math.sin(g.t*8))+')');ctx.fillStyle=gr;ctx.fillRect(0,0,W,H)}
+if(joy){ctx.strokeStyle='rgba(128,128,128,.5)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(joy.x0,joy.y0,60,0,6.283);ctx.stroke();circ(joy.x0+joy.dx*60,joy.y0+joy.dy*60,22,'rgba(128,128,128,.45)')}}
+function loop(ts){const dt=Math.min(.05,(ts-last)/1000);last=ts;if(run&&g)upd(dt);draw();requestAnimationFrame(loop)}
+cv.addEventListener('pointerdown',e=>{if(joy||!run)return;joy={id:e.pointerId,x0:e.clientX,y0:e.clientY,dx:0,dy:0};cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!joy||e.pointerId!==joy.id)return;const dx=e.clientX-joy.x0,dy=e.clientY-joy.y0,l=Math.hypot(dx,dy),m=Math.min(l,60)/60;joy.dx=l?dx/l*m:0;joy.dy=l?dy/l*m:0});
+const up=e=>{if(joy&&e.pointerId===joy.id)joy=null};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=1;if(e.key===' ')dash()});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=0);
+addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pause()});
+menu();requestAnimationFrame(t=>{last=t;loop(t)});
+</script>
+</body>
+</html>
