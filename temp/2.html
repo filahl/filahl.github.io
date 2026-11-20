@@ -43,7 +43,7 @@ input[type=file]{display:none}
 <body>
 <main>
 <h1>Obrázek po zvuku</h1>
-<p class="sub">OFDM přenos. 64×64 za ~2 s, 128×128 za ~7 s, 1080×1080 za ~8 min.</p>
+<p class="sub">OFDM přenos. 128×128 za ~20 s.</p>
 <div class="seg" role="group">
   <button id="bTx" aria-pressed="true">Vysílač</button>
   <button id="bRx" aria-pressed="false">Přijímač</button>
@@ -57,11 +57,10 @@ input[type=file]{display:none}
     <label class="f">Rozlišení<select id="res">
       <option value="0">32 × 32</option>
       <option value="1">48 × 48</option>
-      <option value="2" selected>64 × 64</option>
+      <option value="2">64 × 64</option>
       <option value="3">96 × 96</option>
-      <option value="4">128 × 128</option>
+      <option value="4" selected>128 × 128</option>
       <option value="5">256 × 256</option>
-      <option value="6">1080 × 1080</option>
     </select></label>
     <label class="f">Modulace<select id="mod">
       <option value="b">BPSK (robustní)</option>
@@ -72,7 +71,7 @@ input[type=file]{display:none}
   <div class="row" style="grid-template-columns:1fr;">
     <label class="f">Barvy<select id="col">
       <option value="g">Šedá (64 odstínů)</option>
-      <option value="y">Plné RGB (YCbCr)</option>
+      <option value="y" selected>Plné RGB (YCbCr)</option>
       <option value="c">Paleta (64 barev)</option>
     </select></label>
   </div>
@@ -83,7 +82,7 @@ input[type=file]{display:none}
 </section>
 
 <section id="rx">
-  <canvas id="rv" width="64" height="64"></canvas>
+  <canvas id="rv" width="128" height="128"></canvas>
   <button class="btn" id="listen">Spustit poslech</button>
   <button class="btn o" id="reset" disabled>Začít znovu</button>
   <div class="bar"><i id="rxp"></i></div>
@@ -98,17 +97,18 @@ input[type=file]{display:none}
 "use strict";
 const $ = s => document.querySelector(s);
 const MODES = { g: 0, y: 1, c: 2 };
-const RES = [32, 48, 64, 96, 128, 256, 1080];
+const RES = [32, 48, 64, 96, 128, 256];
 
 /* ---- OFDM params ---- */
 const FFT_SIZE = 1024, CP_LEN = 128, SYM_LEN = FFT_SIZE + CP_LEN;
-const BIN_LO = 21, BIN_HI = 220, N_BINS = BIN_HI - BIN_LO + 1;
-const PILOT_EVERY = 10;
+// Zúžené pásmo: ~984 Hz až 6000 Hz (21. až 128. bin)
+const BIN_LO = 21, BIN_HI = 128, N_BINS = BIN_HI - BIN_LO + 1; 
+const PILOT_EVERY = 8; // Hustší piloty pro lepší odhad fáze
 const N_DATA = N_BINS - Math.ceil(N_BINS / PILOT_EVERY);
 const BPSK_BPS = N_DATA, QPSK_BPS = N_DATA * 2, QAM16_BPS = N_DATA * 4;
 const PREAMBLE_SYMS = 2, HEADER_SYMS = 1;
 
-let N = 64, PIX = 4096, HN = 32, CPIX = 1024;
+let N = 128, PIX = N*N, HN = N>>1, CPIX = HN*HN;
 let SR = 48000, actx = null;
 const getCtx = () => {
   if (!actx) {
@@ -165,7 +165,7 @@ function ifft(re, im) {
   for (let i = 0; i < n; i++) { re[i] *= inv; im[i] = -im[i]*inv; }
 }
 
-/* ---- PN sequence for preamble ---- */
+/* ---- PN sequence ---- */
 const PN = (() => {
   const a = [];
   let s = 0xACE1;
@@ -224,7 +224,7 @@ function makeSymbol(bits, offset, mod) {
 
 const PREAMBLE = makeSymbol([], 0, 'p');
 
-/* ---- Demodulation ---- */
+/* ---- Demodulation s fázovou interpolací ---- */
 function demodSymbol(data, mod) {
   const re = new Float32Array(FFT_SIZE), im = new Float32Array(FFT_SIZE);
   for (let i = 0; i < FFT_SIZE; i++) re[i] = data[i];
@@ -234,6 +234,7 @@ function demodSymbol(data, mod) {
     const bin = BIN_LO + k;
     pilots.push({ bin, hr: re[bin], hi: im[bin] });
   }
+  
   function getH(bin) {
     let p0 = pilots[0], p1 = pilots[pilots.length-1];
     for (let i = 0; i < pilots.length; i++) {
@@ -241,9 +242,23 @@ function demodSymbol(data, mod) {
       if (pilots[i].bin >= bin) { p1 = pilots[i]; break; }
     }
     if (p0 === p1) return { re: p0.hr, im: p0.hi };
+    
     const t = (bin - p0.bin) / (p1.bin - p0.bin);
-    return { re: p0.hr*(1-t)+p1.hr*t, im: p0.hi*(1-t)+p1.hi*t };
+    // Fázová interpolace - odolná vůči driftu hodin
+    const ph0 = Math.atan2(p0.hi, p0.hr);
+    const ph1 = Math.atan2(p1.hi, p1.hr);
+    let dph = ph1 - ph0;
+    if (dph > Math.PI) dph -= 2 * Math.PI;
+    if (dph < -Math.PI) dph += 2 * Math.PI;
+    
+    const mag0 = Math.hypot(p0.hr, p0.hi);
+    const mag1 = Math.hypot(p1.hr, p1.hi);
+    const mag = mag0 * (1-t) + mag1 * t;
+    const ph = ph0 + dph * t;
+    
+    return { re: mag * Math.cos(ph), im: mag * Math.sin(ph) };
   }
+  
   const bits = [];
   for (let k = 0; k < N_BINS; k++) {
     if (k % PILOT_EVERY === 0) continue;
@@ -252,6 +267,7 @@ function demodSymbol(data, mod) {
     const Hm = H.re*H.re + H.im*H.im + 1e-10;
     const Yr = (re[bin]*H.re + im[bin]*H.im) / Hm;
     const Yi = (im[bin]*H.re - re[bin]*H.im) / Hm;
+    
     if (mod === 'b') bits.push(Yr > 0 ? 1 : 0);
     else if (mod === 'q') { bits.push(Yr > 0 ? 1 : 0); bits.push(Yi > 0 ? 1 : 0); }
     else {
@@ -416,7 +432,7 @@ $("#send").onclick = () => {
   txState = { bits, hdrBits, mod, bps, totalSyms, symIdx: 0, buffer: null, bufPos: 0, silent: Math.round(0.2*SR), active: true };
   const node = c.createScriptProcessor(4096, 0, 1);
   node.onaudioprocess = e => txFill(e.outputBuffer.getChannelData(0));
-  const gain = c.createGain(); gain.gain.value = 0.9;
+  const gain = c.createGain(); gain.gain.value = 0.8;
   node.connect(gain); gain.connect(c.destination);
   txState.node = node; txState.gain = gain;
   $("#send").disabled = true; $("#stopTx").disabled = false;
@@ -456,7 +472,7 @@ function txFill(out) {
       txState.bufPos = 0;
     }
     const n = Math.min(out.length - i, txState.buffer.length - txState.bufPos);
-    for (let j = 0; j < n; j++) out[i+j] = txState.buffer[txState.bufPos+j] * 0.9;
+    for (let j = 0; j < n; j++) out[i+j] = txState.buffer[txState.bufPos+j] * 0.7; // Sníženo kvůli PAPR
     i += n; txState.bufPos += n;
   }
 }
