@@ -1,1 +1,646 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Obrázek po zvuku – OFDM</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Jacquard+24&family=DM+Sans:wght@300;400;500;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#111;--card:#1a1a1a;--fg:#fff;--mut:#666;--line:#2a2a2a;--line-strong:#333;--acc:#f5c842;--acc-dim:#e0b530;--accfg:#111;--cv:#000;--warn:#e07b3c}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f3ece4;--card:#fff9f2;--fg:#2b201a;--mut:#7b6a5c;--line:#dccdbd;--line-strong:#c9b8a6;--cv:#1a1412;--warn:#c25a1c}}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.5;min-height:100dvh;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+main{max-width:460px;margin:0 auto;padding:32px 24px 48px}
+h1{font-family:'Jacquard 24',system-ui;font-weight:400;font-size:42px;line-height:1.05;margin:0 0 8px;letter-spacing:-0.02em;color:var(--fg)}
+.sub{color:var(--mut);margin:0 0 28px;font-size:13px}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:24px;background:var(--card);padding:4px;gap:4px}
+.seg button{border:none;background:none;color:var(--mut);font-family:'DM Sans',sans-serif;font-weight:500;font-size:14px;padding:12px;cursor:pointer;border-radius:10px;transition:all .15s}
+.seg button[aria-pressed="true"]{background:var(--acc);color:var(--accfg);font-weight:600}
+section{display:none}
+section.on{display:block}
+canvas{display:block;width:100%;max-width:320px;aspect-ratio:1;margin:0 auto 20px;image-rendering:pixelated;border:1px solid var(--line);border-radius:14px;background:var(--cv);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+label.f{display:block;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;font-weight:500}
+select{width:100%;font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 12px;margin-top:6px;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:10px;cursor:pointer;transition:border-color .15s}
+select:focus{border-color:var(--acc);outline:none}
+select option{background:var(--card);color:var(--fg)}
+.btn{display:block;width:100%;font-family:'DM Sans',sans-serif;font-weight:600;font-size:15px;padding:14px;border-radius:14px;border:1px solid var(--acc);background:var(--acc);color:var(--accfg);cursor:pointer;margin-bottom:10px;text-align:center;transition:all .15s}
+.btn:not(:disabled):active{transform:scale(.97);background:var(--acc-dim)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.o{background:var(--card);color:var(--fg);border-color:var(--line-strong)}
+.btn.o:not(:disabled):active{transform:scale(.97);background:var(--line)}
+label.btn.o{cursor:pointer}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:10px 0}
+.bar i{display:block;height:100%;width:0;background:var(--acc);border-radius:4px;transition:width .2s}
+.st{min-height:3em;font-size:14px;margin:10px 0;color:var(--mut);line-height:1.5}
+.st.warn{color:var(--warn)}
+.tip{font-size:13px;color:var(--mut);border-top:1px solid var(--line);padding-top:16px;margin-top:24px;line-height:1.6}
+.tip::before{content:"TIP";display:inline-block;font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--acc);border:1px solid var(--acc);border-radius:4px;padding:1px 6px;margin-right:8px;vertical-align:middle}
+input[type=file]{display:none}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
+</style>
+</head>
+<body>
+<main>
+<h1>Obrázek po zvuku</h1>
+<p class="sub">OFDM přenos. 64×64 za ~2 s, 128×128 za ~7 s, 1080×1080 za ~8 min.</p>
+<div class="seg" role="group">
+  <button id="bTx" aria-pressed="true">Vysílač</button>
+  <button id="bRx" aria-pressed="false">Přijímač</button>
+</div>
 
+<section id="tx" class="on">
+  <canvas id="pv" width="64" height="64"></canvas>
+  <label class="btn o" for="file">Vybrat obrázek z galerie</label>
+  <input id="file" type="file" accept="image/*">
+  <div class="row">
+    <label class="f">Rozlišení<select id="res">
+      <option value="0">32 × 32</option>
+      <option value="1">48 × 48</option>
+      <option value="2" selected>64 × 64</option>
+      <option value="3">96 × 96</option>
+      <option value="4">128 × 128</option>
+      <option value="5">256 × 256</option>
+      <option value="6">1080 × 1080</option>
+    </select></label>
+    <label class="f">Modulace<select id="mod">
+      <option value="b">BPSK (robustní)</option>
+      <option value="q" selected>QPSK (normální)</option>
+      <option value="s">16-QAM (rychlá)</option>
+    </select></label>
+  </div>
+  <div class="row" style="grid-template-columns:1fr;">
+    <label class="f">Barvy<select id="col">
+      <option value="g">Šedá (64 odstínů)</option>
+      <option value="y">Plné RGB (YCbCr)</option>
+      <option value="c">Paleta (64 barev)</option>
+    </select></label>
+  </div>
+  <button class="btn" id="send" disabled>Odeslat</button>
+  <button class="btn o" id="stopTx" disabled>Zastavit</button>
+  <div class="bar"><i id="txp"></i></div>
+  <div class="st" id="txs">Vyberte obrázek.</div>
+</section>
+
+<section id="rx">
+  <canvas id="rv" width="64" height="64"></canvas>
+  <button class="btn" id="listen">Spustit poslech</button>
+  <button class="btn o" id="reset" disabled>Začít znovu</button>
+  <div class="bar"><i id="rxp"></i></div>
+  <div class="bar" title="Hlasitost vstupu"><i id="lvl"></i></div>
+  <div class="st" id="rxs">Spusťte poslech, pak na druhém telefonu stiskněte Odeslat.</div>
+</section>
+
+<p class="tip">Telefony 10–30 cm od sebe, ticho v místnosti, nejvyšší hlasitost. Nejdřív spusťte poslech na přijímači, pak odesílejte. Pro velké obrázky volte BPSK.</p>
+</main>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const MODES = { g: 0, y: 1, c: 2 };
+const RES = [32, 48, 64, 96, 128, 256, 1080];
+
+/* ---- OFDM params ---- */
+const FFT_SIZE = 1024, CP_LEN = 128, SYM_LEN = FFT_SIZE + CP_LEN;
+const BIN_LO = 21, BIN_HI = 220, N_BINS = BIN_HI - BIN_LO + 1;
+const PILOT_EVERY = 10;
+const N_DATA = N_BINS - Math.ceil(N_BINS / PILOT_EVERY);
+const BPSK_BPS = N_DATA, QPSK_BPS = N_DATA * 2, QAM16_BPS = N_DATA * 4;
+const PREAMBLE_SYMS = 2, HEADER_SYMS = 1;
+
+let N = 64, PIX = 4096, HN = 32, CPIX = 1024;
+let SR = 48000, actx = null;
+const getCtx = () => {
+  if (!actx) {
+    try { actx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 }); }
+    catch (e) { actx = new (window.AudioContext || window.webkitAudioContext)(); }
+    SR = actx.sampleRate;
+  }
+  return actx;
+};
+
+/* ---- FFT / IFFT ---- */
+const fftTabs = {};
+function fft(re, im) {
+  const n = re.length;
+  let t = fftTabs[n];
+  if (!t) {
+    t = { c: new Float32Array(n/2), s: new Float32Array(n/2), r: new Uint32Array(n) };
+    for (let i = 0; i < n/2; i++) {
+      t.c[i] = Math.cos(2*Math.PI*i/n);
+      t.s[i] = -Math.sin(2*Math.PI*i/n);
+    }
+    const bits = Math.log2(n);
+    for (let i = 0; i < n; i++) {
+      let x = i, r = 0;
+      for (let b = 0; b < bits; b++) { r = (r << 1) | (x & 1); x >>= 1; }
+      t.r[i] = r;
+    }
+    fftTabs[n] = t;
+  }
+  for (let i = 0; i < n; i++) {
+    const j = t.r[i];
+    if (j > i) {
+      let v = re[i]; re[i] = re[j]; re[j] = v;
+      v = im[i]; im[i] = im[j]; im[j] = v;
+    }
+  }
+  for (let size = 2; size <= n; size <<= 1) {
+    const half = size >> 1, step = n / size;
+    for (let s = 0; s < n; s += size) {
+      for (let k = 0; k < half; k++) {
+        const wr = t.c[k*step], wi = t.s[k*step], a = s+k, b = a+half;
+        const xr = re[b]*wr - im[b]*wi, xi = re[b]*wi + im[b]*wr;
+        re[b] = re[a]-xr; im[b] = im[a]-xi;
+        re[a] += xr; im[a] += xi;
+      }
+    }
+  }
+}
+function ifft(re, im) {
+  const n = re.length;
+  for (let i = 0; i < n; i++) im[i] = -im[i];
+  fft(re, im);
+  const inv = 1/n;
+  for (let i = 0; i < n; i++) { re[i] *= inv; im[i] = -im[i]*inv; }
+}
+
+/* ---- PN sequence for preamble ---- */
+const PN = (() => {
+  const a = [];
+  let s = 0xACE1;
+  for (let i = 0; i < N_BINS; i++) {
+    s = ((s << 1) ^ ((s >> 15) & 1) ^ ((s >> 13) & 1) ^ ((s >> 12) & 1) ^ ((s >> 10) & 1)) & 0xFFFF;
+    a.push(s & 1 ? 1 : -1);
+  }
+  return a;
+})();
+
+/* ---- CRC5 (7-bit payload) ---- */
+function crc5_7(bits) {
+  let crc = 0x1F;
+  for (const b of bits) {
+    crc ^= b;
+    if (crc & 1) crc = (crc >> 1) ^ 0x15; else crc >>= 1;
+  }
+  return [(crc>>4)&1, (crc>>3)&1, (crc>>2)&1, (crc>>1)&1, crc&1];
+}
+
+/* ---- Symbol creation ---- */
+function makeSymbol(bits, offset, mod) {
+  const re = new Float32Array(FFT_SIZE), im = new Float32Array(FFT_SIZE);
+  let bi = offset || 0;
+  for (let k = 0; k < N_BINS; k++) {
+    const bin = BIN_LO + k;
+    let xr = 0, xi = 0;
+    if (k % PILOT_EVERY === 0) {
+      xr = 1;
+    } else if (mod === 'p') {
+      xr = PN[k];
+    } else if (mod === 'b') {
+      xr = (bi < bits.length && bits[bi++]) ? 1 : -1;
+    } else if (mod === 'q') {
+      const b1 = bi < bits.length ? bits[bi++] : 0;
+      const b2 = bi < bits.length ? bits[bi++] : 0;
+      xr = (b1 ? 1 : -1) * 0.7071;
+      xi = (b2 ? 1 : -1) * 0.7071;
+    } else {
+      const b1 = bi < bits.length ? bits[bi++] : 0;
+      const b2 = bi < bits.length ? bits[bi++] : 0;
+      const b3 = bi < bits.length ? bits[bi++] : 0;
+      const b4 = bi < bits.length ? bits[bi++] : 0;
+      xr = (b1 ? 1 : -1) * (b2 ? 0.3162 : 0.9487);
+      xi = (b3 ? 1 : -1) * (b4 ? 0.3162 : 0.9487);
+    }
+    re[bin] = xr; im[bin] = xi;
+    re[FFT_SIZE - bin] = xr; im[FFT_SIZE - bin] = -xi;
+  }
+  ifft(re, im);
+  const sym = new Float32Array(SYM_LEN);
+  sym.set(re.subarray(FFT_SIZE - CP_LEN), 0);
+  sym.set(re, CP_LEN);
+  return sym;
+}
+
+const PREAMBLE = makeSymbol([], 0, 'p');
+
+/* ---- Demodulation ---- */
+function demodSymbol(data, mod) {
+  const re = new Float32Array(FFT_SIZE), im = new Float32Array(FFT_SIZE);
+  for (let i = 0; i < FFT_SIZE; i++) re[i] = data[i];
+  fft(re, im);
+  const pilots = [];
+  for (let k = 0; k < N_BINS; k += PILOT_EVERY) {
+    const bin = BIN_LO + k;
+    pilots.push({ bin, hr: re[bin], hi: im[bin] });
+  }
+  function getH(bin) {
+    let p0 = pilots[0], p1 = pilots[pilots.length-1];
+    for (let i = 0; i < pilots.length; i++) {
+      if (pilots[i].bin <= bin) p0 = pilots[i];
+      if (pilots[i].bin >= bin) { p1 = pilots[i]; break; }
+    }
+    if (p0 === p1) return { re: p0.hr, im: p0.hi };
+    const t = (bin - p0.bin) / (p1.bin - p0.bin);
+    return { re: p0.hr*(1-t)+p1.hr*t, im: p0.hi*(1-t)+p1.hi*t };
+  }
+  const bits = [];
+  for (let k = 0; k < N_BINS; k++) {
+    if (k % PILOT_EVERY === 0) continue;
+    const bin = BIN_LO + k;
+    const H = getH(bin);
+    const Hm = H.re*H.re + H.im*H.im + 1e-10;
+    const Yr = (re[bin]*H.re + im[bin]*H.im) / Hm;
+    const Yi = (im[bin]*H.re - re[bin]*H.im) / Hm;
+    if (mod === 'b') bits.push(Yr > 0 ? 1 : 0);
+    else if (mod === 'q') { bits.push(Yr > 0 ? 1 : 0); bits.push(Yi > 0 ? 1 : 0); }
+    else {
+      bits.push(Yr > 0 ? 1 : 0);
+      bits.push(Math.abs(Yr) < 0.632 ? 1 : 0);
+      bits.push(Yi > 0 ? 1 : 0);
+      bits.push(Math.abs(Yi) < 0.632 ? 1 : 0);
+    }
+  }
+  return bits;
+}
+
+/* ---- Header ---- */
+function makeHeaderBits(mode, res, mod) {
+  const modBits = mod === 'b' ? [0,0] : mod === 'q' ? [0,1] : [1,0];
+  const payload = [(mode>>1)&1, mode&1, (res>>2)&1, (res>>1)&1, res&1, ...modBits];
+  const crc = crc5_7(payload);
+  const group = payload.concat(crc);
+  const out = [];
+  for (let i = 0; i < BPSK_BPS; i++) out.push(group[i % 12]);
+  return out;
+}
+function decodeHeader(bits) {
+  const votes = new Array(12).fill(0), tot = new Array(12).fill(0);
+  for (let i = 0; i < bits.length; i++) { votes[i%12] += bits[i]; tot[i%12]++; }
+  const g = votes.map((v, i) => v > tot[i]/2 ? 1 : 0);
+  const payload = g.slice(0, 7), crc = g.slice(7);
+  const ok = crc.every((b, i) => b === crc5_7(payload)[i]);
+  return {
+    mode: (payload[0]<<1)|payload[1],
+    res: (payload[2]<<2)|(payload[3]<<1)|payload[4],
+    mod: (payload[5]<<1|payload[6]) === 0 ? 'b' : (payload[5]<<1|payload[6]) === 1 ? 'q' : 's',
+    ok
+  };
+}
+
+/* ---- Image ↔ bits ---- */
+function imageToBits(px, n, mode) {
+  const pix = n*n, hn = n>>1, cpix = hn*hn, bits = [];
+  if (mode === 0) {
+    for (let i = 0; i < pix; i++) {
+      const v = Math.round((0.299*px[i*4] + 0.587*px[i*4+1] + 0.114*px[i*4+2]) / 255 * 63);
+      for (let b = 5; b >= 0; b--) bits.push((v>>b)&1);
+    }
+  } else if (mode === 1) {
+    const Y = new Uint8Array(pix);
+    const cb = new Float32Array(cpix), cr = new Float32Array(cpix);
+    for (let i = 0; i < pix; i++) {
+      const r = px[i*4], g = px[i*4+1], b = px[i*4+2];
+      Y[i] = Math.round((0.299*r + 0.587*g + 0.114*b) / 255 * 63);
+      const j = ((i/n|0)>>1)*hn + ((i%n)>>1);
+      cb[j] += (128 - 0.168736*r - 0.331264*g + 0.5*b) / 4;
+      cr[j] += (128 + 0.5*r - 0.418688*g - 0.081312*b) / 4;
+    }
+    for (let i = 0; i < pix; i++) for (let b = 5; b >= 0; b--) bits.push((Y[i]>>b)&1);
+    for (let j = 0; j < cpix; j++) { const v = Math.max(0, Math.min(63, Math.round(cb[j]/255*63))); for (let b = 5; b >= 0; b--) bits.push((v>>b)&1); }
+    for (let j = 0; j < cpix; j++) { const v = Math.max(0, Math.min(63, Math.round(cr[j]/255*63))); for (let b = 5; b >= 0; b--) bits.push((v>>b)&1); }
+  } else {
+    for (let i = 0; i < pix; i++) {
+      const qr = Math.round(px[i*4]/85), qg = Math.round(px[i*4+1]/85), qb = Math.round(px[i*4+2]/85);
+      const v = (qr<<4)|(qg<<2)|qb;
+      for (let b = 5; b >= 0; b--) bits.push((v>>b)&1);
+    }
+  }
+  return bits;
+}
+function bitsToImage(bits, mode, n) {
+  const pix = n*n, hn = n>>1, cpix = hn*hn;
+  const imgd = new ImageData(n, n), px = imgd.data;
+  let bi = 0;
+  const rd = () => { let v = 0; for (let b = 0; b < 6; b++) v = (v<<1) | (bi < bits.length ? bits[bi++] : 0); return v; };
+  if (mode === 0) {
+    for (let i = 0; i < pix; i++) { const g = rd()*255/63; px[i*4]=px[i*4+1]=px[i*4+2]=g; px[i*4+3]=255; }
+  } else if (mode === 1) {
+    const Y = new Uint8Array(pix);
+    for (let i = 0; i < pix; i++) Y[i] = rd();
+    const cb = new Uint8Array(cpix), cr = new Uint8Array(cpix);
+    for (let j = 0; j < cpix; j++) cb[j] = rd();
+    for (let j = 0; j < cpix; j++) cr[j] = rd();
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+      const i = y*n+x, j = (y>>1)*hn+(x>>1);
+      const Yv = Y[i]*255/63, cbv = cb[j]*255/63-128, crv = cr[j]*255/63-128;
+      px[i*4]   = Math.max(0, Math.min(255, Math.round(Yv + 1.402*crv)));
+      px[i*4+1] = Math.max(0, Math.min(255, Math.round(Yv - 0.344136*cbv - 0.714136*crv)));
+      px[i*4+2] = Math.max(0, Math.min(255, Math.round(Yv + 1.772*cbv)));
+      px[i*4+3] = 255;
+    }
+  } else {
+    for (let i = 0; i < pix; i++) { const v = rd(); px[i*4]=((v>>4)&3)*85; px[i*4+1]=((v>>2)&3)*85; px[i*4+2]=(v&3)*85; px[i*4+3]=255; }
+  }
+  return imgd;
+}
+
+/* ---- UI helpers ---- */
+function fmtDur(s) {
+  s = Math.round(s);
+  if (s < 60) return s + " s";
+  if (s < 3600) return Math.floor(s/60) + " min " + String(s%60).padStart(2,"0") + " s";
+  return Math.floor(s/3600) + " h " + Math.round((s%3600)/60) + " min";
+}
+
+const pv = $("#pv"), pg = pv.getContext("2d");
+const rv = $("#rv"), rg = rv.getContext("2d");
+
+function setRes(idx) {
+  const n = RES[idx];
+  if (n === N) return;
+  N = n; PIX = N*N; HN = N>>1; CPIX = HN*HN;
+  pv.width = pv.height = N;
+  rv.width = rv.height = N;
+  if (img) prepare();
+}
+
+/* ---- TX ---- */
+let img = null, txState = null, txTimer = 0;
+
+$("#file").onchange = e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { const im = new Image(); im.onload = () => { img = im; prepare(); }; im.src = r.result; };
+  r.readAsDataURL(f);
+};
+$("#col").onchange = prepare;
+$("#mod").onchange = prepare;
+$("#res").onchange = e => { setRes(+e.target.value); prepare(); };
+
+function prepare() {
+  if (!img) return;
+  const c = document.createElement("canvas");
+  c.width = c.height = N;
+  const g = c.getContext("2d");
+  const s = Math.min(img.width, img.height);
+  g.drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, N, N);
+  pg.putImageData(g.getImageData(0, 0, N, N), 0, 0);
+  $("#send").disabled = false;
+  const mod = $("#mod").value, mode = MODES[$("#col").value];
+  const bpp = mode === 1 ? 9 : 6;
+  const bps = mod === 'b' ? BPSK_BPS : mod === 'q' ? QPSK_BPS : QAM16_BPS;
+  const dataSyms = Math.ceil(PIX * bpp / bps);
+  const dur = (PREAMBLE_SYMS + HEADER_SYMS + dataSyms) * SYM_LEN / 48000 + 0.4;
+  const el = $("#txs");
+  el.classList.toggle("warn", dur > 600);
+  el.textContent = "Připraveno (" + N + " × " + N + "): ~" + fmtDur(dur) + ".";
+}
+
+$("#send").onclick = () => {
+  if (!img) return;
+  const c = getCtx();
+  c.resume();
+  const mode = MODES[$("#col").value], mod = $("#mod").value, resIdx = +$("#res").value;
+  const srcCanvas = document.createElement("canvas");
+  srcCanvas.width = srcCanvas.height = N;
+  const g = srcCanvas.getContext("2d");
+  const s = Math.min(img.width, img.height);
+  g.drawImage(img, (img.width-s)/2, (img.height-s)/2, s, s, 0, 0, N, N);
+  const bits = imageToBits(g.getImageData(0,0,N,N).data, N, mode);
+  const hdrBits = makeHeaderBits(mode, resIdx, mod);
+  const bps = mod === 'b' ? BPSK_BPS : mod === 'q' ? QPSK_BPS : QAM16_BPS;
+  const totalSyms = Math.ceil(bits.length / bps);
+  
+  txState = { bits, hdrBits, mod, bps, totalSyms, symIdx: 0, buffer: null, bufPos: 0, silent: Math.round(0.2*SR), active: true };
+  const node = c.createScriptProcessor(4096, 0, 1);
+  node.onaudioprocess = e => txFill(e.outputBuffer.getChannelData(0));
+  const gain = c.createGain(); gain.gain.value = 0.9;
+  node.connect(gain); gain.connect(c.destination);
+  txState.node = node; txState.gain = gain;
+  $("#send").disabled = true; $("#stopTx").disabled = false;
+  
+  const dur = (PREAMBLE_SYMS + HEADER_SYMS + totalSyms) * SYM_LEN / SR + 0.2;
+  const t0 = performance.now();
+  txTimer = setInterval(() => {
+    const p = Math.min(1, (performance.now() - t0)/1000 / dur);
+    $("#txp").style.width = (p*100) + "%";
+    $("#txs").textContent = p < 1 ? "Vysílám… zbývá " + fmtDur(dur*(1-p)) : "Hotovo.";
+    if (p >= 1) stopTx(true);
+  }, 500);
+};
+
+function txFill(out) {
+  if (!txState || !txState.active) { out.fill(0); return; }
+  let i = 0;
+  if (txState.silent > 0) {
+    const n = Math.min(out.length, txState.silent);
+    out.fill(0, 0, n);
+    txState.silent -= n;
+    i = n;
+    if (i >= out.length) return;
+  }
+  while (i < out.length) {
+    if (!txState.buffer || txState.bufPos >= txState.buffer.length) {
+      let sym;
+      if (txState.symIdx < PREAMBLE_SYMS) sym = PREAMBLE;
+      else if (txState.symIdx === PREAMBLE_SYMS) sym = makeSymbol(txState.hdrBits, 0, 'b');
+      else {
+        const di = txState.symIdx - PREAMBLE_SYMS - 1;
+        if (di >= txState.totalSyms) { out.fill(0, i); return; }
+        sym = makeSymbol(txState.bits, di * txState.bps, txState.mod);
+      }
+      txState.symIdx++;
+      txState.buffer = sym;
+      txState.bufPos = 0;
+    }
+    const n = Math.min(out.length - i, txState.buffer.length - txState.bufPos);
+    for (let j = 0; j < n; j++) out[i+j] = txState.buffer[txState.bufPos+j] * 0.9;
+    i += n; txState.bufPos += n;
+  }
+}
+
+function stopTx(done) {
+  clearInterval(txTimer);
+  if (txState) {
+    txState.active = false;
+    try { txState.node.disconnect(); } catch (e) {}
+    try { txState.gain.disconnect(); } catch (e) {}
+    txState = null;
+  }
+  $("#send").disabled = !img;
+  $("#stopTx").disabled = true;
+  if (!done) { $("#txs").textContent = "Zastaveno."; $("#txp").style.width = "0"; }
+}
+$("#stopTx").onclick = () => stopTx();
+
+/* ---- RX ---- */
+const RING = 1 << 19, MASK = RING - 1, ring = new Float32Array(RING);
+let total = 0, st = "idle", stream = null, src = null, proc = null, mute = null;
+let preambleStart = -1, nextSymStart = -1, hdrInfo = null;
+let dataBits = [], totalBitsNeeded = 0;
+let lastSearchTime = 0, syncAttempts = 0, rms = 0, lastUi = 0, lastSearchEnd = 0;
+
+function clearRx() {
+  dataBits = []; hdrInfo = null; preambleStart = -1; nextSymStart = -1;
+  totalBitsNeeded = 0; syncAttempts = 0; lastSearchEnd = total;
+  rv.width = rv.height = N;
+  const imgd = rg.createImageData(N, N);
+  for (let i = 0; i < N*N; i++) { imgd.data[i*4]=26; imgd.data[i*4+1]=20; imgd.data[i*4+2]=18; imgd.data[i*4+3]=255; }
+  rg.putImageData(imgd, 0, 0);
+  $("#rxp").style.width = "0";
+}
+
+function detectPreamble() {
+  const WIN = 8192, TL = PREAMBLE.length;
+  const start = Math.max(0, total - WIN);
+  const L = total - start;
+  if (L < TL) return null;
+  const NFFT = 16384;
+  const sRe = new Float32Array(NFFT), sIm = new Float32Array(NFFT);
+  const tRe = new Float32Array(NFFT), tIm = new Float32Array(NFFT);
+  for (let i = 0; i < L; i++) sRe[i] = ring[(start+i)&MASK];
+  for (let i = 0; i < TL; i++) tRe[i] = PREAMBLE[i];
+  fft(sRe, sIm); fft(tRe, tIm);
+  for (let i = 0; i < NFFT; i++) {
+    const sr = sRe[i], si = sIm[i], tr = tRe[i], ti = -tIm[i];
+    sRe[i] = sr*tr - si*ti; sIm[i] = sr*ti + si*tr;
+  }
+  ifft(sRe, sIm);
+  let best = -1, bestVal = 0;
+  for (let i = 0; i <= L - TL; i++) if (sRe[i] > bestVal) { bestVal = sRe[i]; best = i; }
+  let templE = 0, sigE = 0;
+  for (let i = 0; i < TL; i++) templE += PREAMBLE[i]*PREAMBLE[i];
+  for (let i = 0; i < TL; i++) { const v = ring[(start+best+i)&MASK]; sigE += v*v; }
+  const q = bestVal / Math.sqrt(sigE*templE + 1e-10);
+  return q > 0.4 ? { pos: start + best, quality: q } : null;
+}
+
+function tryDecodeHeader() {
+  for (const off of [2*SYM_LEN, SYM_LEN]) {
+    const pos = preambleStart + off;
+    if (pos + SYM_LEN > total) continue;
+    const data = new Float32Array(FFT_SIZE);
+    for (let i = 0; i < FFT_SIZE; i++) data[i] = ring[(pos + CP_LEN + i) & MASK];
+    const bits = demodSymbol(data, 'b');
+    const hdr = decodeHeader(bits);
+    if (hdr.ok) return { ...hdr, pos };
+  }
+  return null;
+}
+
+function processRx() {
+  if (st === "wait") {
+    if (performance.now() - lastSearchTime < 100) return;
+    lastSearchTime = performance.now();
+    if (rms < 0.003) return;
+    const r = detectPreamble();
+    if (r) { preambleStart = r.pos; st = "sync"; syncAttempts = 0; }
+    return;
+  }
+  if (st === "sync") {
+    const hdr = tryDecodeHeader();
+    if (hdr) {
+      hdrInfo = hdr;
+      setRes(hdr.res);
+      totalBitsNeeded = PIX * (hdr.mode === 1 ? 9 : 6);
+      dataBits = [];
+      nextSymStart = hdr.pos + SYM_LEN;
+      st = "rx";
+    } else {
+      syncAttempts++;
+      if (syncAttempts > 3) { st = "wait"; preambleStart = -1; }
+    }
+    return;
+  }
+  if (st === "rx") {
+    while (nextSymStart + SYM_LEN <= total) {
+      const data = new Float32Array(FFT_SIZE);
+      for (let i = 0; i < FFT_SIZE; i++) data[i] = ring[(nextSymStart + CP_LEN + i) & MASK];
+      const bits = demodSymbol(data, hdrInfo.mod);
+      for (const b of bits) dataBits.push(b);
+      nextSymStart += SYM_LEN;
+      if (dataBits.length >= totalBitsNeeded) {
+        const imgd = bitsToImage(dataBits.slice(0, totalBitsNeeded), hdrInfo.mode, N);
+        rg.putImageData(imgd, 0, 0);
+        st = "done";
+        break;
+      }
+    }
+  }
+}
+
+function onAudio(e) {
+  const x = e.inputBuffer.getChannelData(0);
+  let sq = 0;
+  for (let i = 0; i < x.length; i++) { ring[(total+i)&MASK] = x[i]; sq += x[i]*x[i]; }
+  total += x.length;
+  rms = Math.sqrt(sq / x.length);
+  processRx();
+  const now = performance.now();
+  if (now - lastUi > 150) {
+    lastUi = now;
+    $("#lvl").style.width = Math.min(100, rms*2000) + "%";
+    const px = dataBits.length;
+    $("#rxp").style.width = totalBitsNeeded ? (st === "rx" || st === "done" ? px/totalBitsNeeded*100 : 0) + "%" : "0";
+    $("#rxs").textContent =
+      st === "wait" ? "Poslouchám, čekám na preambuli…" :
+      st === "sync" ? "Zachycena preambule, čtu hlavičku…" :
+      st === "rx" ? ("Přijímám " + N + " × " + N + ": " + Math.round(px/totalBitsNeeded*100) + " %") :
+      st === "done" ? ("Hotovo (" + N + " × " + N + ").") : "";
+  }
+}
+
+$("#listen").onclick = () => (st === "idle" ? startRx() : stopRx());
+$("#reset").onclick = () => { if (st !== "idle") { clearRx(); st = "wait"; lastSearchEnd = total; } };
+
+async function startRx() {
+  try {
+    const c = getCtx();
+    await c.resume();
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 }
+    });
+    SR = c.sampleRate;
+    src = c.createMediaStreamSource(stream);
+    proc = c.createScriptProcessor(2048, 1, 1);
+    proc.onaudioprocess = onAudio;
+    mute = c.createGain(); mute.gain.value = 0;
+    src.connect(proc); proc.connect(mute); mute.connect(c.destination);
+    clearRx();
+    st = "wait"; lastSearchEnd = total;
+    $("#listen").textContent = "Zastavit poslech";
+    $("#reset").disabled = false;
+  } catch (err) {
+    $("#rxs").textContent = "Mikrofon nedostupný (" + (err && err.name || "chyba") + "). Otevřete přes https a povolte mikrofon.";
+  }
+}
+function stopRx() {
+  if (st === "idle" && !stream) return;
+  st = "idle";
+  if (proc) { proc.onaudioprocess = null; try { proc.disconnect(); } catch (e) {} }
+  if (src) try { src.disconnect(); } catch (e) {}
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  proc = src = stream = null;
+  $("#listen").textContent = "Spustit poslech";
+  $("#reset").disabled = true;
+  $("#lvl").style.width = "0";
+}
+
+/* ---- Mode switch ---- */
+$("#bTx").onclick = () => {
+  $("#bTx").setAttribute("aria-pressed", "true");
+  $("#bRx").setAttribute("aria-pressed", "false");
+  $("#tx").classList.add("on"); $("#rx").classList.remove("on");
+  stopRx();
+};
+$("#bRx").onclick = () => {
+  $("#bRx").setAttribute("aria-pressed", "true");
+  $("#bTx").setAttribute("aria-pressed", "false");
+  $("#rx").classList.add("on"); $("#tx").classList.remove("on");
+  stopTx();
+};
+</script>
+</body>
+</html>
