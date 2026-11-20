@@ -5,32 +5,346 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Zvukový přenos obrázku</title>
 <style>
-:root{--bg:#f3ece4;--card:#fff9f2;--fg:#2b201a;--mut:#7b6a5c;--line:#dccdbd;--acc:#b8730f;--accfg:#fff;--cv:#1a1412;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171210;--card:#241c18;--fg:#efe4d6;--mut:#a89684;--line:#3c3029;--acc:#f0b247;--accfg:#1d1308}}
-:root[data-theme="dark"]{--bg:#171210;--card:#241c18;--fg:#efe4d6;--mut:#a89684;--line:#3c3029;--acc:#f0b247;--accfg:#1d1308}
-*{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 "Iowan Old Style",Georgia,serif}
-main{max-width:460px;margin:0 auto;padding:20px 16px 40px}
-h1{font-size:26px;line-height:1.15;margin:4px 0 4px;font-weight:600;letter-spacing:-.01em}
-.sub{color:var(--mut);margin:0 0 18px;font-size:15px}
-.seg{display:grid;grid-template-columns:1fr 1fr;border:1.5px solid var(--acc);border-radius:10px;overflow:hidden;margin-bottom:18px}
-.seg button{border:0;background:none;color:var(--fg);font:inherit;font-weight:600;padding:12px;cursor:pointer}
-.seg button[aria-pressed="true"]{background:var(--acc);color:var(--accfg)}
-section{display:none}section.on{display:block}
-canvas{display:block;width:100%;max-width:320px;aspect-ratio:1;margin:0 auto 14px;image-rendering:pixelated;border:1px solid var(--line);border-radius:4px;background:var(--cv)}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-label.f{display:block;font-size:14px;color:var(--mut)}
-select{width:100%;font:inherit;padding:10px;margin-top:2px;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px}
-.btn{display:block;width:100%;font:inherit;font-weight:600;padding:13px;border-radius:10px;border:1.5px solid var(--acc);background:var(--acc);color:var(--accfg);cursor:pointer;margin-bottom:10px;text-align:center}
-.btn.o{background:none;color:var(--fg)}
-.btn:disabled{opacity:.4}
-.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:6px 0}
-.bar i{display:block;height:100%;width:0;background:var(--acc)}
-.st{min-height:3em;font-size:15px;margin:6px 0}
-.tip{font-size:14px;color:var(--mut);border-top:1px solid var(--line);padding-top:12px;margin-top:16px}
-input[type=file]{display:none}
-:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+/* ============================================
+   FONTS + RESET
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jacquard+24&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================
+   PROMĚNNÉ – přebráno z Lightboxu
+   ============================================ */
+:root {
+  --bg: #111;
+  --card: #1a1a1a;
+  --card-hover: #1e1c14;
+  --fg: #fff;
+  --mut: #666;
+  --line: #2a2a2a;
+  --line-strong: #333;
+  --acc: #f5c842;
+  --acc-dim: #e0b530;
+  --acc-dark: #1e1c14;
+  --accfg: #111;
+  --cv: #000;
+}
+
+/* světlý režim (volitelně – Lightbox je primárně tmavý) */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f3ece4;
+    --card: #fff9f2;
+    --fg: #2b201a;
+    --mut: #7b6a5c;
+    --line: #dccdbd;
+    --line-strong: #c9b8a6;
+    --cv: #1a1412;
+  }
+}
+
+/* ============================================
+   LAYOUT
+   ============================================ */
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 100dvh;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+main {
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+}
+
+/* ============================================
+   NADPISY
+   ============================================ */
+h1 {
+  font-family: 'Jacquard 24', system-ui;
+  font-weight: 400;
+  font-size: 42px;
+  line-height: 1.05;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+  color: var(--fg);
+}
+
+h1::first-letter {
+  color: var(--acc);
+}
+
+.sub {
+  color: var(--mut);
+  margin: 0 0 28px;
+  font-size: 13px;
+  text-align: left;
+}
+
+/* ============================================
+   PŘEPÍNAČ REŽIMŮ (segment)
+   ============================================ */
+.seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  background: var(--card);
+  padding: 4px;
+  gap: 4px;
+}
+
+.seg button {
+  border: none;
+  background: none;
+  color: var(--mut);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.15s;
+}
+
+.seg button[aria-pressed="true"] {
+  background: var(--acc);
+  color: var(--accfg);
+  font-weight: 600;
+}
+
+.seg button:not([aria-pressed="true"]):active {
+  transform: scale(0.97);
+  background: var(--line);
+}
+
+/* ============================================
+   SEKCE
+   ============================================ */
+section {
+  display: none;
+}
+
+section.on {
+  display: block;
+}
+
+/* ============================================
+   CANVAS
+   ============================================ */
+canvas {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1;
+  margin: 0 auto 20px;
+  image-rendering: pixelated;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--cv);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   FORMULÁŘOVÉ ŘÁDKY
+   ============================================ */
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+label.f {
+  display: block;
+  font-size: 12px;
+  color: var(--mut);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+select {
+  width: 100%;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  padding: 10px 12px;
+  margin-top: 6px;
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+select:focus {
+  border-color: var(--acc);
+  outline: none;
+}
+
+select option {
+  background: var(--card);
+  color: var(--fg);
+}
+
+/* ============================================
+   TLAČÍTKA
+   ============================================ */
+.btn {
+  display: block;
+  width: 100%;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--acc);
+  background: var(--acc);
+  color: var(--accfg);
+  cursor: pointer;
+  margin-bottom: 10px;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.btn:not(:disabled):active {
+  transform: scale(0.97);
+  background: var(--acc-dim);
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn.o {
+  background: var(--card);
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+.btn.o:not(:disabled):active {
+  transform: scale(0.97);
+  background: var(--line);
+}
+
+/* tlačítko pro výběr souboru (label) */
+label.btn.o {
+  cursor: pointer;
+}
+
+/* ============================================
+   PROGRESS BARY
+   ============================================ */
+.bar {
+  height: 8px;
+  background: var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--acc);
+  border-radius: 4px;
+  transition: width 0.2s ease;
+}
+
+/* ============================================
+   STAVOVÉ TEXTY
+   ============================================ */
+.st {
+  min-height: 3em;
+  font-size: 14px;
+  margin: 10px 0;
+  color: var(--mut);
+  line-height: 1.5;
+}
+
+/* ============================================
+   TIP
+   ============================================ */
+.tip {
+  font-size: 13px;
+  color: var(--mut);
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin-top: 24px;
+  line-height: 1.6;
+}
+
+.tip::before {
+  content: "TIP";
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--acc);
+  border: 1px solid var(--acc);
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* ============================================
+   SKRYTÝ FILE INPUT
+   ============================================ */
+input[type=file] {
+  display: none;
+}
+
+/* ============================================
+   FOCUS VIDITELNOST
+   ============================================ */
+:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ============================================
+   SCROLLBAR (volitelné)
+   ============================================ */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--acc);
+}
 </style>
 </head>
 <body>
